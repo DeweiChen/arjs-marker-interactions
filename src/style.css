@@ -33,6 +33,9 @@ html, body {
   font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
   color: var(--text-primary);
   user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  -webkit-text-size-adjust: 100%;
 }
 
 /* AR Viewport and Video Canvas */
@@ -45,6 +48,7 @@ html, body {
   height: 100dvh;
   z-index: 2;
   pointer-events: none;
+  touch-action: none;
 }
 
 a-scene {
@@ -54,6 +58,9 @@ a-scene {
   width: 100vw !important;
   height: 100dvh !important;
   z-index: 2;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 canvas {
@@ -62,6 +69,7 @@ canvas {
   left: 0;
   pointer-events: none;
   z-index: 2;
+  touch-action: none;
 }
 
 /* AR.js generated video element */
@@ -70,6 +78,25 @@ video {
   top: 0 !important;
   left: 0 !important;
   z-index: 1 !important;
+  touch-action: none;
+}
+
+/* Interactive UI Controls touch-action */
+button,
+.hud-btn,
+.panel-icon-btn,
+.modal-close-btn,
+.bloom-preset-btn,
+.switch-toggle,
+.floating-hud-btn,
+.download-link {
+  touch-action: manipulation;
+}
+
+.modal-content,
+.bloom-panel-body {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Top HUD Header */
