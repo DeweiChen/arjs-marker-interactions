@@ -26,6 +26,8 @@
 html, body {
   width: 100%;
   height: 100%;
+  height: 100dvh;
+  min-height: -webkit-fill-available;
   overflow: hidden;
   background-color: #000;
   font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
@@ -40,8 +42,18 @@ html, body {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   z-index: 2;
   pointer-events: none;
+}
+
+a-scene {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100dvh !important;
+  z-index: 2;
 }
 
 canvas {
@@ -72,6 +84,7 @@ video {
   align-items: center;
   gap: 10px;
   pointer-events: auto;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Top Telemetry HUD & Status Badges */
@@ -214,6 +227,18 @@ video {
   transform: translateY(0);
 }
 
+.hud-btn.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+}
+
+/* Global utility for hiding elements */
+.hidden {
+  display: none !important;
+}
+
 /* Bottom Status Panel */
 .hud-status-panel {
   position: fixed;
@@ -228,6 +253,88 @@ video {
   max-width: 680px;
   pointer-events: auto;
   box-sizing: border-box;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Immersive Viewport Mode: Collapses HUD for 100% full screen view */
+body.hud-collapsed .hud-header {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-20px);
+}
+
+body.hud-collapsed .hud-status-panel {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 20px);
+}
+
+body.hud-collapsed #bloom-control-panel {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Floating Quick Action: Restore HUD Button */
+.floating-hud-btn {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 12px rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 7px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.2s ease;
+  animation: floatBtnIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.floating-hud-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.floating-hud-btn:active {
+  transform: translateY(0);
+}
+
+@keyframes floatBtnIn {
+  from { opacity: 0; transform: scale(0.85) translateY(-6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Lightweight Toast Notification */
+.hud-toast {
+  position: fixed;
+  bottom: max(75px, calc(env(safe-area-inset-bottom) + 75px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 250;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.3);
+  color: #f8fafc;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  max-width: min(88vw, 340px);
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .status-card {
@@ -399,9 +506,14 @@ video {
     font-size: 9px;
   }
 
+  .hud-actions {
+    gap: 5px;
+  }
+
   .hud-btn {
-    padding: 6px 10px;
+    padding: 6px 8px;
     font-size: 11px;
+    gap: 4px;
   }
 
   /* Status Panel in Portrait: 2-Row Grid to prevent horizontal overflow */

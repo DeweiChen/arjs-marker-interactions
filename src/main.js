@@ -34,6 +34,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCloseModal = document.getElementById('btn-close-modal');
   const modalBackdrop = document.getElementById('markers-modal');
 
+  // Fullscreen & Immersive Mode Elements
+  const btnToggleFullscreen = document.getElementById('btn-toggle-fullscreen');
+  const iconFsEnter = document.getElementById('icon-fs-enter');
+  const iconFsExit = document.getElementById('icon-fs-exit');
+  const fsBtnText = document.getElementById('fs-btn-text');
+  const btnRestoreHud = document.getElementById('btn-restore-hud');
+  const hudToast = document.getElementById('hud-toast');
+
   // Bloom Control 2D Panel DOM Elements
   const btnToggleBloom = document.getElementById('btn-toggle-bloom');
   const bloomPanel = document.getElementById('bloom-control-panel');
@@ -61,19 +69,182 @@ document.addEventListener('DOMContentLoaded', () => {
   // ------------------------------------------------------------------------
   // Ensure Camera Projection Matrix & Video Resize Synchronization
   // ------------------------------------------------------------------------
-  window.addEventListener('arToolkitContext-loaded', () => {
+  function syncARViewport() {
+    window.dispatchEvent(new Event('resize'));
     const arSession = sceneEl && sceneEl.systems && sceneEl.systems.arjs;
     if (arSession && arSession.arSource && arSession.arContext) {
-      setTimeout(() => {
-        if (arSession.arSource.onResizeElement) {
-          arSession.arSource.onResizeElement();
-        }
-        if (arSession.arContext.arController && arSession.arContext.arController.canvas) {
-          arSession.arSource.copyElementSizeTo(arSession.arContext.arController.canvas);
-          arSession.arContext.update();
-        }
-      }, 300);
+      if (typeof arSession.arSource.onResizeElement === 'function') {
+        arSession.arSource.onResizeElement();
+      }
+      if (arSession.arContext.arController && arSession.arContext.arController.canvas) {
+        arSession.arSource.copyElementSizeTo(arSession.arContext.arController.canvas);
+        arSession.arContext.update();
+      }
     }
+  }
+
+  window.addEventListener('arToolkitContext-loaded', () => {
+    setTimeout(syncARViewport, 300);
+  });
+
+  // ------------------------------------------------------------------------
+  // Setup Fullscreen & Immersive Mode Controller
+  // ------------------------------------------------------------------------
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  let isImmersiveMode = false;
+  let toastTimer = null;
+
+  function showToast(message, duration = 3200) {
+    if (!hudToast) return;
+    hudToast.textContent = message;
+    hudToast.classList.remove('hidden');
+    hudToast.style.opacity = '1';
+    hudToast.style.transform = 'translate(-50%, -50%) scale(1)';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      hudToast.style.opacity = '0';
+      hudToast.style.transform = 'translate(-50%, -50%) scale(0.95)';
+      setTimeout(() => {
+        hudToast.classList.add('hidden');
+      }, 300);
+    }, duration);
+  }
+
+  function isNativeFullscreen() {
+    return Boolean(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+  }
+
+  function setImmersiveMode(active) {
+    isImmersiveMode = active;
+    document.body.classList.toggle('hud-collapsed', active);
+
+    if (btnRestoreHud) {
+      btnRestoreHud.classList.toggle('hidden', !active);
+    }
+    if (btnToggleFullscreen) {
+      btnToggleFullscreen.classList.toggle('active', active);
+      btnToggleFullscreen.setAttribute('title', active ? 'Restore HUD (還原控制列)' : 'Toggle Fullscreen Mode (全螢幕沉浸模式)');
+      btnToggleFullscreen.setAttribute('aria-label', active ? 'Restore HUD' : 'Toggle Fullscreen Mode');
+    }
+    if (iconFsEnter) iconFsEnter.classList.toggle('hidden', active);
+    if (iconFsExit) iconFsExit.classList.toggle('hidden', !active);
+    if (fsBtnText) fsBtnText.textContent = active ? 'Exit' : 'Full';
+
+    // If panel is open when collapsing, close panel
+    if (active && bloomPanel && !bloomPanel.classList.contains('hidden')) {
+      bloomPanel.classList.add('hidden');
+      if (btnToggleBloom) {
+        btnToggleBloom.classList.remove('active');
+        btnToggleBloom.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    syncARViewport();
+    setTimeout(syncARViewport, 150);
+    setTimeout(syncARViewport, 350);
+    setTimeout(syncARViewport, 600);
+  }
+
+  let wasInNativeFullscreen = false;
+
+  async function toggleFullscreen() {
+    const isCurrentlyFs = isImmersiveMode || isNativeFullscreen();
+    const willActivate = !isCurrentlyFs;
+
+    if (willActivate) {
+      let nativeSuccess = false;
+      const target = document.documentElement;
+
+      // 1. Attempt native Fullscreen API with fallbacks
+      try {
+        if (target.requestFullscreen) {
+          try {
+            await target.requestFullscreen({ navigationUI: 'hide' });
+            nativeSuccess = true;
+          } catch {
+            await target.requestFullscreen();
+            nativeSuccess = true;
+          }
+        } else if (target.webkitRequestFullscreen) {
+          await target.webkitRequestFullscreen();
+          nativeSuccess = true;
+        } else if (document.body && document.body.webkitRequestFullscreen) {
+          await document.body.webkitRequestFullscreen();
+          nativeSuccess = true;
+        }
+      } catch (err) {
+        console.warn('Native Fullscreen API not allowed/supported in this browser context:', err);
+      }
+
+      wasInNativeFullscreen = nativeSuccess || isNativeFullscreen();
+
+      // 2. Hide mobile URL bar scroll nudge if applicable
+      try { window.scrollTo(0, 1); } catch (_) {}
+
+      // 3. Activate Immersive Mode (Collapses HUD to maximize AR camera area)
+      setImmersiveMode(true);
+
+      // 4. Platform-tailored user feedback
+      if (isIOS) {
+        const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+        if (!isStandalone) {
+          showToast('📱 已進入純淨滿版模式！(iOS 限制瀏覽器網址列無法自動隱藏，建議點選分享加入主畫面)', 4500);
+        } else {
+          showToast('✨ 已啟用滿版全螢幕模式', 2500);
+        }
+      } else {
+        if (nativeSuccess) {
+          showToast('⚡ 已進入原生全螢幕沉浸模式', 3000);
+        } else {
+          showToast('✨ 已啟用滿版純淨視角 (點擊右上角按鈕可隨時還原介面)', 3500);
+        }
+      }
+    } else {
+      // Exit Fullscreen & Restore HUD
+      try {
+        if (isNativeFullscreen()) {
+          if (document.exitFullscreen) {
+            await document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            await document.webkitExitFullscreen();
+          }
+        }
+      } catch (err) {
+        console.warn('exitFullscreen error:', err);
+      }
+      wasInNativeFullscreen = false;
+      setImmersiveMode(false);
+      showToast('已還原正常 HUD 介面', 2000);
+    }
+  }
+
+  if (btnToggleFullscreen) {
+    btnToggleFullscreen.addEventListener('click', toggleFullscreen);
+  }
+
+  if (btnRestoreHud) {
+    btnRestoreHud.addEventListener('click', () => {
+      setImmersiveMode(false);
+      showToast('已還原控制列', 2000);
+    });
+  }
+
+  ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach((eventName) => {
+    document.addEventListener(eventName, () => {
+      const inNative = isNativeFullscreen();
+      // Only auto-exit if the user actually exited from an active native fullscreen session (e.g. system back/gesture)
+      if (wasInNativeFullscreen && !inNative && isImmersiveMode) {
+        setImmersiveMode(false);
+      }
+      wasInNativeFullscreen = inNative;
+    });
   });
 
   // ------------------------------------------------------------------------

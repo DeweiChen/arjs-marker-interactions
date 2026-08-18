@@ -3,7 +3,11 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#0a0e17" />
   <title>AR.js Dynamic Dual Marker Lightning Interaction</title>
 
   <!-- Google Fonts -->
@@ -71,6 +75,17 @@
           <polyline points="21 15 16 10 5 21"></polyline>
         </svg>
         <span>Markers</span>
+      </button>
+
+      <!-- Fullscreen Viewport Mode Toggle Button -->
+      <button id="btn-toggle-fullscreen" class="hud-btn" title="Toggle Fullscreen Mode (提高畫面比例)" aria-label="Toggle Fullscreen Mode">
+        <svg id="icon-fs-enter" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+        </svg>
+        <svg id="icon-fs-exit" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+        </svg>
+        <span id="fs-btn-text">Full</span>
       </button>
     </div>
   </header>
@@ -228,6 +243,20 @@
       </div>
     </div>
   </div>
+
+  <!-- Floating Quick Action: Restore HUD Button in Immersive Mode -->
+  <button id="btn-restore-hud" class="floating-hud-btn hidden" title="Restore HUD (還原控制列)" aria-label="Restore HUD">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="4 14 10 14 10 20"></polyline>
+      <polyline points="20 10 14 10 14 4"></polyline>
+      <line x1="14" y1="10" x2="21" y2="3"></line>
+      <line x1="3" y1="21" x2="10" y2="14"></line>
+    </svg>
+    <span>Show HUD</span>
+  </button>
+
+  <!-- Lightweight Toast Notification for Mobile / iOS Tips -->
+  <div id="hud-toast" class="hud-toast hidden" role="status" aria-live="polite"></div>
 
   <!-- Embedded AR.js + A-Frame Scene with Proximity Lightning & Selective Bloom Components -->
   <a-scene embedded
