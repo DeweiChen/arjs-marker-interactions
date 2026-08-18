@@ -1,16 +1,17 @@
-# AR.js + Three.js Dual Marker Interaction System
+# AR.js + A-Frame Dual Marker Dynamic Lightning Interaction
 
-A WebAR dual-marker interaction foundation built on **AR.js (v3.4.8)** and **Three.js (r164)**.
+A WebAR dual-marker proximity interaction system built on **AR.js**, **A-Frame (v1.6.0)**, and **Three.js**.
 
 ---
 
 ## 🌟 Key Features
 
-- 🎯 **Simultaneous Dual Marker Detection**: Supports independent tracking and detection of both Hiro and Kanji markers.
-- 🧊 **3D Objects & Animations**: Hiro (Marker 1) features a futuristic glowing rose core cube, while Kanji (Marker 2) features a cyan crystal octahedron, complete with floating and rotational micro-animations.
-- 🎨 **Modular Extensibility**: Easily swap 3D objects, photo textures, GLTF/GLB models, or Bloom effect meshes via `markerManager.setMarkerObject()` or `markerManager.addCustomMarker()`.
-- 📱 **Mobile HTTPS Ready**: Includes `@vitejs/plugin-basic-ssl` for local development HTTPS certificates and automated GitHub Pages CI/CD deployment to ensure WebRTC camera permissions on mobile devices.
-- 💎 **Modern HUD & UI Status**: Real-time marker tracking status indicators (Tracking / Waiting) and a built-in modal for viewing and downloading marker patterns.
+- 🎯 **Simultaneous Dual Marker Detection**: Real-time independent 6-DoF tracking for both Hiro and Kanji markers.
+- ⚡ **Procedural Lightning Arcs**: Dynamic multi-branch electric arcs generated between markers via the Midpoint Displacement algorithm.
+- 🔮 **Proximity-Scaled Plasma Core**: Midpoint energy core and orbital rings that scale in size and rotate faster as markers approach.
+- 💥 **Dynamic Intensity Curves**: Lightning bolt count (1 to 4 bolts), spark particle emissions, light intensity, and visual scale ramp up non-linearly as distance decreases ($D < 3.0\text{m}$ to $D = 0.35\text{m}$), and disappear completely beyond threshold distance.
+- 🎛️ **Modern Glassmorphism HUD**: Real-time tracking status indicators, live distance readout, dynamic discharge progress bar, and built-in marker preview modal.
+- 📱 **Mobile HTTPS Ready**: Includes `@vitejs/plugin-basic-ssl` for local development HTTPS certificates and automated GitHub Pages CI/CD deployment.
 
 ---
 
@@ -19,7 +20,8 @@ A WebAR dual-marker interaction foundation built on **AR.js (v3.4.8)** and **Thr
 | Package | Version | Description |
 |---|---|---|
 | `@ar-js-org/ar.js` | `3.4.8` | Latest community-maintained stable WebAR tracking core |
-| `three` | `0.164.0` (r164) | Most compatible and stable Three.js release for AR.js |
+| `A-Frame` | `1.6.0` | Declarative 3D scene graph & custom component system |
+| `three` | `0.164.0` | Core WebGL 3D rendering engine |
 | `vite` | `^6.x` | High-performance frontend dev server and bundler |
 | `@vitejs/plugin-basic-ssl` | `^2.x` | Local HTTPS certificate plugin for mobile camera testing |
 | `pnpm` | `^10.x` | Fast, disk space-efficient package manager |
@@ -35,21 +37,20 @@ arjs-marker-interactions/
 │       └── deploy.yml          # GitHub Pages automated CI/CD deployment
 ├── public/
 │   ├── data/
-│   │   └── camera_para.dat     # Local camera calibration file (no CDN dependency)
+│   │   └── camera_para.dat     # Local camera calibration file
 │   ├── markers/
-│   │   ├── pattern-hiro.patt   # Hiro marker pattern training file
-│   │   ├── pattern-kanji.patt  # Kanji marker pattern training file
+│   │   ├── pattern-hiro.patt   # Hiro marker pattern file
+│   │   ├── pattern-kanji.patt  # Kanji marker pattern file
 │   │   └── images/             # Printable / screen-displayable marker images
 │   │       ├── hiro.png
 │   │       └── kanji.png
 │   └── assets/
-│       └── textures/           # Texture assets directory for photo/image replacements
 ├── src/
-│   ├── ar-scene.js             # AR.js + Three.js core scene, camera, lights & render loop
-│   ├── marker-manager.js       # Marker registration, 3D object management & status events
+│   ├── lightning-fx.js         # Procedural lightning, plasma core & sparks FX generator
+│   ├── proximity-component.js  # A-Frame component tracking distance & driving FX
 │   ├── style.css               # Glassmorphism HUD overlay & responsive styles
 │   └── main.js                 # Application bootstrap & UI event handlers
-├── index.html                  # Main HTML entry & marker preview modal
+├── index.html                  # Main HTML entry, AR scene & HUD markup
 ├── vite.config.js              # Vite configuration (base path & HTTPS setup)
 ├── package.json
 └── pnpm-lock.yaml

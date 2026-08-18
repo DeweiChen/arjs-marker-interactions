@@ -4,27 +4,137 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>AR.js + A-Frame Dual Marker Tracking</title>
-  <!-- A-Frame Core Library -->
+  <title>AR.js Dynamic Dual Marker Lightning Interaction</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- A-Frame Core Library (v1.6.0) -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-  <!-- AR.js A-Frame Build (Marker + Location-based) -->
+
+  <!-- AR.js A-Frame Build -->
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+
+  <!-- Application Entry Script (Vite module) -->
+  <script type="module" src="/src/main.js"></script>
 </head>
 
-<body style="margin: 0px; overflow: hidden;">
-  <!-- Embedded AR Scene with debug UI disabled -->
-  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+<body>
+  <!-- Top HUD Header -->
+  <header class="hud-header">
+    <div class="hud-brand">
+      <span class="hud-logo-badge">⚡ AR FX</span>
+      <div>
+        <h1 class="hud-title">Dual Marker Lightning Core</h1>
+        <p class="hud-subtitle">Bring markers close to unleash electric discharge</p>
+      </div>
+    </div>
+    <div class="hud-actions">
+      <button id="btn-show-markers" class="hud-btn" title="View & Download Marker Patterns">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+        <span>Markers</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Bottom Interaction & Proximity Status Panel -->
+  <footer class="hud-status-panel">
+    <!-- Hiro Marker Status -->
+    <div id="status-hiro" class="status-card">
+      <div class="status-indicator"></div>
+      <div class="status-info">
+        <span class="status-label">Marker 1 (Hiro)</span>
+        <span id="status-hiro-val" class="status-val">Waiting...</span>
+      </div>
+    </div>
+
+    <!-- Proximity & Energy Power Gauge -->
+    <div class="energy-card">
+      <div class="energy-header">
+        <span id="energy-status-text" class="energy-status">STANDBY</span>
+        <span id="distance-val" class="distance-badge">--</span>
+      </div>
+      <div class="energy-progress-wrapper">
+        <div id="energy-bar" class="energy-progress-bar"></div>
+      </div>
+    </div>
+
+    <!-- Kanji Marker Status -->
+    <div id="status-kanji" class="status-card">
+      <div class="status-indicator"></div>
+      <div class="status-info">
+        <span class="status-label">Marker 2 (Kanji)</span>
+        <span id="status-kanji-val" class="status-val">Waiting...</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Marker Patterns Modal Dialog -->
+  <div id="markers-modal" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>AR Marker Patterns</h2>
+        <button id="btn-close-modal" class="modal-close-btn" aria-label="Close modal">&times;</button>
+      </div>
+      <p class="modal-desc">Scan both markers simultaneously with your camera. Bring them closer together to trigger
+        dynamic electric arcs and energy core expansion!</p>
+      <div class="markers-grid">
+        <div class="marker-item">
+          <h3>Hiro Marker (Red Energy Node)</h3>
+          <img src="./markers/images/hiro.png" alt="Hiro Marker Pattern" />
+          <a href="./markers/images/hiro.png" download="pattern-hiro.png" class="download-link">Download Pattern</a>
+        </div>
+        <div class="marker-item">
+          <h3>Kanji Marker (Blue Energy Node)</h3>
+          <img src="./markers/images/kanji.png" alt="Kanji Marker Pattern" />
+          <a href="./markers/images/kanji.png" download="pattern-kanji.png" class="download-link">Download Pattern</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Embedded AR.js + A-Frame Scene with Proximity Lightning Component -->
+  <a-scene embedded
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    proximity-lightning="marker1: #marker-hiro; marker2: #marker-kanji; maxDistance: 3.0; minDistance: 0.35; terminalOffsetY: 0.25; smoothingFactor: 0.3">
+
+    <!-- Ambient & Directional Scene Lighting -->
+    <a-entity light="type: ambient; color: #ffffff; intensity: 0.8"></a-entity>
+    <a-entity light="type: directional; color: #ffffff; intensity: 1.2; position: 1 4 2"></a-entity>
 
     <!-- Marker 1: Hiro Marker Configuration -->
-    <a-marker preset="hiro">
-      <a-entity position="0 0 0" scale="0.05 0.05 0.05"
-        gltf-model="https://raw.githack.com/AR-js-org/AR.js/master/aframe/examples/image-tracking/nft/trex/scene.gltf"></a-entity>
+    <a-marker preset="hiro" id="marker-hiro" emitevents="true">
+      <!-- 3D Model: T-Rex with anchor beacon -->
+      <a-entity position="0 0 0" scale="0.04 0.04 0.04"
+        gltf-model="https://raw.githack.com/AR-js-org/AR.js/master/aframe/examples/image-tracking/nft/trex/scene.gltf">
+      </a-entity>
+      <!-- Glowing Terminal Node / Energy Core Anchor -->
+      <a-sphere position="0 0.25 0" radius="0.06" color="#f43f5e"
+        material="emissive: #f43f5e; emissiveIntensity: 0.8; opacity: 0.85; transparent: true">
+        <a-ring radius-inner="0.08" radius-outer="0.1" color="#f43f5e" rotation="-90 0 0"
+          material="side: double; opacity: 0.7; transparent: true"></a-ring>
+      </a-sphere>
     </a-marker>
 
-    <!-- Marker 2: Kanji Marker Configuration-->
-    <a-marker preset="kanji">
-      <a-entity position="0 0 0" scale="0.05 0.05 0.05"
-        gltf-model="https://raw.githack.com/AR-js-org/AR.js/master/aframe/examples/image-tracking/nft/trex/scene.gltf"></a-entity>
+    <!-- Marker 2: Kanji Marker Configuration -->
+    <a-marker preset="kanji" id="marker-kanji" emitevents="true">
+      <!-- 3D Model: T-Rex with anchor beacon -->
+      <a-entity position="0 0 0" scale="0.04 0.04 0.04"
+        gltf-model="https://raw.githack.com/AR-js-org/AR.js/master/aframe/examples/image-tracking/nft/trex/scene.gltf">
+      </a-entity>
+      <!-- Glowing Terminal Node / Energy Core Anchor -->
+      <a-sphere position="0 0.25 0" radius="0.06" color="#0ea5e9"
+        material="emissive: #0ea5e9; emissiveIntensity: 0.8; opacity: 0.85; transparent: true">
+        <a-ring radius-inner="0.08" radius-outer="0.1" color="#0ea5e9" rotation="-90 0 0"
+          material="side: double; opacity: 0.7; transparent: true"></a-ring>
+      </a-sphere>
     </a-marker>
 
     <!-- AR Camera Entity -->

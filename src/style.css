@@ -144,13 +144,15 @@ video {
 /* Bottom Status Panel */
 .hud-status-panel {
   position: fixed;
-  bottom: 24px;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
   display: flex;
-  gap: 12px;
-  max-width: calc(100vw - 32px);
+  align-items: stretch;
+  gap: 10px;
+  width: calc(100vw - 32px);
+  max-width: 680px;
   pointer-events: auto;
 }
 
@@ -163,9 +165,10 @@ video {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--panel-border);
   box-shadow: var(--panel-shadow);
-  padding: 10px 16px;
+  padding: 8px 14px;
   border-radius: var(--radius-md);
-  min-width: 155px;
+  flex: 1;
+  min-width: 110px;
   transition: all 0.3s ease;
 }
 
@@ -184,6 +187,7 @@ video {
   height: 10px;
   border-radius: 50%;
   background: #64748b;
+  flex-shrink: 0;
   transition: all 0.3s ease;
 }
 
@@ -202,22 +206,81 @@ video {
 .status-info {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .status-label {
   font-size: 11px;
   font-weight: 500;
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .status-val {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .status-card.active .status-val {
   color: #38bdf8;
+}
+
+/* Energy Discharge & Proximity Meter */
+.energy-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  flex: 1.6;
+  min-width: 150px;
+  transition: all 0.3s ease;
+}
+
+.energy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.energy-status {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.distance-badge {
+  color: #38bdf8;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.energy-progress-wrapper {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.energy-progress-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #06b6d4, #8b5cf6, #f43f5e);
+  border-radius: 999px;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 10px #06b6d4;
 }
 
 @keyframes pulse {
