@@ -6,6 +6,7 @@
 import './style.css';
 import './proximity-component.js';
 import './three-text-3d.js';
+import './bloom-effect.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const sceneEl = document.querySelector('a-scene');

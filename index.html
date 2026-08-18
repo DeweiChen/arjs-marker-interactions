@@ -115,10 +115,11 @@
     </div>
   </div>
 
-  <!-- Embedded AR.js + A-Frame Scene with Proximity Lightning Component -->
+  <!-- Embedded AR.js + A-Frame Scene with Proximity Lightning & Selective Bloom Components -->
   <a-scene embedded
     arjs="sourceType: webcam; sourceWidth: 1280; sourceHeight: 720; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
-    proximity-lightning="marker1: #marker-hiro; marker2: #marker-kanji; maxDistance: 3.0; minDistance: 0.35; terminalOffsetY: 0.25; smoothingFactor: 0.3">
+    proximity-lightning="marker1: #marker-hiro; marker2: #marker-kanji; maxDistance: 3.0; minDistance: 0.35; terminalOffsetY: 0.25; smoothingFactor: 0.3"
+    bloom-effect="strength: 0.7; radius: 0.3; threshold: 0.0; downscale: 0.5; dynamicIntensity: true">
 
     <!-- Preloaded Assets: 3D Typeface Font -->
     <a-assets>
@@ -131,31 +132,69 @@
 
     <!-- Marker 1: Hiro Marker Configuration (Displays "Fu" in 3D Morandi Green Emissive Text) -->
     <a-marker preset="hiro" id="marker-hiro" emitevents="true">
+      <!-- Futuristic Dark Hologram Platform Base (Dark Obsidian Surface to Catch Bloom Glow) -->
+      <a-entity position="0 0.01 0" rotation="-90 0 0">
+        <!-- Deep Obsidian Base Plate -->
+        <a-plane width="1.25" height="1.25" color="#050811"
+          material="shader: standard; roughness: 0.8; metalness: 0.2; opacity: 0.96; transparent: true">
+        </a-plane>
+        <!-- Outer Glowing Accent Cyber Border -->
+        <a-ring radius-inner="0.60" radius-outer="0.63" color="#10b981"
+          material="shader: flat; opacity: 0.85; transparent: true">
+        </a-ring>
+        <!-- Inner Cyber Target Rings -->
+        <a-ring radius-inner="0.38" radius-outer="0.395" color="#10b981"
+          material="shader: flat; opacity: 0.5; transparent: true">
+        </a-ring>
+        <a-ring radius-inner="0.18" radius-outer="0.19" color="#10b981"
+          material="shader: flat; opacity: 0.35; transparent: true">
+        </a-ring>
+      </a-entity>
+
       <!-- 3D Text: "Fu" standing perpendicular to marker, centered, rounded Fredoka font, with Morandi green glow -->
-      <a-entity position="0 0.25 0" rotation="0 0 0"
+      <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
         three-text-3d="text: Fu; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #10b981; emissive: #10b981; emissiveIntensity: 1.0">
       </a-entity>
 
       <!-- Central Glowing Energy Beacon Anchor (Center of Text) -->
-      <a-sphere position="0 0.25 0" radius="0.05" color="#10b981"
+      <a-sphere position="0 0.25 0" radius="0.05" color="#10b981" class="bloom-fx"
         material="emissive: #10b981; emissiveIntensity: 1.0; opacity: 0.85; transparent: true">
-        <a-ring radius-inner="0.07" radius-outer="0.09" color="#10b981" rotation="-90 0 0"
-          material="side: double; opacity: 0.6; transparent: true"></a-ring>
+        <a-ring radius-inner="0.07" radius-outer="0.09" color="#10b981" rotation="-90 0 0" class="bloom-fx"
+          material="side: double; opacity: 0.7; transparent: true"></a-ring>
       </a-sphere>
     </a-marker>
 
     <!-- Marker 2: Kanji Marker Configuration (Displays "DW" in 3D Misty Blue Emissive Text) -->
     <a-marker preset="kanji" id="marker-kanji" emitevents="true">
+      <!-- Futuristic Dark Hologram Platform Base (Dark Obsidian Surface to Catch Bloom Glow) -->
+      <a-entity position="0 0.01 0" rotation="-90 0 0">
+        <!-- Deep Obsidian Base Plate -->
+        <a-plane width="1.25" height="1.25" color="#050811"
+          material="shader: standard; roughness: 0.8; metalness: 0.2; opacity: 0.96; transparent: true">
+        </a-plane>
+        <!-- Outer Glowing Accent Cyber Border -->
+        <a-ring radius-inner="0.60" radius-outer="0.63" color="#60a5fa"
+          material="shader: flat; opacity: 0.85; transparent: true">
+        </a-ring>
+        <!-- Inner Cyber Target Rings -->
+        <a-ring radius-inner="0.38" radius-outer="0.395" color="#60a5fa"
+          material="shader: flat; opacity: 0.5; transparent: true">
+        </a-ring>
+        <a-ring radius-inner="0.18" radius-outer="0.19" color="#60a5fa"
+          material="shader: flat; opacity: 0.35; transparent: true">
+        </a-ring>
+      </a-entity>
+
       <!-- 3D Text: "DW" standing perpendicular to marker, centered, rounded Fredoka font, with misty blue glow -->
-      <a-entity position="0 0.25 0" rotation="0 0 0"
+      <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
         three-text-3d="text: DW; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #60a5fa; emissive: #60a5fa; emissiveIntensity: 1.0">
       </a-entity>
 
       <!-- Central Glowing Energy Beacon Anchor (Center of Text) -->
-      <a-sphere position="0 0.25 0" radius="0.05" color="#60a5fa"
+      <a-sphere position="0 0.25 0" radius="0.05" color="#60a5fa" class="bloom-fx"
         material="emissive: #60a5fa; emissiveIntensity: 1.0; opacity: 0.85; transparent: true">
-        <a-ring radius-inner="0.07" radius-outer="0.09" color="#60a5fa" rotation="-90 0 0"
-          material="side: double; opacity: 0.6; transparent: true"></a-ring>
+        <a-ring radius-inner="0.07" radius-outer="0.09" color="#60a5fa" rotation="-90 0 0" class="bloom-fx"
+          material="side: double; opacity: 0.7; transparent: true"></a-ring>
       </a-sphere>
     </a-marker>
 

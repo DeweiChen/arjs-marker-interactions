@@ -167,6 +167,7 @@ if (typeof AFRAME !== 'undefined') {
           }
 
           this.mesh = new THREE.Mesh(geometry, material);
+          this.mesh.layers.enable(1); // Enable Layer 1 for Bloom Post-Processing
           this.el.setObject3D('mesh', this.mesh);
           this.el.emit('three-text-loaded', { mesh: this.mesh });
         })

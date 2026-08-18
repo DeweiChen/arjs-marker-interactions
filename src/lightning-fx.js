@@ -47,6 +47,20 @@ export class LightningFX {
     this._initTerminalGlows();
     this._initExplosiveSparks();
     this._initDynamicLight();
+
+    // Enable Layer 1 on all visual FX meshes & particles for Selective Bloom Post-Processing
+    this._enableBloomLayer();
+  }
+
+  /**
+   * Traverse all child objects and enable Layer 1 for selective bloom rendering.
+   */
+  _enableBloomLayer() {
+    this.group.traverse((obj) => {
+      if (obj.isMesh || obj.isPoints || obj.isLight) {
+        obj.layers.enable(1);
+      }
+    });
   }
 
   /**
