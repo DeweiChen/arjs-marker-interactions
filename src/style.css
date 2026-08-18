@@ -74,47 +74,109 @@ video {
   pointer-events: auto;
 }
 
-.hud-brand {
+/* Top Telemetry HUD & Status Badges */
+.hud-telemetry {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.telemetry-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: var(--panel-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--panel-border);
   box-shadow: var(--panel-shadow);
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: var(--radius-md);
-  min-width: 0;
-}
-
-.hud-logo-badge {
-  background: linear-gradient(135deg, #6366f1, #a855f7);
-  color: white;
-  font-weight: 800;
-  font-size: 13px;
-  letter-spacing: 0.5px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  flex-shrink: 0;
-}
-
-.hud-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.2;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  transition: all 0.25s ease;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.hud-subtitle {
-  font-size: 11px;
+.chip-label {
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.5px;
+}
+
+.chip-val {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.chip-sub {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+/* FPS Chip Status Colors */
+.fps-chip .pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 8px var(--color-success);
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.fps-chip.fps-high .pulse-dot {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.fps-chip.fps-high .chip-val {
+  color: #34d399;
+}
+
+.fps-chip.fps-mid .pulse-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+}
+
+.fps-chip.fps-mid .chip-val {
+  color: #fbbf24;
+}
+
+.fps-chip.fps-low .pulse-dot {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: pulse 1s infinite;
+}
+
+.fps-chip.fps-low .chip-val {
+  color: #f87171;
+}
+
+/* State Chip Dynamic Colors */
+.state-chip .state-standby {
+  color: #94a3b8;
+}
+
+.state-chip .state-active {
+  color: #38bdf8;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
+.state-chip .state-overload {
+  color: #f43f5e;
+  text-shadow: 0 0 8px rgba(244, 63, 94, 0.6);
+}
+
+/* Tracking Chip */
+.tracking-chip.tracking-all {
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.tracking-chip.tracking-all .chip-val {
+  color: #38bdf8;
 }
 
 .hud-actions {
@@ -324,25 +386,22 @@ video {
     top: max(10px, env(safe-area-inset-top));
     left: max(10px, env(safe-area-inset-left));
     right: max(10px, env(safe-area-inset-right));
-    gap: 8px;
+    gap: 6px;
   }
 
-  .hud-brand {
-    padding: 6px 12px;
-    gap: 8px;
+  .telemetry-chip {
+    padding: 5px 8px;
+    font-size: 11px;
+    gap: 4px;
   }
 
-  .hud-title {
-    font-size: 12px;
-  }
-
-  .hud-subtitle {
-    display: none;
+  .chip-label {
+    font-size: 9px;
   }
 
   .hud-btn {
-    padding: 8px 12px;
-    font-size: 12px;
+    padding: 6px 10px;
+    font-size: 11px;
   }
 
   /* Status Panel in Portrait: 2-Row Grid to prevent horizontal overflow */
@@ -399,17 +458,13 @@ video {
 
 /* Extra small devices (< 360px) */
 @media (max-width: 360px) {
-  .hud-brand {
-    padding: 4px 8px;
+  .telemetry-chip {
+    padding: 4px 6px;
+    font-size: 10px;
   }
 
-  .hud-logo-badge {
-    font-size: 11px;
-    padding: 2px 6px;
-  }
-
-  .hud-title {
-    font-size: 11px;
+  .chip-sub {
+    display: none;
   }
 
   .hud-status-panel {
@@ -428,8 +483,8 @@ video {
     top: max(8px, env(safe-area-inset-top));
   }
 
-  .hud-brand {
-    padding: 5px 12px;
+  .telemetry-chip {
+    padding: 4px 8px;
   }
 
   .hud-status-panel {

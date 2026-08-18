@@ -22,15 +22,30 @@
 </head>
 
 <body>
-  <!-- Top HUD Header -->
+  <!-- Top Telemetry & Control HUD -->
   <header class="hud-header">
-    <div class="hud-brand">
-      <span class="hud-logo-badge">⚡ AR FX</span>
-      <div>
-        <h1 class="hud-title">Dual Marker Lightning Core</h1>
-        <p class="hud-subtitle">Bring markers close to unleash electric discharge</p>
+    <div class="hud-telemetry">
+      <!-- FPS & Frame Timing -->
+      <div id="badge-fps" class="telemetry-chip fps-chip">
+        <span class="pulse-dot"></span>
+        <span class="chip-label">FPS</span>
+        <span id="fps-val" class="chip-val">--</span>
+        <span id="frametime-val" class="chip-sub">(--ms)</span>
+      </div>
+
+      <!-- System State Indicator -->
+      <div id="badge-state" class="telemetry-chip state-chip">
+        <span class="chip-label">STATE</span>
+        <span id="state-val" class="chip-val state-standby">IDLE</span>
+      </div>
+
+      <!-- Marker Tracking Status Summary -->
+      <div id="badge-tracking" class="telemetry-chip tracking-chip">
+        <span class="chip-label">TRACKING</span>
+        <span id="tracking-val" class="chip-val">0 / 2</span>
       </div>
     </div>
+
     <div class="hud-actions">
       <button id="btn-show-markers" class="hud-btn" title="View & Download Marker Patterns">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
