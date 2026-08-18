@@ -33,6 +33,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCloseModal = document.getElementById('btn-close-modal');
   const modalBackdrop = document.getElementById('markers-modal');
 
+  // Bloom Control 2D Panel DOM Elements
+  const btnToggleBloom = document.getElementById('btn-toggle-bloom');
+  const bloomPanel = document.getElementById('bloom-control-panel');
+  const btnCloseBloom = document.getElementById('btn-close-bloom');
+  const btnResetBloom = document.getElementById('btn-reset-bloom');
+  const sliderBloomStrength = document.getElementById('slider-bloom-strength');
+  const valBloomStrength = document.getElementById('val-bloom-strength');
+  const presetBtns = document.querySelectorAll('.bloom-preset-btn');
+  const sliderBloomRadius = document.getElementById('slider-bloom-radius');
+  const valBloomRadius = document.getElementById('val-bloom-radius');
+  const sliderBloomThreshold = document.getElementById('slider-bloom-threshold');
+  const valBloomThreshold = document.getElementById('val-bloom-threshold');
+  const chkDynamicIntensity = document.getElementById('chk-dynamic-intensity');
+
   // Tracking state store
   const stateStore = {
     isHiroVisible: false,
@@ -58,6 +72,139 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.target === modalBackdrop) {
         modalBackdrop.classList.add('hidden');
       }
+    });
+  }
+
+  // ------------------------------------------------------------------------
+  // Setup 2D Bloom FX Control Panel
+  // ------------------------------------------------------------------------
+  const defaultBloomSettings = {
+    strength: 0.6,
+    radius: 0.3,
+    threshold: 0.0,
+    dynamicIntensity: true
+  };
+
+  function updateBloomPresetsUI(currentStrength) {
+    const roundedStrength = Math.round(currentStrength * 10) / 10;
+    presetBtns.forEach((btn) => {
+      const presetVal = parseFloat(btn.dataset.strength);
+      btn.classList.toggle('active', Math.abs(presetVal - roundedStrength) < 0.05);
+    });
+  }
+
+  function applyBloomStrength(val) {
+    const num = Math.max(0, parseFloat(val) || 0);
+    if (valBloomStrength) {
+      valBloomStrength.textContent = `${num.toFixed(2)}x`;
+    }
+    if (sliderBloomStrength && Math.abs(parseFloat(sliderBloomStrength.value) - num) > 0.001) {
+      sliderBloomStrength.value = num;
+    }
+    updateBloomPresetsUI(num);
+
+    if (sceneEl) {
+      sceneEl.emit('set-bloom-params', { strength: num });
+    }
+  }
+
+  function applyBloomRadius(val) {
+    const num = Math.max(0, parseFloat(val) || 0);
+    if (valBloomRadius) {
+      valBloomRadius.textContent = num.toFixed(2);
+    }
+    if (sliderBloomRadius && Math.abs(parseFloat(sliderBloomRadius.value) - num) > 0.001) {
+      sliderBloomRadius.value = num;
+    }
+    if (sceneEl) {
+      sceneEl.emit('set-bloom-params', { radius: num });
+    }
+  }
+
+  function applyBloomThreshold(val) {
+    const num = Math.max(0, parseFloat(val) || 0);
+    if (valBloomThreshold) {
+      valBloomThreshold.textContent = num.toFixed(2);
+    }
+    if (sliderBloomThreshold && Math.abs(parseFloat(sliderBloomThreshold.value) - num) > 0.001) {
+      sliderBloomThreshold.value = num;
+    }
+    if (sceneEl) {
+      sceneEl.emit('set-bloom-params', { threshold: num });
+    }
+  }
+
+  function applyDynamicIntensity(enabled) {
+    if (chkDynamicIntensity) {
+      chkDynamicIntensity.checked = enabled;
+    }
+    if (sceneEl) {
+      sceneEl.emit('set-bloom-params', { dynamicIntensity: enabled });
+    }
+  }
+
+  // Toggle Panel Open/Close
+  if (btnToggleBloom && bloomPanel) {
+    btnToggleBloom.addEventListener('click', () => {
+      const isHidden = bloomPanel.classList.toggle('hidden');
+      btnToggleBloom.classList.toggle('active', !isHidden);
+      btnToggleBloom.setAttribute('aria-expanded', String(!isHidden));
+    });
+  }
+
+  if (btnCloseBloom && bloomPanel && btnToggleBloom) {
+    btnCloseBloom.addEventListener('click', () => {
+      bloomPanel.classList.add('hidden');
+      btnToggleBloom.classList.remove('active');
+      btnToggleBloom.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  // Reset to Defaults
+  if (btnResetBloom) {
+    btnResetBloom.addEventListener('click', () => {
+      applyBloomStrength(defaultBloomSettings.strength);
+      applyBloomRadius(defaultBloomSettings.radius);
+      applyBloomThreshold(defaultBloomSettings.threshold);
+      applyDynamicIntensity(defaultBloomSettings.dynamicIntensity);
+    });
+  }
+
+  // Strength Slider Events
+  if (sliderBloomStrength) {
+    sliderBloomStrength.addEventListener('input', (e) => {
+      applyBloomStrength(e.target.value);
+    });
+  }
+
+  // Preset Buttons
+  presetBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const strength = parseFloat(btn.dataset.strength);
+      if (!isNaN(strength)) {
+        applyBloomStrength(strength);
+      }
+    });
+  });
+
+  // Radius Slider
+  if (sliderBloomRadius) {
+    sliderBloomRadius.addEventListener('input', (e) => {
+      applyBloomRadius(e.target.value);
+    });
+  }
+
+  // Threshold Slider
+  if (sliderBloomThreshold) {
+    sliderBloomThreshold.addEventListener('input', (e) => {
+      applyBloomThreshold(e.target.value);
+    });
+  }
+
+  // Dynamic Intensity Checkbox
+  if (chkDynamicIntensity) {
+    chkDynamicIntensity.addEventListener('change', (e) => {
+      applyDynamicIntensity(e.target.checked);
     });
   }
 

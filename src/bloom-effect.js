@@ -68,9 +68,9 @@ const AdditiveAlphaCompositeShader = {
 if (typeof AFRAME !== 'undefined') {
   AFRAME.registerComponent('bloom-effect', {
     schema: {
-      strength: { type: 'number', default: 1.1 },
-      radius: { type: 'number', default: 0.55 },
-      threshold: { type: 'number', default: 0.05 },
+      strength: { type: 'number', default: 0.6 },
+      radius: { type: 'number', default: 0.3 },
+      threshold: { type: 'number', default: 0.0 },
       downscale: { type: 'number', default: 0.5 },
       dynamicIntensity: { type: 'boolean', default: true }
     },
@@ -98,6 +98,54 @@ if (typeof AFRAME !== 'undefined') {
         const { proximity, active } = e.detail;
         this.currentProximity = active ? proximity : 0;
       });
+
+      // Listen to external custom events to update bloom parameters in real time
+      this.sceneEl.addEventListener('set-bloom-params', (e) => {
+        const { strength, radius, threshold, dynamicIntensity } = e.detail || {};
+        if (strength !== undefined) this.setStrength(strength);
+        if (radius !== undefined) this.setRadius(radius);
+        if (threshold !== undefined) this.setThreshold(threshold);
+        if (dynamicIntensity !== undefined) this.setDynamicIntensity(dynamicIntensity);
+      });
+    },
+
+    update: function (oldData) {
+      if (this.bloomPass) {
+        if (this.data.radius !== undefined) {
+          this.bloomPass.radius = this.data.radius;
+        }
+        if (this.data.threshold !== undefined) {
+          this.bloomPass.threshold = this.data.threshold;
+        }
+        if (this.data.strength !== undefined && !this.data.dynamicIntensity) {
+          this.bloomPass.strength = this.data.strength;
+        }
+      }
+    },
+
+    setStrength: function (val) {
+      this.data.strength = Math.max(0, parseFloat(val) || 0);
+      if (this.bloomPass && !this.data.dynamicIntensity) {
+        this.bloomPass.strength = this.data.strength;
+      }
+    },
+
+    setRadius: function (val) {
+      this.data.radius = Math.max(0, parseFloat(val) || 0);
+      if (this.bloomPass) {
+        this.bloomPass.radius = this.data.radius;
+      }
+    },
+
+    setThreshold: function (val) {
+      this.data.threshold = Math.max(0, parseFloat(val) || 0);
+      if (this.bloomPass) {
+        this.bloomPass.threshold = this.data.threshold;
+      }
+    },
+
+    setDynamicIntensity: function (val) {
+      this.data.dynamicIntensity = !!val;
     },
 
     _setupPostProcessing: function () {
@@ -208,18 +256,22 @@ if (typeof AFRAME !== 'undefined') {
           self.finalRenderPass.camera = activeCamera;
           self.finalRenderPass.scene = activeScene;
 
+          // Gentle organic breathing pulse (sin wave oscillating by ±0.1 strength over 1.5s per breath phase)
+          const now = performance.now();
+          const breathOffset = self.data.strength > 0 ? Math.sin((now / 1500) * Math.PI) * 0.1 : 0;
+          const baseStrength = Math.max(0, self.data.strength + breathOffset);
+
           // Dynamic bloom intensity modulation based on proximity
           if (self.data.dynamicIntensity) {
             const prox = self.currentProximity;
-            const now = performance.now();
             // Smooth scaling from 1.0x (idle) to 1.8x (intense discharge)
             let dynamicMult = 1.0 + Math.pow(prox, 1.2) * 0.8;
             if (prox > 0.8) {
               dynamicMult += Math.sin(now * 0.02) * 0.2;
             }
-            self.bloomPass.strength = self.data.strength * dynamicMult;
+            self.bloomPass.strength = baseStrength * dynamicMult;
           } else {
-            self.bloomPass.strength = self.data.strength;
+            self.bloomPass.strength = baseStrength;
           }
 
           // Step 1: Render Layer 1 Only (3D Text, Lightning, Beacons, Sparks) to Bloom Composer
