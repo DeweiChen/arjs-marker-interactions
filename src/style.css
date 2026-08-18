@@ -1153,3 +1153,174 @@ body.hud-collapsed #bloom-control-panel {
     overflow-y: auto;
   }
 }
+
+/* ==========================================================================
+   A-Frame Permission & Orientation Dialog Styles
+   Fix for white-on-white text in Camera / Gyroscope / Device Motion dialog
+   ========================================================================== */
+
+.a-modal,
+div.a-modal[aframe-injected] {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(5, 8, 15, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  z-index: 9999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+}
+
+.a-dialog,
+div.a-dialog[aframe-injected] {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+  width: calc(100vw - 40px) !important;
+  max-width: 360px !important;
+  height: auto !important;
+  min-height: unset !important;
+  background: linear-gradient(145deg, rgba(16, 24, 40, 0.96), rgba(10, 14, 23, 0.98)) !important;
+  background-color: #0d1527 !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75), 0 0 25px rgba(56, 189, 248, 0.18) !important;
+  padding: 26px 22px 22px !important;
+  box-sizing: border-box !important;
+  font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  color: #f8fafc !important;
+  text-align: center !important;
+}
+
+.a-dialog-text-container,
+div.a-dialog-text-container {
+  width: 100% !important;
+  height: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.a-dialog-text,
+div.a-dialog-text {
+  display: block !important;
+  color: #f8fafc !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 1.55 !important;
+  letter-spacing: 0.2px !important;
+  text-align: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+}
+
+.a-dialog-buttons-container,
+div.a-dialog-buttons-container {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  height: auto !important;
+  margin-top: 20px !important;
+  padding: 0 !important;
+}
+
+.a-dialog-button,
+button.a-dialog-button {
+  flex: 1 1 0 !important;
+  min-width: 100px !important;
+  height: 44px !important;
+  padding: 0 16px !important;
+  border-radius: 12px !important;
+  font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  border: none !important;
+  outline: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  touch-action: manipulation !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.a-dialog-button:active,
+button.a-dialog-button:active {
+  transform: scale(0.96) !important;
+}
+
+/* Allow / Grant Button */
+.a-dialog-allow-button,
+button.a-dialog-allow-button {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4) !important;
+}
+
+.a-dialog-allow-button:hover,
+button.a-dialog-allow-button:hover {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.5) !important;
+}
+
+/* Deny Button */
+.a-dialog-deny-button,
+button.a-dialog-deny-button {
+  background: rgba(255, 255, 255, 0.08) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: none !important;
+}
+
+.a-dialog-deny-button:hover,
+button.a-dialog-deny-button:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+/* OK / Alert Button */
+.a-dialog-ok-button,
+button.a-dialog-ok-button {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4) !important;
+  width: 100% !important;
+}
+
+/* A-Frame Orientation Warning Screen (Rotate Screen / VR Mode) */
+.a-orientation-modal,
+div.a-orientation-modal {
+  background-color: rgba(10, 14, 23, 0.96) !important;
+  color: #f8fafc !important;
+  font-family: 'Inter', 'Noto Sans TC', system-ui, sans-serif !important;
+}
+
+.a-orientation-modal:after {
+  color: #94a3b8 !important;
+}
+
