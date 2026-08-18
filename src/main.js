@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const sliderBloomThreshold = document.getElementById('slider-bloom-threshold');
   const valBloomThreshold = document.getElementById('val-bloom-threshold');
   const chkDynamicIntensity = document.getElementById('chk-dynamic-intensity');
+  const chkPitchFacing = document.getElementById('chk-pitch-facing');
 
   // Tracking state store
   const stateStore = {
@@ -61,21 +62,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // Ensure Camera Projection Matrix & Video Resize Synchronization
   // ------------------------------------------------------------------------
   window.addEventListener('arToolkitContext-loaded', () => {
-    const arSession = sceneEl?.systems?.arjs?._arSession;
+    const arSession = sceneEl && sceneEl.systems && sceneEl.systems.arjs;
     if (arSession && arSession.arSource && arSession.arContext) {
-      arSession.arSource.onResizeElement();
-      if (sceneEl.renderer) {
-        arSession.arSource.copyElementSizeTo(sceneEl.renderer.domElement);
-      }
-      if (arSession.arContext.arController && arSession.arContext.arController.canvas) {
-        arSession.arSource.copyElementSizeTo(arSession.arContext.arController.canvas);
-        arSession.arContext.update();
-      }
+      setTimeout(() => {
+        if (arSession.arSource.onResizeElement) {
+          arSession.arSource.onResizeElement();
+        }
+        if (arSession.arContext.arController && arSession.arContext.arController.canvas) {
+          arSession.arSource.copyElementSizeTo(arSession.arContext.arController.canvas);
+          arSession.arContext.update();
+        }
+      }, 300);
     }
   });
 
   // ------------------------------------------------------------------------
-  // Setup Marker Modal events
+  // Setup Marker Pattern Modal Dialog
   // ------------------------------------------------------------------------
   if (btnShowMarkers && modalBackdrop && btnCloseModal) {
     btnShowMarkers.addEventListener('click', () => {
@@ -94,13 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ------------------------------------------------------------------------
-  // Setup 2D Bloom FX Control Panel
+  // Setup 2D Bloom & AR Settings Control Panel
   // ------------------------------------------------------------------------
   const defaultBloomSettings = {
     strength: 0.6,
     radius: 0.3,
     threshold: 0.0,
-    dynamicIntensity: true
+    dynamicIntensity: true,
+    pitchFacing: false
   };
 
   function updateBloomPresetsUI(currentStrength) {
@@ -161,6 +164,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function applyPitchFacing(enabled) {
+    if (chkPitchFacing) {
+      chkPitchFacing.checked = enabled;
+    }
+    const textEls = document.querySelectorAll('[three-text-3d]');
+    textEls.forEach((el) => {
+      el.setAttribute('three-text-3d', 'pitchFacing', enabled);
+    });
+    if (sceneEl) {
+      sceneEl.emit('set-text-pitch-facing', { enabled });
+    }
+  }
+
   // Toggle Panel Open/Close
   if (btnToggleBloom && bloomPanel) {
     btnToggleBloom.addEventListener('click', () => {
@@ -185,6 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
       applyBloomRadius(defaultBloomSettings.radius);
       applyBloomThreshold(defaultBloomSettings.threshold);
       applyDynamicIntensity(defaultBloomSettings.dynamicIntensity);
+      applyPitchFacing(defaultBloomSettings.pitchFacing);
     });
   }
 
@@ -223,6 +240,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (chkDynamicIntensity) {
     chkDynamicIntensity.addEventListener('change', (e) => {
       applyDynamicIntensity(e.target.checked);
+    });
+  }
+
+  // Text Elevation Pitch Facing Checkbox (Default OFF)
+  if (chkPitchFacing) {
+    chkPitchFacing.addEventListener('change', (e) => {
+      applyPitchFacing(e.target.checked);
     });
   }
 

@@ -157,6 +157,18 @@
             <span class="slider-toggle"></span>
           </label>
         </div>
+
+        <!-- 3D Text Elevation Facing Toggle (Default OFF) -->
+        <div class="bloom-toggle-row">
+          <div class="bloom-toggle-info">
+            <span class="bloom-toggle-title">Face Camera Elevation (仰角面對鏡頭)</span>
+            <span class="bloom-toggle-sub">Tilt 3D text to face camera pitch angle</span>
+          </div>
+          <label class="switch-toggle" for="chk-pitch-facing">
+            <input type="checkbox" id="chk-pitch-facing">
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
       </div>
     </div>
   </aside>
@@ -241,9 +253,9 @@
         </a-circle>
       </a-entity>
 
-      <!-- 3D Text: "Fu" standing perpendicular to marker, centered, rounded Fredoka font, with Morandi green glow -->
+      <!-- 3D Text: "Fu" standing perpendicular to marker (optional dynamic pitch facing via toggle), centered, rounded Fredoka font, with Morandi green glow -->
       <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
-        three-text-3d="text: Fu; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #10b981; emissive: #10b981; emissiveIntensity: 1.0">
+        three-text-3d="text: Fu; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #10b981; emissive: #10b981; emissiveIntensity: 1.0; pitchFacing: false">
       </a-entity>
     </a-marker>
 
@@ -256,9 +268,9 @@
         </a-circle>
       </a-entity>
 
-      <!-- 3D Text: "DW" standing perpendicular to marker, centered, rounded Fredoka font, with misty blue glow -->
+      <!-- 3D Text: "DW" standing perpendicular to marker (optional dynamic pitch facing via toggle), centered, rounded Fredoka font, with misty blue glow -->
       <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
-        three-text-3d="text: DW; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #60a5fa; emissive: #60a5fa; emissiveIntensity: 1.0">
+        three-text-3d="text: DW; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #60a5fa; emissive: #60a5fa; emissiveIntensity: 1.0; pitchFacing: false">
       </a-entity>
     </a-marker>
 

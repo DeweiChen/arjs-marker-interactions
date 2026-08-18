@@ -104,12 +104,50 @@ if (typeof AFRAME !== 'undefined') {
       bevelSegments: { type: 'int', default: 5 },
       color: { type: 'color', default: '#ffffff' },
       emissive: { type: 'color', default: '#ffffff' },
-      emissiveIntensity: { type: 'number', default: 1.0 }
+      emissiveIntensity: { type: 'number', default: 1.0 },
+      pitchFacing: { type: 'boolean', default: false },
+      minPitch: { type: 'number', default: -90 },
+      maxPitch: { type: 'number', default: 35 },
+      smoothingFactor: { type: 'number', default: 0.25 }
     },
 
     init: function () {
       this._buildMesh = this._buildMesh.bind(this);
+      this._onMarkerFound = this._onMarkerFound.bind(this);
+      this._onMarkerLost = this._onMarkerLost.bind(this);
+      this._onSetPitchFacing = this._onSetPitchFacing.bind(this);
+
+      this._camWorldPos = null;
+      this._localCam = null;
+      this._currentPitch = null;
+
+      // Bind marker stabilization events on parent marker entity if available
+      const parentEl = this.el.parentEl;
+      if (parentEl) {
+        parentEl.addEventListener('markerFound', this._onMarkerFound);
+        parentEl.addEventListener('markerLost', this._onMarkerLost);
+        parentEl.addEventListener('marker-stabilize-start', this._onMarkerFound);
+      }
+
+      if (this.el.sceneEl) {
+        this.el.sceneEl.addEventListener('set-text-pitch-facing', this._onSetPitchFacing);
+      }
+
       this._buildMesh();
+    },
+
+    _onSetPitchFacing: function (e) {
+      if (e && e.detail && typeof e.detail.enabled === 'boolean') {
+        this.el.setAttribute('three-text-3d', 'pitchFacing', e.detail.enabled);
+      }
+    },
+
+    _onMarkerFound: function () {
+      this._currentPitch = null;
+    },
+
+    _onMarkerLost: function () {
+      this._currentPitch = null;
     },
 
     update: function (oldData) {
@@ -121,6 +159,73 @@ if (typeof AFRAME !== 'undefined') {
         this.mesh.material.emissive.set(this.data.emissive);
         this.mesh.material.emissiveIntensity = this.data.emissiveIntensity;
       }
+    },
+
+    tick: function () {
+      if (!this.mesh) return;
+
+      const obj3D = this.el.object3D;
+      if (!obj3D || !obj3D.parent) return;
+
+      const THREE = window.THREE || AFRAME.THREE;
+
+      // If pitch facing is disabled, smoothly return to 0 (perpendicular)
+      if (!this.data.pitchFacing) {
+        if (this._currentPitch !== null && this._currentPitch !== 0) {
+          this._currentPitch = THREE.MathUtils.lerp(this._currentPitch, 0, 0.25);
+          if (Math.abs(this._currentPitch) < 0.001) {
+            this._currentPitch = 0;
+          }
+          obj3D.rotation.x = this._currentPitch;
+        } else if (obj3D.rotation.x !== 0) {
+          obj3D.rotation.x = 0;
+        }
+        return;
+      }
+
+      const sceneEl = this.el.sceneEl;
+      if (!sceneEl) return;
+
+      const camera = (sceneEl.camera && sceneEl.camera.isCamera) ? sceneEl.camera : (sceneEl.cameraEl && sceneEl.cameraEl.getObject3D('camera'));
+      if (!camera) return;
+
+      // Avoid computing when parent marker is hidden/not tracked
+      if (obj3D.parent.visible === false && this._currentPitch !== null) return;
+
+      if (!this._camWorldPos) {
+        this._camWorldPos = new THREE.Vector3();
+        this._localCam = new THREE.Vector3();
+      }
+
+      camera.getWorldPosition(this._camWorldPos);
+      this._localCam.copy(this._camWorldPos);
+
+      // Transform camera world coordinate into parent (marker) local frame
+      obj3D.parent.updateMatrixWorld(true);
+      obj3D.parent.worldToLocal(this._localCam);
+
+      // Vector from text origin to camera in parent space
+      const relY = this._localCam.y - obj3D.position.y;
+      const relZ = this._localCam.z - obj3D.position.z;
+
+      // Elevation angle (pitch) in local Y-Z plane
+      let targetPitch = -Math.atan2(relY, relZ);
+
+      // Convert degree limits to radians and clamp
+      const minPitch = THREE.MathUtils.degToRad(this.data.minPitch);
+      const maxPitch = THREE.MathUtils.degToRad(this.data.maxPitch);
+      targetPitch = THREE.MathUtils.clamp(targetPitch, minPitch, maxPitch);
+
+      // Smooth lerp to eliminate AR camera tracking micro-jitter
+      if (this._currentPitch === null || isNaN(this._currentPitch)) {
+        this._currentPitch = targetPitch;
+      } else {
+        const alpha = THREE.MathUtils.clamp(this.data.smoothingFactor, 0.01, 1.0);
+        this._currentPitch = THREE.MathUtils.lerp(this._currentPitch, targetPitch, alpha);
+      }
+
+      // Update ONLY elevation pitch (rotation.x). Leave rotation.y (yaw) and rotation.z (roll) intact.
+      obj3D.rotation.x = this._currentPitch;
     },
 
     _buildMesh: function () {
@@ -177,6 +282,15 @@ if (typeof AFRAME !== 'undefined') {
     },
 
     remove: function () {
+      if (this.el.sceneEl) {
+        this.el.sceneEl.removeEventListener('set-text-pitch-facing', this._onSetPitchFacing);
+      }
+      const parentEl = this.el.parentEl;
+      if (parentEl) {
+        parentEl.removeEventListener('markerFound', this._onMarkerFound);
+        parentEl.removeEventListener('markerLost', this._onMarkerLost);
+        parentEl.removeEventListener('marker-stabilize-start', this._onMarkerFound);
+      }
       if (this.mesh) {
         if (this.mesh.geometry) this.mesh.geometry.dispose();
         if (this.mesh.material) this.mesh.material.dispose();
