@@ -50,10 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const sliderBloomStrength = document.getElementById('slider-bloom-strength');
   const valBloomStrength = document.getElementById('val-bloom-strength');
   const presetBtns = document.querySelectorAll('.bloom-preset-btn');
-  const sliderBloomRadius = document.getElementById('slider-bloom-radius');
-  const valBloomRadius = document.getElementById('val-bloom-radius');
-  const sliderBloomThreshold = document.getElementById('slider-bloom-threshold');
-  const valBloomThreshold = document.getElementById('val-bloom-threshold');
   const chkDynamicIntensity = document.getElementById('chk-dynamic-intensity');
   const chkPitchFacing = document.getElementById('chk-pitch-facing');
 
@@ -117,20 +113,73 @@ document.addEventListener('DOMContentLoaded', () => {
   initAntiZoomProtection();
 
   // ------------------------------------------------------------------------
-  // Ensure Camera Projection Matrix & Video Resize Synchronization
+  // App-Switch Recovery, Viewport Scale Reset & Camera Sync System
   // ------------------------------------------------------------------------
   let resizeTimer = null;
+
+  function resetVisualViewportZoom() {
+    // Prevent iOS / mobile browser visual viewport auto-zoom glitch when switching apps
+    try {
+      window.scrollTo(0, 0);
+      if (window.visualViewport && window.visualViewport.scale !== 1.0) {
+        const viewportMeta = document.querySelector('meta[name="viewport"]');
+        if (viewportMeta) {
+          const originalContent = viewportMeta.getAttribute('content');
+          viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+          setTimeout(() => {
+            viewportMeta.setAttribute('content', originalContent || 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover');
+          }, 60);
+        }
+      }
+    } catch (_) {}
+  }
+
   function syncARViewport() {
-    window.dispatchEvent(new Event('resize'));
+    resetVisualViewportZoom();
+
     const arSession = sceneEl && sceneEl.systems && sceneEl.systems.arjs;
     if (arSession && arSession.arSource && arSession.arContext) {
+      const video = arSession.arSource.domElement;
+
+      // 1. If camera video was paused by OS when switching apps, resume it
+      if (video && video.tagName === 'VIDEO') {
+        if (video.paused) {
+          video.play().catch(() => {});
+        }
+        // If video stream is still recovering (dimensions not yet available), wait for metadata
+        if (!video.videoWidth || !video.videoHeight) {
+          video.onloadedmetadata = () => {
+            syncARViewport();
+          };
+          return;
+        }
+      }
+
+      // 2. Force AR.js to recalculate video element layout styles
       if (typeof arSession.arSource.onResizeElement === 'function') {
         arSession.arSource.onResizeElement();
       }
+
+      // 3. Synchronize AR controller canvas & update context projection matrix
       if (arSession.arContext.arController && arSession.arContext.arController.canvas) {
         arSession.arSource.copyElementSizeTo(arSession.arContext.arController.canvas);
         arSession.arContext.update();
       }
+    }
+
+    // 4. Synchronize A-Frame camera & renderer viewport
+    if (sceneEl && sceneEl.renderer && sceneEl.camera) {
+      sceneEl.renderer.setSize(window.innerWidth, window.innerHeight, false);
+      if (sceneEl.camera.isCamera) {
+        sceneEl.camera.aspect = window.innerWidth / window.innerHeight;
+        sceneEl.camera.updateProjectionMatrix();
+      }
+    }
+
+    // 5. Update Bloom Effect post-processing buffers if active
+    const bloomComponent = sceneEl && sceneEl.components && sceneEl.components['bloom-effect'];
+    if (bloomComponent && typeof bloomComponent._onResize === 'function') {
+      bloomComponent._onResize();
     }
   }
 
@@ -141,14 +190,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
   }
 
+  function multiStageSyncARViewport() {
+    syncARViewport();
+    setTimeout(syncARViewport, 100);
+    setTimeout(syncARViewport, 300);
+    setTimeout(syncARViewport, 600);
+    setTimeout(syncARViewport, 1000);
+  }
+
   window.addEventListener('resize', debouncedSyncARViewport);
   window.addEventListener('orientationchange', () => {
-    setTimeout(syncARViewport, 150);
-    setTimeout(syncARViewport, 450);
+    multiStageSyncARViewport();
   });
 
+  // Handle App Switching (Background <-> Foreground Lifecycle)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      multiStageSyncARViewport();
+    }
+  });
+
+  window.addEventListener('pageshow', () => {
+    multiStageSyncARViewport();
+  });
+
+  window.addEventListener('focus', () => {
+    multiStageSyncARViewport();
+  });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', debouncedSyncARViewport);
+  }
+
   window.addEventListener('arToolkitContext-loaded', () => {
-    setTimeout(syncARViewport, 300);
+    multiStageSyncARViewport();
   });
 
   // ------------------------------------------------------------------------
@@ -364,32 +439,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function applyBloomRadius(val) {
-    const num = Math.max(0, parseFloat(val) || 0);
-    if (valBloomRadius) {
-      valBloomRadius.textContent = num.toFixed(2);
-    }
-    if (sliderBloomRadius && Math.abs(parseFloat(sliderBloomRadius.value) - num) > 0.001) {
-      sliderBloomRadius.value = num;
-    }
-    if (sceneEl) {
-      sceneEl.emit('set-bloom-params', { radius: num });
-    }
-  }
-
-  function applyBloomThreshold(val) {
-    const num = Math.max(0, parseFloat(val) || 0);
-    if (valBloomThreshold) {
-      valBloomThreshold.textContent = num.toFixed(2);
-    }
-    if (sliderBloomThreshold && Math.abs(parseFloat(sliderBloomThreshold.value) - num) > 0.001) {
-      sliderBloomThreshold.value = num;
-    }
-    if (sceneEl) {
-      sceneEl.emit('set-bloom-params', { threshold: num });
-    }
-  }
-
   function applyDynamicIntensity(enabled) {
     if (chkDynamicIntensity) {
       chkDynamicIntensity.checked = enabled;
@@ -433,8 +482,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnResetBloom) {
     btnResetBloom.addEventListener('click', () => {
       applyBloomStrength(defaultBloomSettings.strength);
-      applyBloomRadius(defaultBloomSettings.radius);
-      applyBloomThreshold(defaultBloomSettings.threshold);
+      if (sceneEl) {
+        sceneEl.emit('set-bloom-params', {
+          radius: defaultBloomSettings.radius,
+          threshold: defaultBloomSettings.threshold
+        });
+      }
       applyDynamicIntensity(defaultBloomSettings.dynamicIntensity);
       applyPitchFacing(defaultBloomSettings.pitchFacing);
     });
@@ -456,20 +509,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
-
-  // Radius Slider
-  if (sliderBloomRadius) {
-    sliderBloomRadius.addEventListener('input', (e) => {
-      applyBloomRadius(e.target.value);
-    });
-  }
-
-  // Threshold Slider
-  if (sliderBloomThreshold) {
-    sliderBloomThreshold.addEventListener('input', (e) => {
-      applyBloomThreshold(e.target.value);
-    });
-  }
 
   // Dynamic Intensity Checkbox
   if (chkDynamicIntensity) {
