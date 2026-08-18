@@ -5,10 +5,10 @@
   --panel-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
-  --color-hiro: #f43f5e;
-  --color-hiro-glow: rgba(244, 63, 94, 0.4);
-  --color-kanji: #0ea5e9;
-  --color-kanji-glow: rgba(14, 165, 233, 0.4);
+  --color-hiro: #10b981;
+  --color-hiro-glow: rgba(16, 185, 129, 0.4);
+  --color-kanji: #60a5fa;
+  --color-kanji-glow: rgba(96, 165, 250, 0.4);
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --radius-sm: 8px;

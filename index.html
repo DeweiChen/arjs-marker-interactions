@@ -65,7 +65,7 @@
     <div id="status-hiro" class="status-card">
       <div class="status-indicator"></div>
       <div class="status-info">
-        <span class="status-label">Marker 1 (Hiro)</span>
+        <span class="status-label">Marker 1 (Fu)</span>
         <span id="status-hiro-val" class="status-val">Waiting...</span>
       </div>
     </div>
@@ -85,7 +85,7 @@
     <div id="status-kanji" class="status-card">
       <div class="status-indicator"></div>
       <div class="status-info">
-        <span class="status-label">Marker 2 (Kanji)</span>
+        <span class="status-label">Marker 2 (DW)</span>
         <span id="status-kanji-val" class="status-val">Waiting...</span>
       </div>
     </div>
@@ -102,12 +102,12 @@
         dynamic electric arcs and energy core expansion!</p>
       <div class="markers-grid">
         <div class="marker-item">
-          <h3>Hiro Marker (Red Energy Node)</h3>
+          <h3>Hiro Marker ("Fu" - Morandi Green Node)</h3>
           <img src="./markers/images/hiro.png" alt="Hiro Marker Pattern" />
           <a href="./markers/images/hiro.png" download="pattern-hiro.png" class="download-link">Download Pattern</a>
         </div>
         <div class="marker-item">
-          <h3>Kanji Marker (Blue Energy Node)</h3>
+          <h3>Kanji Marker ("DW" - Misty Blue Node)</h3>
           <img src="./markers/images/kanji.png" alt="Kanji Marker Pattern" />
           <a href="./markers/images/kanji.png" download="pattern-kanji.png" class="download-link">Download Pattern</a>
         </div>
@@ -120,35 +120,42 @@
     arjs="sourceType: webcam; sourceWidth: 1280; sourceHeight: 720; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
     proximity-lightning="marker1: #marker-hiro; marker2: #marker-kanji; maxDistance: 3.0; minDistance: 0.35; terminalOffsetY: 0.25; smoothingFactor: 0.3">
 
+    <!-- Preloaded Assets: 3D Typeface Font -->
+    <a-assets>
+      <a-asset-item id="typeface-font" src="/fonts/fredoka_light_regular.json"></a-asset-item>
+    </a-assets>
+
     <!-- Ambient & Directional Scene Lighting -->
     <a-entity light="type: ambient; color: #ffffff; intensity: 0.8"></a-entity>
     <a-entity light="type: directional; color: #ffffff; intensity: 1.2; position: 1 4 2"></a-entity>
 
-    <!-- Marker 1: Hiro Marker Configuration -->
+    <!-- Marker 1: Hiro Marker Configuration (Displays "Fu" in 3D Morandi Green Emissive Text) -->
     <a-marker preset="hiro" id="marker-hiro" emitevents="true">
-      <!-- 3D Model: T-Rex with anchor beacon -->
-      <a-entity position="0 0 0" scale="0.04 0.04 0.04"
-        gltf-model="https://raw.githack.com/AR-js-org/AR.js/master/aframe/examples/image-tracking/nft/trex/scene.gltf">
+      <!-- 3D Text: "Fu" standing perpendicular to marker, centered, rounded Fredoka font, with Morandi green glow -->
+      <a-entity position="0 0.25 0" rotation="0 0 0"
+        three-text-3d="text: Fu; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #10b981; emissive: #10b981; emissiveIntensity: 1.0">
       </a-entity>
-      <!-- Glowing Terminal Node / Energy Core Anchor -->
-      <a-sphere position="0 0.25 0" radius="0.06" color="#f43f5e"
-        material="emissive: #f43f5e; emissiveIntensity: 0.8; opacity: 0.85; transparent: true">
-        <a-ring radius-inner="0.08" radius-outer="0.1" color="#f43f5e" rotation="-90 0 0"
-          material="side: double; opacity: 0.7; transparent: true"></a-ring>
+
+      <!-- Central Glowing Energy Beacon Anchor (Center of Text) -->
+      <a-sphere position="0 0.25 0" radius="0.05" color="#10b981"
+        material="emissive: #10b981; emissiveIntensity: 1.0; opacity: 0.85; transparent: true">
+        <a-ring radius-inner="0.07" radius-outer="0.09" color="#10b981" rotation="-90 0 0"
+          material="side: double; opacity: 0.6; transparent: true"></a-ring>
       </a-sphere>
     </a-marker>
 
-    <!-- Marker 2: Kanji Marker Configuration -->
+    <!-- Marker 2: Kanji Marker Configuration (Displays "DW" in 3D Misty Blue Emissive Text) -->
     <a-marker preset="kanji" id="marker-kanji" emitevents="true">
-      <!-- 3D Model: T-Rex with anchor beacon -->
-      <a-entity position="0 0 0" scale="0.04 0.04 0.04"
-        gltf-model="https://raw.githack.com/AR-js-org/AR.js/master/aframe/examples/image-tracking/nft/trex/scene.gltf">
+      <!-- 3D Text: "DW" standing perpendicular to marker, centered, rounded Fredoka font, with misty blue glow -->
+      <a-entity position="0 0.25 0" rotation="0 0 0"
+        three-text-3d="text: DW; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #60a5fa; emissive: #60a5fa; emissiveIntensity: 1.0">
       </a-entity>
-      <!-- Glowing Terminal Node / Energy Core Anchor -->
-      <a-sphere position="0 0.25 0" radius="0.06" color="#0ea5e9"
-        material="emissive: #0ea5e9; emissiveIntensity: 0.8; opacity: 0.85; transparent: true">
-        <a-ring radius-inner="0.08" radius-outer="0.1" color="#0ea5e9" rotation="-90 0 0"
-          material="side: double; opacity: 0.7; transparent: true"></a-ring>
+
+      <!-- Central Glowing Energy Beacon Anchor (Center of Text) -->
+      <a-sphere position="0 0.25 0" radius="0.05" color="#60a5fa"
+        material="emissive: #60a5fa; emissiveIntensity: 1.0; opacity: 0.85; transparent: true">
+        <a-ring radius-inner="0.07" radius-outer="0.09" color="#60a5fa" rotation="-90 0 0"
+          material="side: double; opacity: 0.6; transparent: true"></a-ring>
       </a-sphere>
     </a-marker>
 
