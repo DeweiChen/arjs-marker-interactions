@@ -107,6 +107,15 @@ if (typeof AFRAME !== 'undefined') {
         if (threshold !== undefined) this.setThreshold(threshold);
         if (dynamicIntensity !== undefined) this.setDynamicIntensity(dynamicIntensity);
       });
+
+      // Listen to dynamic DPR scale changes
+      this.sceneEl.addEventListener('set-dpr', (e) => {
+        const { dpr } = e.detail || {};
+        if (dpr && this.sceneEl && this.sceneEl.renderer) {
+          this.sceneEl.renderer.setPixelRatio(dpr);
+          this._onResize();
+        }
+      });
     },
 
     update: function (oldData) {
@@ -161,6 +170,10 @@ if (typeof AFRAME !== 'undefined') {
 
       this.isInitialized = true;
       renderer.autoClear = false;
+
+      // Restore native device pixel ratio for full-sharpness rendering
+      const targetDpr = window.devicePixelRatio || 1;
+      renderer.setPixelRatio(targetDpr);
 
       // Initial Layer 1 synchronization
       this._syncBloomLayers();
@@ -303,6 +316,11 @@ if (typeof AFRAME !== 'undefined') {
       if (!this.sceneEl || !this.sceneEl.renderer || !this.bloomComposer || !this.finalComposer) return;
 
       const renderer = this.sceneEl.renderer;
+      const targetDpr = window.devicePixelRatio || 1;
+      if (renderer.getPixelRatio() !== targetDpr) {
+        renderer.setPixelRatio(targetDpr);
+      }
+
       const size = new THREE.Vector2();
       renderer.getSize(size);
       const pr = renderer.getPixelRatio() || 1;

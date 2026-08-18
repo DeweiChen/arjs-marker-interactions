@@ -64,7 +64,7 @@
           <path d="m6.34 17.66-1.41 1.41"></path>
           <path d="m19.07 4.93-1.41 1.41"></path>
         </svg>
-        <span>Bloom FX</span>
+        <span>FX / DPR</span>
       </button>
 
       <button id="btn-show-markers" class="hud-btn" title="View & Download Marker Patterns">
@@ -130,6 +130,38 @@
           <button type="button" class="bloom-preset-btn active" data-strength="0.6">Def (0.6)</button>
           <button type="button" class="bloom-preset-btn" data-strength="1.2">Glow (1.2)</button>
           <button type="button" class="bloom-preset-btn" data-strength="2.0">Hyper (2.0)</button>
+        </div>
+      </div>
+
+      <!-- DPR Resolution Scale Control (1x, 1.5x, 2x, Native) -->
+      <div class="bloom-control-group dpr-control-group">
+        <div class="bloom-control-label-row">
+          <label class="bloom-control-label">
+            <span class="label-title">Rendering DPR (渲染解析度)</span>
+          </label>
+          <span id="val-dpr" class="bloom-val-badge">Native</span>
+        </div>
+        
+        <!-- Preset quick buttons for 1.0, 1.5, 2.0, Native -->
+        <div class="dpr-presets">
+          <button type="button" class="dpr-preset-btn" data-dpr="1">1.0x</button>
+          <button type="button" class="dpr-preset-btn" data-dpr="1.5">1.5x</button>
+          <button type="button" class="dpr-preset-btn" data-dpr="2">2.0x</button>
+          <button type="button" class="dpr-preset-btn active" data-dpr="native">Native</button>
+        </div>
+
+        <!-- Real-time Resolution Info Box -->
+        <div class="dpr-res-details">
+          <div class="dpr-res-row">
+            <span class="res-item-title">🎨 3D 渲染畫素</span>
+            <span id="res-render-px" class="res-item-value">-- × -- px</span>
+            <span id="res-render-mp" class="res-item-badge">-- MP</span>
+          </div>
+          <div class="dpr-res-row">
+            <span class="res-item-title">📷 相機串流畫素</span>
+            <span id="res-camera-px" class="res-item-value">640 × 360 px</span>
+            <span id="res-camera-mp" class="res-item-badge">0.23 MP</span>
+          </div>
         </div>
       </div>
 
@@ -235,7 +267,8 @@
 
   <!-- Embedded AR.js + A-Frame Scene with Proximity Lightning & Selective Bloom Components -->
   <a-scene embedded
-    arjs="sourceType: webcam; sourceWidth: 1280; sourceHeight: 720; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    arjs="sourceType: webcam; sourceWidth: 640; sourceHeight: 360; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    renderer="precision: mediump; antialias: false; powerPreference: high-performance;"
     proximity-lightning="marker1: #marker-hiro; marker2: #marker-kanji; maxDistance: 3.0; minDistance: 0.35; terminalOffsetY: 0.25; smoothingFactor: 0.3"
     bloom-effect="strength: 0.6; radius: 0.3; threshold: 0.0; downscale: 0.5; dynamicIntensity: true"
     device-orientation-permission-ui="enabled: true; deviceMotionMessage: 此 AR 互動需要存取您的裝置動作與方向感應器 (陀螺儀)。<br><span style='font-size:12px;opacity:0.85;display:block;margin-top:4px;'>This AR experience requires access to your device motion sensors.</span>; allowButtonText: 允許 Allow; denyButtonText: 拒絕 Deny;">

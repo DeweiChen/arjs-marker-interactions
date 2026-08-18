@@ -53,6 +53,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const chkDynamicIntensity = document.getElementById('chk-dynamic-intensity');
   const chkPitchFacing = document.getElementById('chk-pitch-facing');
 
+  // DPR Resolution Control DOM Elements
+  const valDpr = document.getElementById('val-dpr');
+  const dprBtns = document.querySelectorAll('.dpr-preset-btn');
+  const resRenderPx = document.getElementById('res-render-px');
+  const resRenderMp = document.getElementById('res-render-mp');
+  const resCameraPx = document.getElementById('res-camera-px');
+  const resCameraMp = document.getElementById('res-camera-mp');
+  let currentDprSetting = localStorage.getItem('ar_custom_dpr') || 'native';
+
   // Tracking state store
   const stateStore = {
     isHiroVisible: false,
@@ -168,9 +177,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 4. Synchronize A-Frame camera & renderer viewport
-    if (sceneEl && sceneEl.renderer && sceneEl.camera) {
+    if (sceneEl && sceneEl.renderer) {
+      const activeDpr = getEffectiveDPR(currentDprSetting);
+      if (sceneEl.renderer.getPixelRatio() !== activeDpr) {
+        sceneEl.renderer.setPixelRatio(activeDpr);
+      }
       sceneEl.renderer.setSize(window.innerWidth, window.innerHeight, false);
-      if (sceneEl.camera.isCamera) {
+      if (sceneEl.camera && sceneEl.camera.isCamera) {
         sceneEl.camera.aspect = window.innerWidth / window.innerHeight;
         sceneEl.camera.updateProjectionMatrix();
       }
@@ -181,6 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bloomComponent && typeof bloomComponent._onResize === 'function') {
       bloomComponent._onResize();
     }
+
+    // 6. Update Resolution Metrics in Settings Panel
+    updateResolutionDisplay();
   }
 
   function debouncedSyncARViewport() {
@@ -490,6 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       applyDynamicIntensity(defaultBloomSettings.dynamicIntensity);
       applyPitchFacing(defaultBloomSettings.pitchFacing);
+      applyDPR('native', false);
     });
   }
 
@@ -523,6 +540,108 @@ document.addEventListener('DOMContentLoaded', () => {
       applyPitchFacing(e.target.checked);
     });
   }
+
+  // ------------------------------------------------------------------------
+  // DPR Resolution Switcher Controller (1.0x, 1.5x, 2.0x, Native)
+  // ------------------------------------------------------------------------
+  function getEffectiveDPR(setting) {
+    if (setting === 'native') {
+      return window.devicePixelRatio || 1;
+    }
+    const parsed = parseFloat(setting);
+    return isNaN(parsed) || parsed <= 0 ? (window.devicePixelRatio || 1) : parsed;
+  }
+
+  function updateResolutionDisplay() {
+    const effectiveDpr = getEffectiveDPR(currentDprSetting);
+    const renderW = Math.round(window.innerWidth * effectiveDpr);
+    const renderH = Math.round(window.innerHeight * effectiveDpr);
+    const renderMp = ((renderW * renderH) / 1000000).toFixed(2);
+
+    if (resRenderPx) {
+      resRenderPx.textContent = `${renderW} × ${renderH} px`;
+    }
+    if (resRenderMp) {
+      resRenderMp.textContent = `${renderMp} MP`;
+    }
+
+    // Camera actual resolution from AR session video stream
+    const arSession = sceneEl && sceneEl.systems && sceneEl.systems.arjs;
+    if (arSession && arSession.arSource && arSession.arSource.domElement) {
+      const video = arSession.arSource.domElement;
+      if (video && video.videoWidth && video.videoHeight) {
+        const camW = video.videoWidth;
+        const camH = video.videoHeight;
+        const camMp = ((camW * camH) / 1000000).toFixed(2);
+        if (resCameraPx) resCameraPx.textContent = `${camW} × ${camH} px`;
+        if (resCameraMp) resCameraMp.textContent = `${camMp} MP`;
+      }
+    }
+  }
+
+  function applyDPR(setting, showToastMsg = false) {
+    currentDprSetting = setting;
+    const effectiveDpr = getEffectiveDPR(setting);
+    const renderW = Math.round(window.innerWidth * effectiveDpr);
+    const renderH = Math.round(window.innerHeight * effectiveDpr);
+    const renderMp = ((renderW * renderH) / 1000000).toFixed(2);
+
+    // Update UI Badge
+    if (valDpr) {
+      if (setting === 'native') {
+        valDpr.textContent = `Native (${(window.devicePixelRatio || 1).toFixed(1)}x)`;
+      } else {
+        valDpr.textContent = `${parseFloat(setting).toFixed(1)}x`;
+      }
+    }
+
+    // Update Button Active Classes
+    dprBtns.forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.dpr === String(setting));
+    });
+
+    // Apply to Three.js WebGLRenderer
+    if (sceneEl && sceneEl.renderer) {
+      sceneEl.renderer.setPixelRatio(effectiveDpr);
+      sceneEl.renderer.setSize(window.innerWidth, window.innerHeight, false);
+      if (sceneEl.camera && sceneEl.camera.isCamera) {
+        sceneEl.camera.aspect = window.innerWidth / window.innerHeight;
+        sceneEl.camera.updateProjectionMatrix();
+      }
+    }
+
+    // Emit event for post-processing shaders & listeners
+    if (sceneEl) {
+      sceneEl.emit('set-dpr', { dpr: effectiveDpr });
+    }
+
+    // Trigger syncARViewport & update metrics display
+    syncARViewport();
+    updateResolutionDisplay();
+
+    // Persist preference
+    try {
+      localStorage.setItem('ar_custom_dpr', setting);
+    } catch (_) {}
+
+    // Show feedback toast
+    if (showToastMsg) {
+      const label = setting === 'native' 
+        ? `Native (${(window.devicePixelRatio || 1).toFixed(1)}x)`
+        : `${setting}x Scale`;
+      showToast(`⚡ DPR: ${label} • ${renderW}×${renderH} (${renderMp} MP)`);
+    }
+  }
+
+  // DPR Preset Button Click Handlers
+  dprBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const dprVal = btn.dataset.dpr;
+      if (dprVal) {
+        applyDPR(dprVal, true);
+      }
+    });
+  });
 
   // ------------------------------------------------------------------------
   // State Machine HUD Synchronizer
@@ -564,9 +683,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ------------------------------------------------------------------------
-  // Setup AR scene event listeners
+  // Setup AR scene event listeners & DPR Enforcement
   // ------------------------------------------------------------------------
   if (sceneEl) {
+    const enforceOptimizedDPR = () => {
+      if (sceneEl.renderer) {
+        applyDPR(currentDprSetting, false);
+      }
+    };
+
+    if (sceneEl.renderer) {
+      enforceOptimizedDPR();
+    } else {
+      sceneEl.addEventListener('renderstart', enforceOptimizedDPR, { once: true });
+      sceneEl.addEventListener('loaded', enforceOptimizedDPR, { once: true });
+    }
+
     // 1. Marker visibility changes
     sceneEl.addEventListener('marker-status-change', (e) => {
       const { marker, visible } = e.detail;
