@@ -25,7 +25,7 @@ export class ARScene {
   }
 
   /**
-   * 初始化 Three.js 場景與 AR.js 核心
+   * Initialize Three.js scene and AR.js core
    */
   async init() {
     this._initThree();
@@ -39,7 +39,7 @@ export class ARScene {
     // 1. Scene
     this.scene = new THREE.Scene();
 
-    // 2. Camera (AR.js 會在 context init 後更新投影矩陣)
+    // 2. Camera (AR.js updates the projection matrix after context initialization)
     this.camera = new THREE.Camera();
     this.scene.add(this.camera);
 
@@ -60,16 +60,16 @@ export class ARScene {
   }
 
   _initLights() {
-    // 環境光
+    // Ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
     this.scene.add(ambientLight);
 
-    // 主方向光（柔和陰影與高光）
+    // Main directional light (soft shadows & highlights)
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
     dirLight.position.set(2, 5, 3);
     this.scene.add(dirLight);
 
-    // 補光
+    // Fill light
     const fillLight = new THREE.DirectionalLight(0xa5b4fc, 0.6);
     fillLight.position.set(-2, -3, -1);
     this.scene.add(fillLight);
@@ -77,13 +77,14 @@ export class ARScene {
 
   _initArToolkit() {
     return new Promise((resolve, reject) => {
-      // 1. 初始化攝影機視訊來源
+      // 1. Initialize camera video source
       this.arToolkitSource = new ArToolkitSource({
         sourceType: 'webcam'
       });
 
       this.arToolkitSource.init(
         () => {
+          this._onResize();
           setTimeout(() => {
             this._onResize();
           }, 500);
@@ -94,7 +95,11 @@ export class ARScene {
         }
       );
 
-      // 2. 初始化 AR Context (追蹤辨識核心)
+      window.addEventListener('arjs-video-loaded', () => {
+        this._onResize();
+      });
+
+      // 2. Initialize AR Context (tracking & recognition core)
       const baseUrl = import.meta.env.BASE_URL || '/';
       const cameraParamUrl = `${baseUrl}data/camera_para.dat`;
 
@@ -107,7 +112,7 @@ export class ARScene {
       });
 
       this.arToolkitContext.init(() => {
-        // 將 AR 攝影機投影矩陣同步至 Three.js 相機
+        // Synchronize AR camera projection matrix to Three.js camera
         this.camera.projectionMatrix.copy(this.arToolkitContext.getProjectionMatrix());
         resolve();
       });
@@ -130,14 +135,14 @@ export class ARScene {
   }
 
   /**
-   * 註冊每幀更新 callback
+   * Register per-frame render callback
    */
   onRender(fn) {
     this.renderCallbacks.push(fn);
   }
 
   /**
-   * 啟動主渲染迴圈
+   * Start main animation and render loop
    */
   startLoop() {
     const clock = new THREE.Clock();
@@ -148,17 +153,17 @@ export class ARScene {
       const delta = clock.getDelta();
       const elapsedTime = clock.getElapsedTime();
 
-      // 1. 更新 ARToolkitContext (處理攝影機影像識別)
+      // 1. Update ARToolkitContext (process webcam image recognition)
       if (this.arToolkitSource && this.arToolkitSource.ready) {
         this.arToolkitContext.update(this.arToolkitSource.domElement);
       }
 
-      // 2. 執行所有註冊的渲染邏輯 (例如 3D 物件旋轉、狀態監聽等)
+      // 2. Execute all registered render callbacks (e.g. 3D object rotation, state monitoring)
       for (const cb of this.renderCallbacks) {
         cb(delta, elapsedTime);
       }
 
-      // 3. 繪製 Three.js 場景
+      // 3. Render Three.js scene
       this.renderer.render(this.scene, this.camera);
     };
 

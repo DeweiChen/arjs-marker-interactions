@@ -1,36 +1,81 @@
 import { ARScene } from './ar-scene.js';
+import { MarkerManager } from './marker-manager.js';
 
-// 初始化 AR 場景
+// Bootstrap AR application
 async function bootstrap() {
   const loadingOverlay = document.getElementById('loading-overlay');
+  const statusHiro = document.getElementById('status-hiro');
+  const statusKanji = document.getElementById('status-kanji');
 
   try {
+    // 1. Initialize AR base scene
     const arScene = new ARScene('ar-container');
     await arScene.init();
 
-    // 隱藏載入中畫面
+    // 2. Initialize Marker Manager
+    const markerManager = new MarkerManager(arScene);
+
+    // 3. Register Marker 1 (Hiro) and status callbacks
+    markerManager.addHiroMarker((isVisible) => {
+      if (statusHiro) {
+        if (isVisible) {
+          statusHiro.classList.add('active');
+          statusHiro.querySelector('.status-val').textContent = 'Tracking (Locked)';
+        } else {
+          statusHiro.classList.remove('active');
+          statusHiro.querySelector('.status-val').textContent = 'Waiting for scan...';
+        }
+      }
+    });
+
+    // 4. Register Marker 2 (Kanji) and status callbacks
+    markerManager.addKanjiMarker((isVisible) => {
+      if (statusKanji) {
+        if (isVisible) {
+          statusKanji.classList.add('active');
+          statusKanji.querySelector('.status-val').textContent = 'Tracking (Locked)';
+        } else {
+          statusKanji.classList.remove('active');
+          statusKanji.querySelector('.status-val').textContent = 'Waiting for scan...';
+        }
+      }
+    });
+
+    // 5. Update marker animations and states per frame
+    arScene.onRender((delta, elapsedTime) => {
+      markerManager.update(delta, elapsedTime);
+    });
+
+    // 6. Hide loading overlay
     if (loadingOverlay) {
       loadingOverlay.classList.add('hidden');
     }
 
-    // 啟動主渲染迴圈
+    // 7. Start render loop
     arScene.startLoop();
-    console.log('AR.js + Three.js Core Scene initialized successfully!');
+
+    // Expose instance to window for debugging and future extensions
+    window.__AR_APP__ = {
+      arScene,
+      markerManager
+    };
+
+    console.log('✅ AR.js + Three.js dual-marker system initialized successfully!');
   } catch (error) {
     console.error('AR initialization error:', error);
     if (loadingOverlay) {
       loadingOverlay.innerHTML = `
         <div class="loading-card" style="border-color: #f43f5e;">
-          <h2 style="color: #f43f5e;">攝影機啟動失敗</h2>
-          <p>${error.message || '請確認已授權攝影機權限，且連線支援 HTTPS。'}</p>
-          <button onclick="location.reload()" class="hud-btn" style="margin-top: 12px;">重新嘗試</button>
+          <h2 style="color: #f43f5e;">Camera Initialization Failed</h2>
+          <p>${error.message || 'Please grant camera permissions and ensure connection uses HTTPS.'}</p>
+          <button onclick="location.reload()" class="hud-btn" style="margin-top: 12px;">Retry</button>
         </div>
       `;
     }
   }
 }
 
-// 綁定 UI 互動（查看 Marker 圖檔彈窗）
+// Bind UI interactions (Marker reference modal)
 function setupUI() {
   const modal = document.getElementById('markers-modal');
   const btnOpen = document.getElementById('btn-markers-modal');

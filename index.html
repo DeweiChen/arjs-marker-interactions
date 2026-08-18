@@ -11,10 +11,10 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <!-- 3D Canvas 容器 -->
+    <!-- 3D Canvas Container -->
     <div id="ar-container"></div>
 
-    <!-- 頂部 HUD UI -->
+    <!-- Top HUD Header -->
     <header class="hud-header">
       <div class="hud-brand">
         <span class="hud-logo-badge">AR</span>
@@ -35,13 +35,13 @@
       </div>
     </header>
 
-    <!-- 底部狀態面板 -->
+    <!-- Bottom Status Panel -->
     <aside class="hud-status-panel">
       <div class="status-card" id="status-hiro">
         <div class="status-indicator"></div>
         <div class="status-info">
           <span class="status-label">Marker 1 (Hiro)</span>
-          <span class="status-val">等待掃描...</span>
+          <span class="status-val">Waiting for scan...</span>
         </div>
       </div>
 
@@ -49,12 +49,12 @@
         <div class="status-indicator"></div>
         <div class="status-info">
           <span class="status-label">Marker 2 (Kanji)</span>
-          <span class="status-val">等待掃描...</span>
+          <span class="status-val">Waiting for scan...</span>
         </div>
       </div>
     </aside>
 
-    <!-- 攝影機授權提示 / 載入中畫面 -->
+    <!-- Camera Permission & Loading Overlay -->
     <div id="loading-overlay" class="overlay-panel">
       <div class="loading-card">
         <div class="spinner"></div>
@@ -64,7 +64,7 @@
       </div>
     </div>
 
-    <!-- Marker 預覽與下載彈窗 -->
+    <!-- Marker Preview & Download Modal -->
     <div id="markers-modal" class="modal-backdrop hidden">
       <div class="modal-content">
         <div class="modal-header">
