@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="基於 AR.js 與 Three.js 的雙 Marker WebAR 互動裝置" />
+    <title>AR.js + Three.js 雙 Marker 互動裝置</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- 3D Canvas 容器 -->
+    <div id="ar-container"></div>
+
+    <!-- 頂部 HUD UI -->
+    <header class="hud-header">
+      <div class="hud-brand">
+        <span class="hud-logo-badge">AR</span>
+        <div class="hud-title-group">
+          <h1 class="hud-title">WebAR 雙 Marker 互動</h1>
+          <p class="hud-subtitle">AR.js (3.4.8) + Three.js (r164)</p>
+        </div>
+      </div>
+      <div class="hud-actions">
+        <button id="btn-markers-modal" class="hud-btn" title="查看 Marker 圖案">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <span>Marker 圖案</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 底部狀態面板 -->
+    <aside class="hud-status-panel">
+      <div class="status-card" id="status-hiro">
+        <div class="status-indicator"></div>
+        <div class="status-info">
+          <span class="status-label">Marker 1 (Hiro)</span>
+          <span class="status-val">等待掃描...</span>
+        </div>
+      </div>
+
+      <div class="status-card" id="status-kanji">
+        <div class="status-indicator"></div>
+        <div class="status-info">
+          <span class="status-label">Marker 2 (Kanji)</span>
+          <span class="status-val">等待掃描...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 攝影機授權提示 / 載入中畫面 -->
+    <div id="loading-overlay" class="overlay-panel">
+      <div class="loading-card">
+        <div class="spinner"></div>
+        <h2>正在初始化 AR 攝影機...</h2>
+        <p>請允許瀏覽器存取攝影機權限以啟用 AR 體驗</p>
+        <div class="loading-hint">提示：在手機上請使用 HTTPS 連線</div>
+      </div>
+    </div>
+
+    <!-- Marker 預覽與下載彈窗 -->
+    <div id="markers-modal" class="modal-backdrop hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Marker 圖檔參考</h2>
+          <button id="btn-close-modal" class="modal-close-btn">&times;</button>
+        </div>
+        <p class="modal-desc">可使用其他螢幕顯示下方圖片，或列印出來後由攝影機掃描：</p>
+        <div class="markers-grid">
+          <div class="marker-item">
+            <h3>Marker 1 : Hiro (紅色彩光球/立方體)</h3>
+            <img src="./markers/images/hiro.png" alt="Hiro Marker" id="img-hiro" />
+            <a href="./markers/images/hiro.png" target="_blank" download="hiro-marker.png" class="download-link">下載 Hiro 圖檔</a>
+          </div>
+          <div class="marker-item">
+            <h3>Marker 2 : Kanji (藍色彩光球/立方體)</h3>
+            <img src="./markers/images/kanji.png" alt="Kanji Marker" id="img-kanji" />
+            <a href="./markers/images/kanji.png" target="_blank" download="kanji-marker.png" class="download-link">下載 Kanji 圖檔</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
