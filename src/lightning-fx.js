@@ -18,9 +18,9 @@ export class LightningFX {
         maxBolts: 5,               // 1 main crisp bolt + 4 energetic branch forks
         segmentsPerBolt: 32,       // High subdivision for sharp zigzag arcs
         maxSparks: 140,            // Rich particle count for explosive bursts
-        primaryColor: 0x00f0ff,    // Electric Neon Cyan
-        secondaryColor: 0x38bdf8,  // Sky Blue Plasma
-        coreColor: 0xffffff,       // White-hot core
+        primaryColor: 0x38bdf8,    // Electric Sky Blue
+        secondaryColor: 0xa855f7,  // Ultraviolet Purple
+        coreColor: 0xede9fe,       // Lavender-White Core
         maxDistance: 4.5,          // Max detection distance (m)
         minDistance: 1.5           // Peak proximity distance (m)
       },
@@ -44,7 +44,6 @@ export class LightningFX {
 
     this._initSleekLightning();
     this._initPlasmaCore();
-    this._initTerminalGlows();
     this._initExplosiveSparks();
     this._initDynamicLight();
 
@@ -74,10 +73,10 @@ export class LightningFX {
     const ctx = canvas.getContext('2d');
 
     const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
-    gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.95)');
-    gradient.addColorStop(0.45, 'rgba(0, 240, 255, 0.8)');
-    gradient.addColorStop(0.75, 'rgba(56, 189, 248, 0.25)');
+    gradient.addColorStop(0, 'rgba(245, 243, 255, 1.0)');     // Lavender-White Core
+    gradient.addColorStop(0.2, 'rgba(237, 233, 254, 0.95)');  // Soft Lavender-White
+    gradient.addColorStop(0.45, 'rgba(56, 189, 248, 0.85)');  // Electric Sky Blue
+    gradient.addColorStop(0.75, 'rgba(168, 85, 247, 0.35)');  // Ultraviolet Purple
     gradient.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)');
 
     ctx.fillStyle = gradient;
@@ -130,46 +129,6 @@ export class LightningFX {
   }
 
   /**
-   * Initialize subtle terminal beacons at the two marker anchor points.
-   */
-  _initTerminalGlows() {
-    const THREE = this.THREE;
-
-    const createTerminalBeacon = (color) => {
-      const g = new THREE.Group();
-      const orb = new THREE.Mesh(
-        new THREE.SphereGeometry(0.06, 12, 12),
-        new THREE.MeshBasicMaterial({
-          color: color,
-          transparent: true,
-          opacity: 0.85,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false
-        })
-      );
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(0.09, 0.008, 6, 18),
-        new THREE.MeshBasicMaterial({
-          color: 0xffffff,
-          transparent: true,
-          opacity: 0.7,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false
-        })
-      );
-      g.add(orb);
-      g.add(ring);
-      return { group: g, orb, ring };
-    };
-
-    this.terminalA = createTerminalBeacon(0xf43f5e); // Hiro Rose
-    this.terminalB = createTerminalBeacon(0x0ea5e9); // Kanji Cyan
-
-    this.group.add(this.terminalA.group);
-    this.group.add(this.terminalB.group);
-  }
-
-  /**
    * Initialize sleek midpoint energy core.
    */
   _initPlasmaCore() {
@@ -188,7 +147,7 @@ export class LightningFX {
     this.innerCoreMesh = new THREE.Mesh(innerGeo, innerMat);
     this.coreGroup.add(this.innerCoreMesh);
 
-    // 2. Outer cyan wireframe shield
+    // 2. Outer blue wireframe shield
     const outerGeo = new THREE.IcosahedronGeometry(0.13, 1);
     const outerMat = new THREE.MeshBasicMaterial({
       color: this.options.primaryColor,
@@ -201,7 +160,7 @@ export class LightningFX {
     this.outerCoreMesh = new THREE.Mesh(outerGeo, outerMat);
     this.coreGroup.add(this.outerCoreMesh);
 
-    // 3. Delicate orbital gyro rings
+    // 3. Delicate orbital gyro rings in blue and purple
     this.rings = [];
     const ringGeos = [
       new THREE.TorusGeometry(0.18, 0.006, 6, 24),
@@ -210,7 +169,7 @@ export class LightningFX {
 
     ringGeos.forEach((geo, i) => {
       const ringMat = new THREE.MeshBasicMaterial({
-        color: i === 0 ? this.options.primaryColor : 0x38bdf8,
+        color: i === 0 ? this.options.primaryColor : this.options.secondaryColor,
         transparent: true,
         opacity: 0.8,
         blending: THREE.AdditiveBlending,
@@ -238,17 +197,20 @@ export class LightningFX {
     this.sparkVelocities = [];
     this.sparkLifes = [];
 
-    const colWhite = new THREE.Color(0xffffff);
-    const colCyan = new THREE.Color(0x00f0ff);
-    const colSky = new THREE.Color(0x38bdf8);
+    const colLavenderWhite = new THREE.Color(0xf5f3ff); // Lavender-White Core
+    const colSky = new THREE.Color(0x38bdf8);           // Electric Sky Blue
+    const colBlue = new THREE.Color(0x3b82f6);          // Neon Cobalt Blue
+    const colPurple = new THREE.Color(0xa855f7);        // Ultraviolet Purple
+    const colViolet = new THREE.Color(0xc084fc);        // Radiant Violet
 
     for (let i = 0; i < maxSparks; i++) {
       this.sparkPositions[i * 3] = 0;
       this.sparkPositions[i * 3 + 1] = 0;
       this.sparkPositions[i * 3 + 2] = 0;
 
-      // Random vibrant cyan/white colors
-      const randColor = Math.random() > 0.4 ? colWhite : (Math.random() > 0.5 ? colCyan : colSky);
+      // Dynamic blend of white-purple high light, electric sky blue, and ultraviolet purple
+      const r = Math.random();
+      const randColor = r > 0.65 ? colLavenderWhite : (r > 0.4 ? colSky : (r > 0.2 ? colPurple : colViolet));
       this.sparkColors[i * 3] = randColor.r;
       this.sparkColors[i * 3 + 1] = randColor.g;
       this.sparkColors[i * 3 + 2] = randColor.b;
@@ -284,11 +246,11 @@ export class LightningFX {
   }
 
   /**
-   * Dynamic point light to illuminate surrounding 3D models.
+   * Dynamic point light to illuminate surrounding 3D models with indigo-violet glow.
    */
   _initDynamicLight() {
     const THREE = this.THREE;
-    this.pointLight = new THREE.PointLight(this.options.primaryColor, 0, 4);
+    this.pointLight = new THREE.PointLight(0x818cf8, 0, 4);
     this.group.add(this.pointLight);
   }
 
@@ -369,10 +331,6 @@ export class LightningFX {
 
     this.group.visible = true;
 
-    // Terminals
-    this.terminalA.group.position.copy(startPos);
-    this.terminalB.group.position.copy(endPos);
-
     // Midpoint
     const midPoint = startPos.clone().add(endPos).multiplyScalar(0.5);
     this.coreGroup.position.copy(midPoint);
@@ -404,13 +362,6 @@ export class LightningFX {
       ring.rotation.y += rotSpeed * 1.2;
       ring.rotation.z += rotSpeed * 0.8;
     });
-
-    // Terminal beacons
-    const termScale = 0.5 + p * 0.8;
-    this.terminalA.group.scale.set(termScale, termScale, termScale);
-    this.terminalB.group.scale.set(termScale, termScale, termScale);
-    this.terminalA.ring.rotation.z += 0.04;
-    this.terminalB.ring.rotation.z -= 0.04;
 
     // 2. Light intensity
     this.pointLight.intensity = Math.pow(p, 1.3) * 5.0;
@@ -447,9 +398,11 @@ export class LightningFX {
     const baseWidth = 0.012 + Math.pow(p, 1.2) * 0.036;
     const baseJitter = 0.08 + Math.pow(p, 1.1) * 0.28;
 
-    const colWhite = new THREE.Color(0xffffff);
-    const colCyan = new THREE.Color(0x00f0ff);
-    const colSky = new THREE.Color(0x38bdf8);
+    const colLavenderWhite = new THREE.Color(0xf5f3ff); // Lavender-White Core
+    const colSky = new THREE.Color(0x38bdf8);           // Electric Sky Blue
+    const colBlue = new THREE.Color(0x3b82f6);          // Neon Cobalt Blue
+    const colPurple = new THREE.Color(0xa855f7);        // Ultraviolet Purple
+    const colViolet = new THREE.Color(0xc084fc);        // Radiant Violet
 
     const mainDir = endPos.clone().sub(startPos).normalize();
     const upVector = new THREE.Vector3(0, 1, 0);
@@ -504,12 +457,15 @@ export class LightningFX {
         const v3 = p2.clone().addScaledVector(norm, halfW);
         const v4 = p2.clone().addScaledVector(norm, -halfW);
 
-        // Core white-hot, branches electric cyan/sky blue
-        let segColor = colCyan;
+        // Main bolt has radiant lavender-white core + sky blue, branches alternate ultraviolet purple & electric blue
+        let segColor;
         if (b === 0) {
-          segColor = (Math.random() > 0.25) ? colWhite : colCyan;
+          const r = Math.random();
+          segColor = r > 0.4 ? colLavenderWhite : (r > 0.18 ? colSky : colViolet);
+        } else if (b % 2 === 1) {
+          segColor = (Math.random() > 0.35) ? colPurple : colViolet;
         } else {
-          segColor = (Math.random() > 0.4) ? colCyan : colSky;
+          segColor = (Math.random() > 0.35) ? colSky : colBlue;
         }
 
         const quadVerts = [v1, v2, v3, v2, v4, v3];
