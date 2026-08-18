@@ -63,13 +63,14 @@ video {
 /* Top HUD Header */
 .hud-header {
   position: fixed;
-  top: 16px;
-  left: 16px;
-  right: 16px;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  right: max(16px, env(safe-area-inset-right));
   z-index: 10;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
   pointer-events: auto;
 }
 
@@ -84,6 +85,7 @@ video {
   box-shadow: var(--panel-shadow);
   padding: 8px 16px;
   border-radius: var(--radius-md);
+  min-width: 0;
 }
 
 .hud-logo-badge {
@@ -94,6 +96,7 @@ video {
   letter-spacing: 0.5px;
   padding: 4px 8px;
   border-radius: 6px;
+  flex-shrink: 0;
 }
 
 .hud-title {
@@ -101,16 +104,23 @@ video {
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hud-subtitle {
   font-size: 11px;
   color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hud-actions {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .hud-btn {
@@ -128,6 +138,7 @@ video {
   padding: 10px 14px;
   border-radius: var(--radius-md);
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.2s ease;
 }
 
@@ -144,7 +155,7 @@ video {
 /* Bottom Status Panel */
 .hud-status-panel {
   position: fixed;
-  bottom: 20px;
+  bottom: max(20px, env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -154,6 +165,7 @@ video {
   width: calc(100vw - 32px);
   max-width: 680px;
   pointer-events: auto;
+  box-sizing: border-box;
 }
 
 .status-card {
@@ -168,8 +180,9 @@ video {
   padding: 8px 14px;
   border-radius: var(--radius-md);
   flex: 1;
-  min-width: 110px;
+  min-width: 0;
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .status-card#status-hiro.active {
@@ -206,6 +219,7 @@ video {
 .status-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -214,6 +228,8 @@ video {
   font-weight: 500;
   color: var(--text-secondary);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-val {
@@ -221,6 +237,8 @@ video {
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-card.active .status-val {
@@ -241,8 +259,9 @@ video {
   padding: 8px 14px;
   border-radius: var(--radius-md);
   flex: 1.6;
-  min-width: 150px;
+  min-width: 0;
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .energy-header {
@@ -250,6 +269,7 @@ video {
   justify-content: space-between;
   align-items: center;
   font-size: 11px;
+  gap: 6px;
 }
 
 .energy-status {
@@ -257,12 +277,17 @@ video {
   letter-spacing: 0.5px;
   color: var(--text-secondary);
   transition: color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .distance-badge {
   color: #38bdf8;
   font-weight: 600;
   font-family: monospace;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .energy-progress-wrapper {
@@ -287,6 +312,135 @@ video {
   0% { transform: scale(0.95); opacity: 0.8; }
   50% { transform: scale(1.25); opacity: 1; }
   100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+/* ==========================================================================
+   Responsive Breakpoints (Mobile Portrait & Compact Viewports)
+   ========================================================================== */
+
+@media (max-width: 640px), (orientation: portrait) and (max-width: 850px) {
+  /* Header in Portrait / Small screens */
+  .hud-header {
+    top: max(10px, env(safe-area-inset-top));
+    left: max(10px, env(safe-area-inset-left));
+    right: max(10px, env(safe-area-inset-right));
+    gap: 8px;
+  }
+
+  .hud-brand {
+    padding: 6px 12px;
+    gap: 8px;
+  }
+
+  .hud-title {
+    font-size: 12px;
+  }
+
+  .hud-subtitle {
+    display: none;
+  }
+
+  .hud-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  /* Status Panel in Portrait: 2-Row Grid to prevent horizontal overflow */
+  .hud-status-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+  }
+
+  /* Energy Meter spans full top row */
+  .energy-card {
+    grid-column: 1 / -1;
+    order: 1;
+    padding: 7px 12px;
+    min-width: 0;
+  }
+
+  /* Marker 1 (Hiro) on bottom left */
+  #status-hiro {
+    grid-column: 1 / 2;
+    order: 2;
+    padding: 7px 10px;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  /* Marker 2 (Kanji) on bottom right */
+  #status-kanji {
+    grid-column: 2 / 3;
+    order: 3;
+    padding: 7px 10px;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .status-indicator {
+    width: 8px;
+    height: 8px;
+  }
+
+  .status-label {
+    font-size: 10px;
+  }
+
+  .status-val {
+    font-size: 11px;
+  }
+}
+
+/* Extra small devices (< 360px) */
+@media (max-width: 360px) {
+  .hud-brand {
+    padding: 4px 8px;
+  }
+
+  .hud-logo-badge {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+
+  .hud-title {
+    font-size: 11px;
+  }
+
+  .hud-status-panel {
+    width: calc(100vw - 12px);
+    gap: 6px;
+  }
+
+  .status-card, .energy-card {
+    padding: 6px 8px;
+  }
+}
+
+/* Mobile Landscape Height Optimization */
+@media (orientation: landscape) and (max-height: 500px) {
+  .hud-header {
+    top: max(8px, env(safe-area-inset-top));
+  }
+
+  .hud-brand {
+    padding: 5px 12px;
+  }
+
+  .hud-status-panel {
+    bottom: max(8px, env(safe-area-inset-bottom));
+    gap: 8px;
+    max-width: 600px;
+  }
+
+  .status-card, .energy-card {
+    padding: 6px 10px;
+  }
 }
 
 /* Loading & Permission Overlay */
