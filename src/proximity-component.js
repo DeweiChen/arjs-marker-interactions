@@ -78,9 +78,11 @@ if (typeof AFRAME !== 'undefined') {
 
       if (!marker1 || !marker2 || !this.lightningFX) return;
 
-      // Check visibility from AR.js object3D state and event tracking
-      const m1Visible = (marker1.object3D && marker1.object3D.visible) || this.isMarker1Visible;
-      const m2Visible = (marker2.object3D && marker2.object3D.visible) || this.isMarker2Visible;
+      // Check visibility and stabilization from marker-stabilizer and AR.js object3D state
+      const stab1 = marker1.components['marker-stabilizer'];
+      const stab2 = marker2.components['marker-stabilizer'];
+      const m1Visible = stab1 ? stab1.isStable : ((marker1.object3D && marker1.object3D.visible) || this.isMarker1Visible);
+      const m2Visible = stab2 ? stab2.isStable : ((marker2.object3D && marker2.object3D.visible) || this.isMarker2Visible);
 
       // Sync state if object3D visibility changes directly
       if (m1Visible !== this._lastM1Visible) {
@@ -93,6 +95,10 @@ if (typeof AFRAME !== 'undefined') {
       }
 
       if (m1Visible && m2Visible) {
+        // Ensure synchronized world matrices before sampling positions
+        marker1.object3D.updateMatrixWorld(true);
+        marker2.object3D.updateMatrixWorld(true);
+
         // Extract raw world positions
         marker1.object3D.getWorldPosition(this.pos1);
         marker2.object3D.getWorldPosition(this.pos2);

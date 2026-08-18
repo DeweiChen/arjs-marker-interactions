@@ -4,6 +4,7 @@
  */
 
 import './style.css';
+import './marker-stabilizer.js';
 import './proximity-component.js';
 import './three-text-3d.js';
 import './bloom-effect.js';
@@ -55,6 +56,23 @@ document.addEventListener('DOMContentLoaded', () => {
     proximityActive: false,
     distance: null
   };
+
+  // ------------------------------------------------------------------------
+  // Ensure Camera Projection Matrix & Video Resize Synchronization
+  // ------------------------------------------------------------------------
+  window.addEventListener('arToolkitContext-loaded', () => {
+    const arSession = sceneEl?.systems?.arjs?._arSession;
+    if (arSession && arSession.arSource && arSession.arContext) {
+      arSession.arSource.onResizeElement();
+      if (sceneEl.renderer) {
+        arSession.arSource.copyElementSizeTo(sceneEl.renderer.domElement);
+      }
+      if (arSession.arContext.arController && arSession.arContext.arController.canvas) {
+        arSession.arSource.copyElementSizeTo(arSession.arContext.arController.canvas);
+        arSession.arContext.update();
+      }
+    }
+  });
 
   // ------------------------------------------------------------------------
   // Setup Marker Modal events

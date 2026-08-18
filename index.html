@@ -233,7 +233,7 @@
     <a-entity light="type: directional; color: #ffffff; intensity: 1.2; position: 1 4 2"></a-entity>
 
     <!-- Marker 1: Hiro Marker Configuration (Displays "Fu" in 3D Morandi Green Emissive Text) -->
-    <a-marker preset="hiro" id="marker-hiro" emitevents="true">
+    <a-marker preset="hiro" id="marker-hiro" emitevents="true" marker-stabilizer="warmupFrames: 4">
       <!-- Deep Obsidian Circular Base Stage to Catch Bloom Glow -->
       <a-entity position="0 0.01 0" rotation="-90 0 0">
         <a-circle radius="0.65" color="#050508"
@@ -248,7 +248,7 @@
     </a-marker>
 
     <!-- Marker 2: Kanji Marker Configuration (Displays "DW" in 3D Misty Blue Emissive Text) -->
-    <a-marker preset="kanji" id="marker-kanji" emitevents="true">
+    <a-marker preset="kanji" id="marker-kanji" emitevents="true" marker-stabilizer="warmupFrames: 4">
       <!-- Deep Obsidian Circular Base Stage to Catch Bloom Glow -->
       <a-entity position="0 0.01 0" rotation="-90 0 0">
         <a-circle radius="0.65" color="#050508"
