@@ -53,17 +53,20 @@
     <div class="hud-actions">
       <!-- Bloom FX Control Toggle Button -->
       <button id="btn-toggle-bloom" class="hud-btn" title="Adjust Bloom Effect Settings" aria-expanded="false" aria-controls="bloom-control-panel">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="4"></circle>
-          <path d="M12 2v2"></path>
-          <path d="M12 20v2"></path>
-          <path d="m4.93 4.93 1.41 1.41"></path>
-          <path d="m17.66 17.66 1.41 1.41"></path>
-          <path d="M2 12h2"></path>
-          <path d="M20 12h2"></path>
-          <path d="m6.34 17.66-1.41 1.41"></path>
-          <path d="m19.07 4.93-1.41 1.41"></path>
-        </svg>
+        <span class="btn-icon-wrapper">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2"></path>
+            <path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path>
+            <path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path>
+            <path d="M20 12h2"></path>
+            <path d="m6.34 17.66-1.41 1.41"></path>
+            <path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+          <span id="bloom-hud-dot" class="hud-status-dot active"></span>
+        </span>
         <span>FX / DPR</span>
       </button>
 
@@ -111,8 +114,27 @@
     </div>
 
     <div class="bloom-panel-body">
+      <!-- Master Bloom Switch (Bypasses all EffectComposer passes when OFF) -->
+      <div class="bloom-master-section">
+        <div class="bloom-toggle-row master-toggle-row">
+          <div class="bloom-toggle-info">
+            <span class="bloom-toggle-title">
+              <span class="master-title-text">Bloom 特效開關</span>
+            </span>
+            <span class="bloom-toggle-sub">關閉後完全跳過 Composer 直通原生渲染 (0 Pass)</span>
+          </div>
+          <div class="master-switch-wrapper">
+            <span id="val-bloom-status" class="bloom-status-badge status-active">ON</span>
+            <label class="switch-toggle" for="chk-master-bloom">
+              <input type="checkbox" id="chk-master-bloom" checked>
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
       <!-- Strength Control (Primary Slider) -->
-      <div class="bloom-control-group">
+      <div id="bloom-strength-group" class="bloom-control-group bloom-strength-group">
         <div class="bloom-control-label-row">
           <label for="slider-bloom-strength" class="bloom-control-label">
             <span class="label-title">Strength (強烈度)</span>

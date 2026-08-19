@@ -68,6 +68,7 @@ const AdditiveAlphaCompositeShader = {
 if (typeof AFRAME !== 'undefined') {
   AFRAME.registerComponent('bloom-effect', {
     schema: {
+      enabled: { type: 'boolean', default: true },
       strength: { type: 'number', default: 0.6 },
       radius: { type: 'number', default: 0.3 },
       threshold: { type: 'number', default: 0.0 },
@@ -79,6 +80,7 @@ if (typeof AFRAME !== 'undefined') {
       this.sceneEl = this.el.sceneEl || this.el;
       this.currentProximity = 0;
       this.isInitialized = false;
+      this.enabled = this.data.enabled !== undefined ? this.data.enabled : true;
 
       const setup = () => {
         if (!this.isInitialized && this.sceneEl.renderer) {
@@ -101,7 +103,8 @@ if (typeof AFRAME !== 'undefined') {
 
       // Listen to external custom events to update bloom parameters in real time
       this.sceneEl.addEventListener('set-bloom-params', (e) => {
-        const { strength, radius, threshold, dynamicIntensity } = e.detail || {};
+        const { enabled, strength, radius, threshold, dynamicIntensity } = e.detail || {};
+        if (enabled !== undefined) this.setEnabled(enabled);
         if (strength !== undefined) this.setStrength(strength);
         if (radius !== undefined) this.setRadius(radius);
         if (threshold !== undefined) this.setThreshold(threshold);
@@ -119,6 +122,9 @@ if (typeof AFRAME !== 'undefined') {
     },
 
     update: function (oldData) {
+      if (oldData && this.data.enabled !== oldData.enabled) {
+        this.setEnabled(this.data.enabled);
+      }
       if (this.bloomPass) {
         if (this.data.radius !== undefined) {
           this.bloomPass.radius = this.data.radius;
@@ -128,6 +134,28 @@ if (typeof AFRAME !== 'undefined') {
         }
         if (this.data.strength !== undefined && !this.data.dynamicIntensity) {
           this.bloomPass.strength = this.data.strength;
+        }
+      }
+    },
+
+    setEnabled: function (val) {
+      this.data.enabled = !!val;
+      this.enabled = !!val;
+      const renderer = this.sceneEl && this.sceneEl.renderer;
+      if (renderer) {
+        renderer.setRenderTarget(null);
+        renderer.setClearColor(0x000000, 0);
+        renderer.autoClear = !this.enabled;
+      }
+      if (this.sceneEl && this.sceneEl.object3D && this.sceneEl.object3D.background) {
+        this.sceneEl.object3D.background = null;
+      }
+      if (this.sceneEl && this.sceneEl.camera) {
+        const activeCamera = (this.sceneEl.camera && this.sceneEl.camera.isCamera) 
+          ? this.sceneEl.camera 
+          : (this.sceneEl.camera && this.sceneEl.camera.el && this.sceneEl.camera.el.getObject3D('camera'));
+        if (activeCamera && activeCamera.layers) {
+          activeCamera.layers.enableAll();
         }
       }
     },
@@ -169,7 +197,12 @@ if (typeof AFRAME !== 'undefined') {
       }
 
       this.isInitialized = true;
-      renderer.autoClear = false;
+      renderer.setRenderTarget(null);
+      renderer.setClearColor(0x000000, 0);
+      renderer.autoClear = !this.enabled;
+      if (sceneEl.object3D && sceneEl.object3D.background) {
+        sceneEl.object3D.background = null;
+      }
 
       // Restore native device pixel ratio for full-sharpness rendering
       const targetDpr = window.devicePixelRatio || 1;
@@ -253,13 +286,37 @@ if (typeof AFRAME !== 'undefined') {
           return;
         }
 
+        const activeCamera = (sceneEl.camera && sceneEl.camera.isCamera) ? sceneEl.camera : camera;
+        const activeScene = sceneEl.object3D || scene;
+
+        // CRITICAL: If bloom is disabled or strength <= 0, bypass the entire post-processing composer pipeline completely!
+        // Directly call originalRender so it NEVER enters EffectComposer / RenderPass / UnrealBloomPass.
+        if (!self.data.enabled || !self.enabled || self.data.strength <= 0) {
+          if (activeScene && activeScene.background) {
+            activeScene.background = null;
+          }
+          renderer.setRenderTarget(null);
+          renderer.setClearColor(0x000000, 0);
+          if (!renderer.autoClear) {
+            renderer.autoClear = true;
+          }
+          if (activeCamera && activeCamera.layers) {
+            activeCamera.layers.enableAll();
+          }
+          originalRender(activeScene, activeCamera);
+          return;
+        }
+
+        if (renderer.autoClear) {
+          renderer.autoClear = false;
+        }
+
         isRenderingComposer = true;
         try {
-          const activeCamera = (sceneEl.camera && sceneEl.camera.isCamera) ? sceneEl.camera : camera;
-          const activeScene = sceneEl.object3D || scene;
-
           if (!activeCamera || !activeScene || !self.bloomComposer || !self.finalComposer) {
-            originalRender(scene, camera);
+            renderer.setRenderTarget(null);
+            renderer.setClearColor(0x000000, 0);
+            originalRender(activeScene || scene, activeCamera || camera);
             return;
           }
 
@@ -297,7 +354,9 @@ if (typeof AFRAME !== 'undefined') {
           self.finalComposer.render();
         } catch (err) {
           console.error('[bloom-effect] Render pipeline error:', err);
-          originalRender(scene, camera);
+          renderer.setRenderTarget(null);
+          renderer.setClearColor(0x000000, 0);
+          originalRender(activeScene || scene, activeCamera || camera);
         } finally {
           isRenderingComposer = false;
         }
@@ -373,6 +432,9 @@ if (typeof AFRAME !== 'undefined') {
       }
       if (this.sceneEl && this.sceneEl.renderer && this._originalRender) {
         this.sceneEl.renderer.render = this._originalRender;
+        this.sceneEl.renderer.setRenderTarget(null);
+        this.sceneEl.renderer.setClearColor(0x000000, 0);
+        this.sceneEl.renderer.autoClear = true;
       }
       if (this.bloomComposer) {
         this.bloomComposer.dispose();

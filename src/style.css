@@ -261,6 +261,30 @@ button,
   box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
 }
 
+.btn-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hud-status-dot {
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #64748b;
+  border: 1px solid #0f172a;
+  transition: all 0.25s ease;
+}
+
+.hud-status-dot.active {
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
 /* Global utility for hiding elements */
 .hidden {
   display: none !important;
@@ -924,6 +948,74 @@ body.hud-collapsed #bloom-control-panel {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+/* Master Bloom Switch Section */
+.bloom-master-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: all 0.25s ease;
+}
+
+.bloom-master-section:has(input:checked) {
+  background: rgba(56, 189, 248, 0.06);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.1);
+}
+
+.master-toggle-row {
+  padding-top: 0;
+}
+
+.master-title-text {
+  color: #f8fafc;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+}
+
+.master-switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.bloom-status-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+}
+
+.bloom-status-badge.status-active {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+}
+
+.bloom-status-badge.status-off {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+/* Strength Group Disabled / Bypass Visual Styling */
+.bloom-strength-group {
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.bloom-strength-group.bloom-disabled {
+  opacity: 0.4;
+  filter: grayscale(50%);
+  pointer-events: none;
+  user-select: none;
 }
 
 .bloom-control-group {

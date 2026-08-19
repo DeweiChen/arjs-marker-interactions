@@ -44,9 +44,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Bloom Control 2D Panel DOM Elements
   const btnToggleBloom = document.getElementById('btn-toggle-bloom');
+  const bloomHudDot = document.getElementById('bloom-hud-dot');
   const bloomPanel = document.getElementById('bloom-control-panel');
   const btnCloseBloom = document.getElementById('btn-close-bloom');
   const btnResetBloom = document.getElementById('btn-reset-bloom');
+  const chkMasterBloom = document.getElementById('chk-master-bloom');
+  const valBloomStatus = document.getElementById('val-bloom-status');
+  const bloomStrengthGroup = document.getElementById('bloom-strength-group');
   const sliderBloomStrength = document.getElementById('slider-bloom-strength');
   const valBloomStrength = document.getElementById('val-bloom-strength');
   const presetBtns = document.querySelectorAll('.bloom-preset-btn');
@@ -183,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sceneEl.renderer.setPixelRatio(activeDpr);
       }
       sceneEl.renderer.setSize(window.innerWidth, window.innerHeight, false);
+      sceneEl.renderer.setClearColor(0x000000, 0);
       if (sceneEl.camera && sceneEl.camera.isCamera) {
         sceneEl.camera.aspect = window.innerWidth / window.innerHeight;
         sceneEl.camera.updateProjectionMatrix();
@@ -425,6 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Setup 2D Bloom & AR Settings Control Panel
   // ------------------------------------------------------------------------
   const defaultBloomSettings = {
+    enabled: true,
     strength: 0.6,
     radius: 0.3,
     threshold: 0.0,
@@ -432,7 +438,16 @@ document.addEventListener('DOMContentLoaded', () => {
     pitchFacing: false
   };
 
-  function updateBloomPresetsUI(currentStrength) {
+  let isBloomActive = localStorage.getItem('ar_bloom_enabled') !== 'false';
+  let lastPositiveStrength = 0.6;
+
+  function updateBloomPresetsUI(currentStrength, isEnabled = true) {
+    if (!isEnabled) {
+      presetBtns.forEach((btn) => {
+        btn.classList.toggle('active', parseFloat(btn.dataset.strength) === 0);
+      });
+      return;
+    }
     const roundedStrength = Math.round(currentStrength * 10) / 10;
     presetBtns.forEach((btn) => {
       const presetVal = parseFloat(btn.dataset.strength);
@@ -440,15 +455,78 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function applyBloomStrength(val) {
+  function applyBloomEnabled(enabled, showToastMsg = false) {
+    isBloomActive = !!enabled;
+
+    if (chkMasterBloom) {
+      chkMasterBloom.checked = isBloomActive;
+    }
+
+    if (valBloomStatus) {
+      if (isBloomActive) {
+        valBloomStatus.textContent = 'ON';
+        valBloomStatus.className = 'bloom-status-badge status-active';
+      } else {
+        valBloomStatus.textContent = 'OFF (Bypassed)';
+        valBloomStatus.className = 'bloom-status-badge status-off';
+      }
+    }
+
+    if (bloomStrengthGroup) {
+      bloomStrengthGroup.classList.toggle('bloom-disabled', !isBloomActive);
+    }
+
+    if (bloomHudDot) {
+      bloomHudDot.classList.toggle('active', isBloomActive);
+    }
+
+    // Update preset buttons state
+    if (!isBloomActive) {
+      updateBloomPresetsUI(0, false);
+    } else {
+      const currentVal = parseFloat(sliderBloomStrength ? sliderBloomStrength.value : lastPositiveStrength);
+      updateBloomPresetsUI(currentVal > 0 ? currentVal : lastPositiveStrength, true);
+    }
+
+    if (sceneEl) {
+      sceneEl.emit('set-bloom-params', { enabled: isBloomActive });
+    }
+
+    try {
+      localStorage.setItem('ar_bloom_enabled', String(isBloomActive));
+    } catch (_) {}
+
+    if (showToastMsg) {
+      if (isBloomActive) {
+        showToast('✨ Bloom 特效已啟用 (2-Pass Post-Processing)', 2200);
+      } else {
+        showToast('⚡ Bloom 特效已關閉（已完全跳過 Composer，0 額外 Pass）', 2800);
+      }
+    }
+  }
+
+  function applyBloomStrength(val, autoWakeBloom = true) {
     const num = Math.max(0, parseFloat(val) || 0);
+    if (num > 0) {
+      lastPositiveStrength = num;
+    }
+
     if (valBloomStrength) {
       valBloomStrength.textContent = `${num.toFixed(2)}x`;
     }
     if (sliderBloomStrength && Math.abs(parseFloat(sliderBloomStrength.value) - num) > 0.001) {
       sliderBloomStrength.value = num;
     }
-    updateBloomPresetsUI(num);
+
+    if (num === 0) {
+      if (isBloomActive) {
+        applyBloomEnabled(false, false);
+      }
+    } else if (autoWakeBloom && !isBloomActive) {
+      applyBloomEnabled(true, false);
+    }
+
+    updateBloomPresetsUI(num, isBloomActive);
 
     if (sceneEl) {
       sceneEl.emit('set-bloom-params', { strength: num });
@@ -494,9 +572,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Master Bloom Checkbox Event
+  if (chkMasterBloom) {
+    chkMasterBloom.addEventListener('change', (e) => {
+      const willEnable = e.target.checked;
+      applyBloomEnabled(willEnable, true);
+      if (willEnable) {
+        const curStrength = parseFloat(sliderBloomStrength ? sliderBloomStrength.value : 0);
+        if (curStrength <= 0) {
+          applyBloomStrength(lastPositiveStrength || defaultBloomSettings.strength, false);
+        } else {
+          applyBloomStrength(curStrength, false);
+        }
+      }
+    });
+  }
+
   // Reset to Defaults
   if (btnResetBloom) {
     btnResetBloom.addEventListener('click', () => {
+      applyBloomEnabled(defaultBloomSettings.enabled, false);
       applyBloomStrength(defaultBloomSettings.strength);
       if (sceneEl) {
         sceneEl.emit('set-bloom-params', {
@@ -507,13 +602,14 @@ document.addEventListener('DOMContentLoaded', () => {
       applyDynamicIntensity(defaultBloomSettings.dynamicIntensity);
       applyPitchFacing(defaultBloomSettings.pitchFacing);
       applyDPR('native', false);
+      showToast('已還原 Bloom 與渲染預設設定', 2000);
     });
   }
 
   // Strength Slider Events
   if (sliderBloomStrength) {
     sliderBloomStrength.addEventListener('input', (e) => {
-      applyBloomStrength(e.target.value);
+      applyBloomStrength(e.target.value, true);
     });
   }
 
@@ -522,7 +618,15 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       const strength = parseFloat(btn.dataset.strength);
       if (!isNaN(strength)) {
-        applyBloomStrength(strength);
+        if (strength === 0) {
+          applyBloomStrength(0, false);
+          applyBloomEnabled(false, true);
+        } else {
+          if (!isBloomActive) {
+            applyBloomEnabled(true, true);
+          }
+          applyBloomStrength(strength, false);
+        }
       }
     });
   });
@@ -539,6 +643,11 @@ document.addEventListener('DOMContentLoaded', () => {
     chkPitchFacing.addEventListener('change', (e) => {
       applyPitchFacing(e.target.checked);
     });
+  }
+
+  // Initialize Bloom State from Storage
+  if (!isBloomActive) {
+    applyBloomEnabled(false, false);
   }
 
   // ------------------------------------------------------------------------
@@ -604,6 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sceneEl && sceneEl.renderer) {
       sceneEl.renderer.setPixelRatio(effectiveDpr);
       sceneEl.renderer.setSize(window.innerWidth, window.innerHeight, false);
+      sceneEl.renderer.setClearColor(0x000000, 0);
       if (sceneEl.camera && sceneEl.camera.isCamera) {
         sceneEl.camera.aspect = window.innerWidth / window.innerHeight;
         sceneEl.camera.updateProjectionMatrix();
