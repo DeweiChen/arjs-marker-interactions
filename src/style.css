@@ -880,12 +880,14 @@ body.hud-collapsed #bloom-control-panel {
   border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
-/* Strength Group Disabled / Bypass Visual Styling */
-.bloom-strength-group {
+/* Strength & Pulse Group Disabled / Bypass Visual Styling */
+.bloom-strength-group,
+.bloom-pulse-group {
   transition: opacity 0.25s ease, filter 0.25s ease;
 }
 
-.bloom-strength-group.bloom-disabled {
+.bloom-strength-group.bloom-disabled,
+.bloom-pulse-group.bloom-disabled {
   opacity: 0.4;
   filter: grayscale(50%);
   pointer-events: none;
@@ -1024,11 +1026,32 @@ body.hud-collapsed #bloom-control-panel {
   border-color: rgba(255, 255, 255, 0.25);
 }
 
-.bloom-preset-btn.active {
+.bloom-preset-btn.active,
+.pulse-preset-btn.active {
   background: rgba(56, 189, 248, 0.18);
   border-color: #38bdf8;
   color: #38bdf8;
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
+
+.pulse-preset-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 5px 2px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.pulse-preset-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 /* DPR Presets Grid & Buttons */

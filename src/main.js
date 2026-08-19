@@ -47,6 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const sliderBloomStrength = document.getElementById('slider-bloom-strength');
   const valBloomStrength = document.getElementById('val-bloom-strength');
   const presetBtns = document.querySelectorAll('.bloom-preset-btn');
+  const bloomPulseGroup = document.getElementById('bloom-pulse-group');
+  const sliderPulseRange = document.getElementById('slider-pulse-range');
+  const valPulseRange = document.getElementById('val-pulse-range');
+  const pulsePresetBtns = document.querySelectorAll('.pulse-preset-btn');
   const chkDynamicIntensity = document.getElementById('chk-dynamic-intensity');
   const chkPitchFacing = document.getElementById('chk-pitch-facing');
 
@@ -424,15 +428,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // ------------------------------------------------------------------------
   const defaultBloomSettings = {
     enabled: true,
-    strength: 0.6,
+    strength: 1.3,
     radius: 0.3,
     threshold: 0.0,
+    pulseRange: 0.4,
     dynamicIntensity: true,
     pitchFacing: false
   };
 
   let isBloomActive = localStorage.getItem('ar_bloom_enabled') !== 'false';
-  let lastPositiveStrength = 0.6;
+  let lastPositiveStrength = 1.3;
+  let currentPulseRange = parseFloat(localStorage.getItem('ar_pulse_range') || '0.4');
 
   function updateBloomPresetsUI(currentStrength, isEnabled = true) {
     if (!isEnabled) {
@@ -467,6 +473,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (bloomStrengthGroup) {
       bloomStrengthGroup.classList.toggle('bloom-disabled', !isBloomActive);
+    }
+
+    if (bloomPulseGroup) {
+      bloomPulseGroup.classList.toggle('bloom-disabled', !isBloomActive);
     }
 
     if (bloomHudDot) {
@@ -594,6 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       applyDynamicIntensity(defaultBloomSettings.dynamicIntensity);
       applyPitchFacing(defaultBloomSettings.pitchFacing);
+      applyPulseRange(defaultBloomSettings.pulseRange, false);
       applyDPR('native', false);
       showToast('已還原 Bloom 與渲染預設設定', 2000);
     });
@@ -638,10 +649,61 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Initialize Bloom State from Storage
+  // ------------------------------------------------------------------------
+  // Breathing Pulse Amplitude Controller (0.0x ~ 0.60x)
+  // ------------------------------------------------------------------------
+  function updatePulsePresetsUI(currentVal) {
+    pulsePresetBtns.forEach((btn) => {
+      const presetVal = parseFloat(btn.dataset.pulse);
+      btn.classList.toggle('active', Math.abs(presetVal - currentVal) < 0.04);
+    });
+  }
+
+  function applyPulseRange(val, showToastMsg = false) {
+    const num = Math.max(0, Math.min(1.0, parseFloat(val) || 0));
+    currentPulseRange = num;
+
+    if (valPulseRange) {
+      valPulseRange.textContent = num === 0 ? '0.00x (Off)' : `±${num.toFixed(2)}x`;
+    }
+    if (sliderPulseRange && Math.abs(parseFloat(sliderPulseRange.value) - num) > 0.005) {
+      sliderPulseRange.value = num;
+    }
+    updatePulsePresetsUI(num);
+
+    if (sceneEl) {
+      sceneEl.emit('set-bloom-params', { pulseRange: num });
+    }
+
+    try {
+      localStorage.setItem('ar_pulse_range', String(num));
+    } catch (_) {}
+
+    if (showToastMsg) {
+      showToast(`✨ 呼吸燈起伏幅度: ${num === 0 ? '關閉' : '±' + num.toFixed(2) + 'x'}`);
+    }
+  }
+
+  if (sliderPulseRange) {
+    sliderPulseRange.addEventListener('input', (e) => {
+      applyPulseRange(e.target.value, false);
+    });
+  }
+
+  pulsePresetBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const pulseVal = parseFloat(btn.dataset.pulse);
+      if (!isNaN(pulseVal)) {
+        applyPulseRange(pulseVal, true);
+      }
+    });
+  });
+
+  // Initialize Bloom State & Pulse from Storage
   if (!isBloomActive) {
     applyBloomEnabled(false, false);
   }
+  applyPulseRange(currentPulseRange, false);
 
   // ------------------------------------------------------------------------
   // DPR Resolution Switcher Controller (1.0x, 1.5x, 2.0x, Native)

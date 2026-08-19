@@ -127,19 +127,41 @@
           <label for="slider-bloom-strength" class="bloom-control-label">
             <span class="label-title">Strength (強烈度)</span>
           </label>
-          <span id="val-bloom-strength" class="bloom-val-badge">0.60x</span>
+          <span id="val-bloom-strength" class="bloom-val-badge">1.30x</span>
         </div>
         <div class="bloom-slider-wrapper">
-          <input type="range" id="slider-bloom-strength" class="bloom-range-slider" min="0" max="3" step="0.05" value="0.6">
+          <input type="range" id="slider-bloom-strength" class="bloom-range-slider" min="0" max="3" step="0.05" value="1.3">
         </div>
         
         <!-- Preset quick buttons -->
         <div class="bloom-presets">
           <button type="button" class="bloom-preset-btn" data-strength="0.0">Off (0.0)</button>
-          <button type="button" class="bloom-preset-btn" data-strength="0.3">Soft (0.3)</button>
-          <button type="button" class="bloom-preset-btn active" data-strength="0.6">Def (0.6)</button>
-          <button type="button" class="bloom-preset-btn" data-strength="1.2">Glow (1.2)</button>
-          <button type="button" class="bloom-preset-btn" data-strength="2.0">Hyper (2.0)</button>
+          <button type="button" class="bloom-preset-btn" data-strength="0.6">Soft (0.6)</button>
+          <button type="button" class="bloom-preset-btn active" data-strength="1.3">Def (1.3)</button>
+          <button type="button" class="bloom-preset-btn" data-strength="2.0">Glow (2.0)</button>
+          <button type="button" class="bloom-preset-btn" data-strength="3.0">Hyper (3.0)</button>
+        </div>
+      </div>
+
+      <!-- Breathing Pulse Amplitude Control (呼吸燈起伏幅度) -->
+      <div id="bloom-pulse-group" class="bloom-control-group bloom-pulse-group">
+        <div class="bloom-control-label-row">
+          <label for="slider-pulse-range" class="bloom-control-label">
+            <span class="label-title">Breathing Pulse (呼吸燈起伏幅度)</span>
+          </label>
+          <span id="val-pulse-range" class="bloom-val-badge">±0.40x</span>
+        </div>
+        <div class="bloom-slider-wrapper">
+          <input type="range" id="slider-pulse-range" class="bloom-range-slider" min="0" max="0.6" step="0.02" value="0.4">
+        </div>
+        
+        <!-- Preset quick buttons for pulse -->
+        <div class="bloom-presets pulse-presets">
+          <button type="button" class="pulse-preset-btn" data-pulse="0.0">Off (0.0)</button>
+          <button type="button" class="pulse-preset-btn" data-pulse="0.20">Soft (±0.2)</button>
+          <button type="button" class="pulse-preset-btn active" data-pulse="0.40">Def (±0.4)</button>
+          <button type="button" class="pulse-preset-btn" data-pulse="0.50">Deep (±0.5)</button>
+          <button type="button" class="pulse-preset-btn" data-pulse="0.60">Max (±0.6)</button>
         </div>
       </div>
 
@@ -263,7 +285,7 @@
     arjs="sourceType: webcam; sourceWidth: 640; sourceHeight: 360; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
     renderer="precision: mediump; antialias: false; powerPreference: high-performance;"
     proximity-lightning="marker1: #marker-hiro; marker2: #marker-kanji; maxDistance: 3.0; minDistance: 0.35; terminalOffsetY: 0.25; smoothingFactor: 0.3"
-    bloom-effect="strength: 0.6; radius: 0.3; threshold: 0.0; downscale: 0.5; dynamicIntensity: true"
+    bloom-effect="strength: 1.3; radius: 0.3; threshold: 0.0; downscale: 0.25; pulseRange: 0.4; dynamicIntensity: true"
     device-orientation-permission-ui="enabled: true; deviceMotionMessage: 此 AR 互動需要存取您的裝置動作與方向感應器 (陀螺儀)。<br><span style='font-size:12px;opacity:0.85;display:block;margin-top:4px;'>This AR experience requires access to your device motion sensors.</span>; allowButtonText: 允許 Allow; denyButtonText: 拒絕 Deny;">
 
     <!-- Preloaded Assets: 3D Typeface Font -->
