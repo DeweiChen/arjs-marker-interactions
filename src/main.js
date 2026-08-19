@@ -16,15 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const badgeFps = document.getElementById('badge-fps');
   const fpsVal = document.getElementById('fps-val');
   const frametimeVal = document.getElementById('frametime-val');
-  const stateVal = document.getElementById('state-val');
-  const badgeTracking = document.getElementById('badge-tracking');
-  const trackingVal = document.getElementById('tracking-val');
 
   // Bottom Status & Energy DOM Elements
-  const statusHiro = document.getElementById('status-hiro');
-  const statusKanji = document.getElementById('status-kanji');
-  const statusHiroVal = document.getElementById('status-hiro-val');
-  const statusKanjiVal = document.getElementById('status-kanji-val');
   const distanceVal = document.getElementById('distance-val');
   const energyBar = document.getElementById('energy-bar');
   const energyStatusText = document.getElementById('energy-status-text');
@@ -754,45 +747,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ------------------------------------------------------------------------
-  // State Machine HUD Synchronizer
-  // ------------------------------------------------------------------------
-  function updateStateHUD() {
-    const trackedCount = (stateStore.isHiroVisible ? 1 : 0) + (stateStore.isKanjiVisible ? 1 : 0);
-
-    // 1. Update Tracking Count Badge
-    if (trackingVal) {
-      trackingVal.textContent = `${trackedCount} / 2`;
-    }
-    if (badgeTracking) {
-      badgeTracking.classList.toggle('tracking-all', trackedCount === 2);
-    }
-
-    // 2. Update System State Indicator
-    if (stateVal) {
-      stateVal.className = 'chip-val'; // reset modifier classes
-      if (trackedCount === 0) {
-        stateVal.textContent = 'SEARCHING';
-        stateVal.classList.add('state-standby');
-      } else if (trackedCount === 1) {
-        stateVal.textContent = stateStore.isHiroVisible ? 'HIRO LOCKED' : 'KANJI LOCKED';
-        stateVal.classList.add('state-standby');
-      } else {
-        // Both markers visible
-        if (stateStore.proximityPercent > 80) {
-          stateVal.textContent = '⚡ OVERLOAD';
-          stateVal.classList.add('state-overload');
-        } else if (stateStore.proximityPercent > 25) {
-          stateVal.textContent = '⚡ DISCHARGE';
-          stateVal.classList.add('state-active');
-        } else {
-          stateVal.textContent = 'STANDBY (2/2)';
-          stateVal.classList.add('state-standby');
-        }
-      }
-    }
-  }
-
-  // ------------------------------------------------------------------------
   // Setup AR scene event listeners & DPR Enforcement
   // ------------------------------------------------------------------------
   if (sceneEl) {
@@ -809,24 +763,18 @@ document.addEventListener('DOMContentLoaded', () => {
       sceneEl.addEventListener('loaded', enforceOptimizedDPR, { once: true });
     }
 
-    // 1. Marker visibility changes
+    // 1. Marker visibility tracking
     sceneEl.addEventListener('marker-status-change', (e) => {
       const { marker, visible } = e.detail;
 
       if (marker === 'hiro') {
         stateStore.isHiroVisible = visible;
-        if (statusHiro) statusHiro.classList.toggle('active', visible);
-        if (statusHiroVal) statusHiroVal.textContent = visible ? 'Tracking' : 'Waiting...';
       } else if (marker === 'kanji') {
         stateStore.isKanjiVisible = visible;
-        if (statusKanji) statusKanji.classList.toggle('active', visible);
-        if (statusKanjiVal) statusKanjiVal.textContent = visible ? 'Tracking' : 'Waiting...';
       }
-
-      updateStateHUD();
     });
 
-    // 2. Proximity and Distance calculations
+    // 2. Proximity and Distance calculations (Discharge Status & Energy Power Gauge)
     sceneEl.addEventListener('proximity-update', (e) => {
       const { distance, proximity, active } = e.detail;
       stateStore.proximityActive = active;
@@ -858,8 +806,6 @@ document.addEventListener('DOMContentLoaded', () => {
           energyStatusText.style.color = 'var(--text-secondary)';
         }
       }
-
-      updateStateHUD();
     });
   }
 

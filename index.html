@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#0a0e17" />
+  <meta name="theme-color" content="#000000" />
   <title>AR.js Dynamic Dual Marker Lightning Interaction</title>
 
   <!-- Google Fonts -->
@@ -35,18 +35,6 @@
         <span class="chip-label">FPS</span>
         <span id="fps-val" class="chip-val">--</span>
         <span id="frametime-val" class="chip-sub">(--ms)</span>
-      </div>
-
-      <!-- System State Indicator -->
-      <div id="badge-state" class="telemetry-chip state-chip">
-        <span class="chip-label">STATE</span>
-        <span id="state-val" class="chip-val state-standby">IDLE</span>
-      </div>
-
-      <!-- Marker Tracking Status Summary -->
-      <div id="badge-tracking" class="telemetry-chip tracking-chip">
-        <span class="chip-label">TRACKING</span>
-        <span id="tracking-val" class="chip-val">0 / 2</span>
       </div>
     </div>
 
@@ -219,16 +207,7 @@
 
   <!-- Bottom Interaction & Proximity Status Panel -->
   <footer class="hud-status-panel">
-    <!-- Hiro Marker Status -->
-    <div id="status-hiro" class="status-card">
-      <div class="status-indicator"></div>
-      <div class="status-info">
-        <span class="status-label">Marker 1 (Fu)</span>
-        <span id="status-hiro-val" class="status-val">Waiting...</span>
-      </div>
-    </div>
-
-    <!-- Proximity & Energy Power Gauge -->
+    <!-- Proximity & Energy Power Gauge (Discharge Status & Proximity Meter) -->
     <div class="energy-card">
       <div class="energy-header">
         <span id="energy-status-text" class="energy-status">STANDBY</span>
@@ -236,15 +215,6 @@
       </div>
       <div class="energy-progress-wrapper">
         <div id="energy-bar" class="energy-progress-bar"></div>
-      </div>
-    </div>
-
-    <!-- Kanji Marker Status -->
-    <div id="status-kanji" class="status-card">
-      <div class="status-indicator"></div>
-      <div class="status-info">
-        <span class="status-label">Marker 2 (DW)</span>
-        <span id="status-kanji-val" class="status-val">Waiting...</span>
       </div>
     </div>
   </footer>
@@ -289,6 +259,7 @@
 
   <!-- Embedded AR.js + A-Frame Scene with Proximity Lightning & Selective Bloom Components -->
   <a-scene embedded
+    loading-screen="dotsColor: #38bdf8; backgroundColor: #000000;"
     arjs="sourceType: webcam; sourceWidth: 640; sourceHeight: 360; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
     renderer="precision: mediump; antialias: false; powerPreference: high-performance;"
     proximity-lightning="marker1: #marker-hiro; marker2: #marker-kanji; maxDistance: 3.0; minDistance: 0.35; terminalOffsetY: 0.25; smoothingFactor: 0.3"

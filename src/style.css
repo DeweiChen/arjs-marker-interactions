@@ -61,6 +61,8 @@ a-scene {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  background-color: transparent !important;
+  background: transparent !important;
 }
 
 canvas {
@@ -195,28 +197,15 @@ button,
   color: #f87171;
 }
 
-/* State Chip Dynamic Colors */
-.state-chip .state-standby {
-  color: #94a3b8;
+/* A-Frame Loading Screen Text & Buttons */
+.a-loader-title {
+  color: #f8fafc !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
 }
 
-.state-chip .state-active {
-  color: #38bdf8;
-  text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
-}
-
-.state-chip .state-overload {
-  color: #f43f5e;
-  text-shadow: 0 0 8px rgba(244, 63, 94, 0.6);
-}
-
-/* Tracking Chip */
-.tracking-chip.tracking-all {
-  border-color: rgba(56, 189, 248, 0.4);
-}
-
-.tracking-chip.tracking-all .chip-val {
-  color: #38bdf8;
+.a-enter-vr,
+.a-enter-ar {
+  display: none !important;
 }
 
 .hud-actions {
@@ -290,7 +279,7 @@ button,
   display: none !important;
 }
 
-/* Bottom Status Panel */
+/* Bottom Status Panel (Discharging & Proximity Power Gauge) */
 .hud-status-panel {
   position: fixed;
   bottom: max(20px, env(safe-area-inset-bottom));
@@ -298,10 +287,10 @@ button,
   transform: translateX(-50%);
   z-index: 10;
   display: flex;
-  align-items: stretch;
-  gap: 10px;
+  justify-content: center;
+  align-items: center;
   width: calc(100vw - 32px);
-  max-width: 680px;
+  max-width: 440px;
   pointer-events: auto;
   box-sizing: border-box;
   transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -388,97 +377,20 @@ body.hud-collapsed #bloom-control-panel {
   transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.status-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--panel-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--panel-shadow);
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  flex: 1;
-  min-width: 0;
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.status-card#status-hiro.active {
-  border-color: var(--color-hiro);
-  box-shadow: 0 0 20px var(--color-hiro-glow);
-}
-
-.status-card#status-kanji.active {
-  border-color: var(--color-kanji);
-  box-shadow: 0 0 20px var(--color-kanji-glow);
-}
-
-.status-indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #64748b;
-  flex-shrink: 0;
-  transition: all 0.3s ease;
-}
-
-.status-card#status-hiro.active .status-indicator {
-  background: var(--color-hiro);
-  box-shadow: 0 0 10px var(--color-hiro);
-  animation: pulse 1.5s infinite;
-}
-
-.status-card#status-kanji.active .status-indicator {
-  background: var(--color-kanji);
-  box-shadow: 0 0 10px var(--color-kanji);
-  animation: pulse 1.5s infinite;
-}
-
-.status-info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.status-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.status-val {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.status-card.active .status-val {
-  color: #38bdf8;
-}
-
 /* Energy Discharge & Proximity Meter */
 .energy-card {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   background: var(--panel-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--panel-border);
   box-shadow: var(--panel-shadow);
-  padding: 8px 14px;
+  padding: 10px 16px;
   border-radius: var(--radius-md);
-  flex: 1.6;
+  width: 100%;
   min-width: 0;
   transition: all 0.3s ease;
   overflow: hidden;
@@ -488,7 +400,7 @@ body.hud-collapsed #bloom-control-panel {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+  font-size: 11.5px;
   gap: 6px;
 }
 
@@ -568,24 +480,20 @@ body.hud-collapsed #bloom-control-panel {
     gap: 5px;
   }
 
-  /* Status Panel in Portrait: 2-Row Grid to prevent horizontal overflow */
+  /* Status Panel in Portrait */
   .hud-status-panel {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    display: flex;
+    justify-content: center;
     bottom: max(14px, env(safe-area-inset-bottom));
     left: 50%;
     transform: translateX(-50%);
     width: calc(100vw - 24px);
-    max-width: calc(100vw - 24px);
+    max-width: 440px;
   }
 
-  /* Energy Meter spans full top row */
   .energy-card {
-    grid-column: 1 / -1;
-    order: 1;
-    padding: 8px 14px;
-    min-width: 0;
+    padding: 9px 14px;
+    width: 100%;
   }
 
   .energy-status {
@@ -594,38 +502,6 @@ body.hud-collapsed #bloom-control-panel {
 
   .distance-badge {
     font-size: 12px;
-  }
-
-  /* Marker 1 (Hiro) on bottom left */
-  #status-hiro {
-    grid-column: 1 / 2;
-    order: 2;
-    padding: 8px 12px;
-    gap: 8px;
-    min-width: 0;
-  }
-
-  /* Marker 2 (Kanji) on bottom right */
-  #status-kanji {
-    grid-column: 2 / 3;
-    order: 3;
-    padding: 8px 12px;
-    gap: 8px;
-    min-width: 0;
-  }
-
-  .status-indicator {
-    width: 9px;
-    height: 9px;
-  }
-
-  .status-label {
-    font-size: 11px;
-  }
-
-  .status-val {
-    font-size: 12.5px;
-    font-weight: 600;
   }
 }
 
@@ -642,10 +518,9 @@ body.hud-collapsed #bloom-control-panel {
 
   .hud-status-panel {
     width: calc(100vw - 16px);
-    gap: 6px;
   }
 
-  .status-card, .energy-card {
+  .energy-card {
     padding: 7px 10px;
   }
 }
@@ -662,11 +537,10 @@ body.hud-collapsed #bloom-control-panel {
 
   .hud-status-panel {
     bottom: max(8px, env(safe-area-inset-bottom));
-    gap: 8px;
-    max-width: 600px;
+    max-width: 440px;
   }
 
-  .status-card, .energy-card {
+  .energy-card {
     padding: 6px 10px;
   }
 }
