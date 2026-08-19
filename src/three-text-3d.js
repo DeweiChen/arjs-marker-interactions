@@ -105,7 +105,7 @@ if (typeof AFRAME !== 'undefined') {
       color: { type: 'color', default: '#ffffff' },
       emissive: { type: 'color', default: '#ffffff' },
       emissiveIntensity: { type: 'number', default: 1.0 },
-      pitchFacing: { type: 'boolean', default: false },
+      pitchFacing: { type: 'boolean', default: true },
       minPitch: { type: 'number', default: -90 },
       maxPitch: { type: 'number', default: 35 },
       smoothingFactor: { type: 'number', default: 0.25 }

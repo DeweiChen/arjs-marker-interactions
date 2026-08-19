@@ -61,6 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const resRenderMp = document.getElementById('res-render-mp');
   const resCameraPx = document.getElementById('res-camera-px');
   const resCameraMp = document.getElementById('res-camera-mp');
+  const resViewportAspect = document.getElementById('res-viewport-aspect');
+  const resViewportBadge = document.getElementById('res-viewport-badge');
   let currentDprSetting = localStorage.getItem('ar_custom_dpr') || 'native';
 
   // Tracking state store
@@ -123,6 +125,117 @@ document.addEventListener('DOMContentLoaded', () => {
   initAntiZoomProtection();
 
   // ------------------------------------------------------------------------
+  // AR.js Dynamic Viewport Aspect Ratio & Projection Matrix Correction System
+  // ------------------------------------------------------------------------
+  let isCorrectionInitialized = false;
+
+  function getARObjects() {
+    const arSystem = sceneEl && sceneEl.systems && sceneEl.systems.arjs;
+    const arSession = arSystem && (arSystem._arSession || arSystem);
+    const arSource = arSession && (arSession.arSource || arSystem.arSource);
+    const arContext = arSession && (arSession.arContext || arSystem.arContext);
+    const video = (arSource && arSource.domElement) || document.querySelector('#arjs-video') || document.querySelector('video');
+    return { arSystem, arSession, arSource, arContext, video };
+  }
+
+  /**
+   * Mathematically corrects the AR projection matrix to compensate for viewport aspect ratio cropping.
+   * Eliminates the ~3.8x horizontal/vertical stretch distortion in mobile portrait & ultra-wide landscape.
+   *
+   * @param {THREE.Matrix4} originalMatrix - Raw projection matrix from ARToolKit
+   * @param {HTMLVideoElement} videoEl - Active camera video element
+   * @returns {THREE.Matrix4} Corrected projection matrix matching visible screen viewport
+   */
+  function calculateCorrectedProjectionMatrix(originalMatrix, videoEl) {
+    if (!originalMatrix || !originalMatrix.elements) return originalMatrix;
+
+    const Ws = window.innerWidth;
+    const Hs = window.innerHeight;
+    if (Ws <= 0 || Hs <= 0) return originalMatrix;
+
+    const { arSource } = getARObjects();
+    const Wv = (videoEl && videoEl.videoWidth > 0) ? videoEl.videoWidth : ((arSource && arSource.parameters && arSource.parameters.sourceWidth) || 1280);
+    const Hv = (videoEl && videoEl.videoHeight > 0) ? videoEl.videoHeight : ((arSource && arSource.parameters && arSource.parameters.sourceHeight) || 720);
+
+    if (Wv <= 0 || Hv <= 0) return originalMatrix;
+
+    const Rs = Ws / Hs; // Viewport aspect ratio (e.g. 0.46 on mobile portrait)
+    const Rv = Wv / Hv; // Camera stream aspect ratio (e.g. 1.777 for 16:9)
+
+    const corrected = originalMatrix.clone();
+    const el = corrected.elements;
+
+    if (Rs < Rv) {
+      // Portrait mode (or screen taller/narrower than camera stream):
+      // The video fills height and is cropped on left & right.
+      // Visible horizontal fraction: kx = Rs / Rv.
+      // Multiply horizontal focal scale (el[0]) and principal point x (el[8]) by 1 / kx:
+      const kx = Rs / Rv;
+      el[0] /= kx;
+      el[8] /= kx;
+    } else if (Rs > Rv) {
+      // Ultra-wide Landscape mode (or screen wider than camera stream):
+      // The video fills width and is cropped on top & bottom.
+      // Visible vertical fraction: ky = Rv / Rs.
+      // Multiply vertical focal scale (el[5]) and principal point y (el[9]) by 1 / ky:
+      const ky = Rv / Rs;
+      el[5] /= ky;
+      el[9] /= ky;
+    }
+    // If Rs === Rv (e.g. 4:3 screen with 4:3 camera): exact match, no modification needed.
+
+    return corrected;
+  }
+
+  function tryInitAspectCorrection() {
+    if (isCorrectionInitialized) return;
+
+    const { arSource, arContext, video } = getARObjects();
+    if (!arContext) {
+      return;
+    }
+
+    isCorrectionInitialized = true;
+
+    // 1. Override arSource.copyElementSizeTo to PREVENT AR.js from altering document.body
+    // and from enforcing obsolete 4/3 aspect ratio in portrait mode!
+    if (arSource && typeof arSource.copyElementSizeTo === 'function') {
+      arSource.copyElementSizeTo = function (target) {
+        if (!target || target === document.body) {
+          return; // Never allow AR.js to alter document.body dimensions or margin!
+        }
+        if (target.tagName === 'CANVAS' || target.classList.contains('a-canvas')) {
+          target.style.width = '100vw';
+          target.style.height = '100dvh';
+          target.style.marginLeft = '0px';
+          target.style.marginTop = '0px';
+          target.style.top = '0px';
+          target.style.left = '0px';
+          return;
+        }
+        if (this.domElement) {
+          target.style.width = this.domElement.style.width;
+          target.style.height = this.domElement.style.height;
+          target.style.marginLeft = this.domElement.style.marginLeft;
+          target.style.marginTop = this.domElement.style.marginTop;
+        }
+      };
+    }
+
+    // 2. Wrap arContext.getProjectionMatrix to return mathematically corrected projection matrix
+    if (typeof arContext.getProjectionMatrix === 'function') {
+      const originalGetProjectionMatrix = arContext.getProjectionMatrix.bind(arContext);
+      arContext.getProjectionMatrix = function () {
+        const originalMat = originalGetProjectionMatrix();
+        const curVideo = (arSource && arSource.domElement) || document.querySelector('#arjs-video') || document.querySelector('video');
+        return calculateCorrectedProjectionMatrix(originalMat, curVideo);
+      };
+    }
+
+    console.log('[AR Aspect Correction] Dynamic projection matrix and viewport synchronizer hooked successfully.');
+  }
+
+  // ------------------------------------------------------------------------
   // App-Switch Recovery, Viewport Scale Reset & Camera Sync System
   // ------------------------------------------------------------------------
   let resizeTimer = null;
@@ -147,34 +260,33 @@ document.addEventListener('DOMContentLoaded', () => {
   function syncARViewport() {
     resetVisualViewportZoom();
 
-    const arSession = sceneEl && sceneEl.systems && sceneEl.systems.arjs;
-    if (arSession && arSession.arSource && arSession.arContext) {
-      const video = arSession.arSource.domElement;
+    // Ensure Aspect Correction is hooked as soon as AR session is available
+    tryInitAspectCorrection();
 
-      // 1. If camera video was paused by OS when switching apps, resume it
-      if (video && video.tagName === 'VIDEO') {
-        if (video.paused) {
-          video.play().catch(() => {});
-        }
-        // If video stream is still recovering (dimensions not yet available), wait for metadata
-        if (!video.videoWidth || !video.videoHeight) {
-          video.onloadedmetadata = () => {
-            syncARViewport();
-          };
-          return;
-        }
-      }
+    const { arSource, arContext, video } = getARObjects();
 
-      // 2. Force AR.js to recalculate video element layout styles
-      if (typeof arSession.arSource.onResizeElement === 'function') {
-        arSession.arSource.onResizeElement();
+    // 1. If camera video was paused by OS when switching apps, resume it
+    if (video && video.tagName === 'VIDEO') {
+      if (video.paused) {
+        video.play().catch(() => {});
       }
+      // If video stream is still recovering (dimensions not yet available), wait for metadata
+      if (!video.videoWidth || !video.videoHeight) {
+        video.onloadedmetadata = () => {
+          syncARViewport();
+        };
+      }
+    }
 
-      // 3. Synchronize AR controller canvas & update context projection matrix
-      if (arSession.arContext.arController && arSession.arContext.arController.canvas) {
-        arSession.arSource.copyElementSizeTo(arSession.arContext.arController.canvas);
-        arSession.arContext.update();
-      }
+    // 2. Force AR.js to recalculate video element layout styles
+    if (arSource && typeof arSource.onResizeElement === 'function') {
+      arSource.onResizeElement();
+    }
+
+    // 3. Synchronize AR controller canvas & update context projection matrix
+    if (arContext && arContext.arController && arContext.arController.canvas && arSource) {
+      arSource.copyElementSizeTo(arContext.arController.canvas);
+      arContext.update();
     }
 
     // 4. Synchronize A-Frame camera & renderer viewport
@@ -185,9 +297,23 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       sceneEl.renderer.setSize(window.innerWidth, window.innerHeight, false);
       sceneEl.renderer.setClearColor(0x000000, 0);
+
+      // Update camera projection matrix with mathematically corrected AR matrix
       if (sceneEl.camera && sceneEl.camera.isCamera) {
-        sceneEl.camera.aspect = window.innerWidth / window.innerHeight;
-        sceneEl.camera.updateProjectionMatrix();
+        if (arContext && typeof arContext.getProjectionMatrix === 'function') {
+          try {
+            const correctedMatrix = arContext.getProjectionMatrix();
+            if (correctedMatrix) {
+              sceneEl.camera.projectionMatrix.copy(correctedMatrix);
+            }
+          } catch (_) {
+            sceneEl.camera.aspect = window.innerWidth / window.innerHeight;
+            sceneEl.camera.updateProjectionMatrix();
+          }
+        } else {
+          sceneEl.camera.aspect = window.innerWidth / window.innerHeight;
+          sceneEl.camera.updateProjectionMatrix();
+        }
       }
     }
 
@@ -240,9 +366,35 @@ document.addEventListener('DOMContentLoaded', () => {
     window.visualViewport.addEventListener('resize', debouncedSyncARViewport);
   }
 
-  window.addEventListener('arToolkitContext-loaded', () => {
+  window.addEventListener('arjs-video-loaded', (e) => {
+    tryInitAspectCorrection();
+    const video = (e && e.detail && e.detail.component) || document.querySelector('#arjs-video') || document.querySelector('video');
+    if (video) {
+      const onVideoReady = () => {
+        multiStageSyncARViewport();
+      };
+      video.addEventListener('loadedmetadata', onVideoReady);
+      video.addEventListener('playing', onVideoReady);
+      video.addEventListener('canplay', onVideoReady);
+    }
     multiStageSyncARViewport();
   });
+
+  window.addEventListener('arToolkitContext-loaded', () => {
+    tryInitAspectCorrection();
+    multiStageSyncARViewport();
+  });
+
+  if (sceneEl) {
+    sceneEl.addEventListener('renderstart', () => {
+      tryInitAspectCorrection();
+      multiStageSyncARViewport();
+    });
+    sceneEl.addEventListener('loaded', () => {
+      tryInitAspectCorrection();
+      multiStageSyncARViewport();
+    });
+  }
 
   // ------------------------------------------------------------------------
   // Setup Fullscreen & Immersive Mode Controller
@@ -433,7 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
     threshold: 0.0,
     pulseRange: 0.4,
     dynamicIntensity: true,
-    pitchFacing: false
+    pitchFacing: true
   };
 
   let isBloomActive = localStorage.getItem('ar_bloom_enabled') !== 'false';
@@ -730,15 +882,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Camera actual resolution from AR session video stream
-    const arSession = sceneEl && sceneEl.systems && sceneEl.systems.arjs;
-    if (arSession && arSession.arSource && arSession.arSource.domElement) {
-      const video = arSession.arSource.domElement;
-      if (video && video.videoWidth && video.videoHeight) {
-        const camW = video.videoWidth;
-        const camH = video.videoHeight;
+    const { video, arSource } = getARObjects();
+    if (video) {
+      const camW = video.videoWidth || (arSource && arSource.parameters && arSource.parameters.sourceWidth) || 0;
+      const camH = video.videoHeight || (arSource && arSource.parameters && arSource.parameters.sourceHeight) || 0;
+
+      if (camW > 0 && camH > 0) {
         const camMp = ((camW * camH) / 1000000).toFixed(2);
         if (resCameraPx) resCameraPx.textContent = `${camW} × ${camH} px`;
         if (resCameraMp) resCameraMp.textContent = `${camMp} MP`;
+
+        if (resViewportAspect) {
+          const isPortrait = window.innerHeight > window.innerWidth;
+          const Rs = (window.innerWidth / window.innerHeight).toFixed(2);
+          const Rv = (camW / camH).toFixed(2);
+          resViewportAspect.textContent = isPortrait 
+            ? `直立 (螢幕 ${Rs} : 鏡頭 ${Rv})` 
+            : `橫向 (螢幕 ${Rs} : 鏡頭 ${Rv})`;
+        }
+        if (resViewportBadge) {
+          const isPortrait = window.innerHeight > window.innerWidth;
+          resViewportBadge.textContent = isPortrait ? '縱向裁切校正' : '橫向適配校正';
+          resViewportBadge.className = 'res-item-badge status-active';
+        }
       }
     }
   }
@@ -769,10 +935,6 @@ document.addEventListener('DOMContentLoaded', () => {
       sceneEl.renderer.setPixelRatio(effectiveDpr);
       sceneEl.renderer.setSize(window.innerWidth, window.innerHeight, false);
       sceneEl.renderer.setClearColor(0x000000, 0);
-      if (sceneEl.camera && sceneEl.camera.isCamera) {
-        sceneEl.camera.aspect = window.innerWidth / window.innerHeight;
-        sceneEl.camera.updateProjectionMatrix();
-      }
     }
 
     // Emit event for post-processing shaders & listeners
@@ -903,6 +1065,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           badgeFps.classList.add('fps-low');
         }
+      }
+
+      // Periodically sync resolution readout and ensure aspect correction is hooked
+      updateResolutionDisplay();
+      if (!isCorrectionInitialized) {
+        tryInitAspectCorrection();
       }
 
       // Reset counters

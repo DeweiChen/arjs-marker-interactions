@@ -65,22 +65,29 @@ a-scene {
   background: transparent !important;
 }
 
-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
+canvas,
+.a-canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
   pointer-events: none;
-  z-index: 2;
+  z-index: 2 !important;
   touch-action: none;
 }
 
 /* AR.js generated video element */
+#arjs-video,
 video {
   position: absolute !important;
   top: 0 !important;
   left: 0 !important;
   z-index: 1 !important;
+  max-width: none !important;
+  max-height: none !important;
   touch-action: none;
+  pointer-events: none;
 }
 
 /* Interactive UI Controls touch-action */
@@ -112,7 +119,7 @@ button,
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  pointer-events: auto;
+  pointer-events: none;
   transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -123,6 +130,7 @@ button,
   gap: 8px;
   min-width: 0;
   flex-wrap: wrap;
+  pointer-events: auto;
 }
 
 .telemetry-chip {
@@ -212,6 +220,7 @@ button,
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+  pointer-events: auto;
 }
 
 .hud-btn {
@@ -447,37 +456,43 @@ body.hud-collapsed #bloom-control-panel {
 }
 
 /* ==========================================================================
-   Responsive Breakpoints (Mobile Portrait & Compact Viewports)
+   Responsive Breakpoints: Portrait Mode (右上往右下直立排列)
    ========================================================================== */
 
-@media (max-width: 640px), (orientation: portrait) and (max-width: 850px) {
+@media (orientation: portrait), (max-width: 640px) {
   /* Header in Portrait / Small screens */
   .hud-header {
     top: max(12px, env(safe-area-inset-top));
     left: max(12px, env(safe-area-inset-left));
     right: max(12px, env(safe-area-inset-right));
+    align-items: flex-start;
     gap: 8px;
   }
 
   .telemetry-chip {
     padding: 6px 10px;
-    font-size: 12px;
+    font-size: 11.5px;
     gap: 5px;
   }
 
   .chip-label {
-    font-size: 10.5px;
+    font-size: 10px;
     letter-spacing: 0.3px;
   }
 
+  /* 直立模式：按鈕從右上往右下垂直並排 */
   .hud-actions {
-    gap: 6px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
   }
 
   .hud-btn {
     padding: 8px 12px;
-    font-size: 12.5px;
-    gap: 5px;
+    font-size: 12px;
+    gap: 6px;
+    min-width: 92px;
+    justify-content: flex-start;
   }
 
   /* Status Panel in Portrait */
@@ -516,6 +531,16 @@ body.hud-collapsed #bloom-control-panel {
     display: none;
   }
 
+  .hud-actions {
+    gap: 6px;
+  }
+
+  .hud-btn {
+    padding: 7px 10px;
+    font-size: 11.5px;
+    min-width: 84px;
+  }
+
   .hud-status-panel {
     width: calc(100vw - 16px);
   }
@@ -525,19 +550,41 @@ body.hud-collapsed #bloom-control-panel {
   }
 }
 
-/* Mobile Landscape Height Optimization */
+/* Mobile Landscape Height & Layout Optimization */
+@media (orientation: landscape) {
+  .hud-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .hud-actions {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
 @media (orientation: landscape) and (max-height: 500px) {
   .hud-header {
     top: max(8px, env(safe-area-inset-top));
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
   }
 
   .telemetry-chip {
     padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .hud-btn {
+    padding: 6px 10px;
+    font-size: 11.5px;
   }
 
   .hud-status-panel {
-    bottom: max(8px, env(safe-area-inset-bottom));
-    max-width: 440px;
+    bottom: max(6px, env(safe-area-inset-bottom));
+    max-width: 420px;
   }
 
   .energy-card {
@@ -746,13 +793,15 @@ body.hud-collapsed #bloom-control-panel {
   right: max(16px, env(safe-area-inset-right));
   width: 320px;
   max-width: calc(100vw - 32px);
-  background: rgba(15, 23, 42, 0.9);
+  max-height: calc(100vh - 75px);
+  max-height: calc(100dvh - 75px);
+  background: rgba(15, 23, 42, 0.92);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(56, 189, 248, 0.28);
   border-radius: var(--radius-lg);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(56, 189, 248, 0.15);
-  z-index: 50;
+  z-index: 150;
   pointer-events: auto;
   user-select: none;
   opacity: 1;
@@ -761,7 +810,10 @@ body.hud-collapsed #bloom-control-panel {
   transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
               visibility 0.25s ease;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  touch-action: pan-y;
 }
 
 .bloom-panel.hidden {
@@ -777,6 +829,8 @@ body.hud-collapsed #bloom-control-panel {
   align-items: center;
   padding: 12px 16px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  background: rgba(15, 23, 42, 0.95);
 }
 
 .bloom-panel-title {
@@ -822,6 +876,31 @@ body.hud-collapsed #bloom-control-panel {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+/* Custom Sleek Scrollbar for bloom-panel-body */
+.bloom-panel-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.bloom-panel-body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.bloom-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.35);
+  border-radius: 4px;
+}
+
+.bloom-panel-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.6);
 }
 
 /* Master Bloom Switch Section */
@@ -1223,16 +1302,27 @@ body.hud-collapsed #bloom-control-panel {
   background-color: #ffffff;
 }
 
-/* Responsive adjustment for Mobile screens */
-@media (max-width: 640px), (orientation: portrait) and (max-width: 850px) {
+/* Responsive adjustment for Bloom Panel in Mobile / Landscape / Portrait */
+@media (orientation: portrait), (max-width: 640px) {
   .bloom-panel {
-    top: calc(max(10px, env(safe-area-inset-top)) + 48px);
-    right: 10px;
-    left: 10px;
-    width: auto;
-    max-width: none;
-    max-height: calc(100vh - 160px);
-    overflow-y: auto;
+    top: calc(max(12px, env(safe-area-inset-top)) + 44px);
+    right: max(12px, env(safe-area-inset-right));
+    left: auto;
+    width: calc(100vw - 24px);
+    max-width: 330px;
+    max-height: calc(100vh - 120px);
+    max-height: calc(100dvh - 120px);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px), (max-height: 600px) {
+  .bloom-panel {
+    top: max(8px, env(safe-area-inset-top));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    right: max(8px, env(safe-area-inset-right));
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+    width: 320px;
   }
 }
 

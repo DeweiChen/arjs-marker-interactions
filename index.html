@@ -3,7 +3,8 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -39,10 +40,38 @@
     </div>
 
     <div class="hud-actions">
+      <!-- Fullscreen Viewport Mode Toggle Button -->
+      <button id="btn-toggle-fullscreen" class="hud-btn" title="Toggle Fullscreen Mode (提高畫面比例)"
+        aria-label="Toggle Fullscreen Mode">
+        <svg id="icon-fs-enter" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+          </path>
+        </svg>
+        <svg id="icon-fs-exit" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3">
+          </path>
+        </svg>
+        <span id="fs-btn-text">Full</span>
+      </button>
+
+      <button id="btn-show-markers" class="hud-btn" title="View & Download Marker Patterns">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+        <span>Markers</span>
+      </button>
+
       <!-- Bloom FX Control Toggle Button -->
-      <button id="btn-toggle-bloom" class="hud-btn" title="Adjust Bloom Effect Settings" aria-expanded="false" aria-controls="bloom-control-panel">
+      <button id="btn-toggle-bloom" class="hud-btn" title="Adjust Bloom Effect Settings" aria-expanded="false"
+        aria-controls="bloom-control-panel">
         <span class="btn-icon-wrapper">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="4"></circle>
             <path d="M12 2v2"></path>
             <path d="M12 20v2"></path>
@@ -57,27 +86,6 @@
         </span>
         <span>FX / DPR</span>
       </button>
-
-      <button id="btn-show-markers" class="hud-btn" title="View & Download Marker Patterns">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-          <polyline points="21 15 16 10 5 21"></polyline>
-        </svg>
-        <span>Markers</span>
-      </button>
-
-      <!-- Fullscreen Viewport Mode Toggle Button -->
-      <button id="btn-toggle-fullscreen" class="hud-btn" title="Toggle Fullscreen Mode (提高畫面比例)" aria-label="Toggle Fullscreen Mode">
-        <svg id="icon-fs-enter" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-        </svg>
-        <svg id="icon-fs-exit" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
-        </svg>
-        <span id="fs-btn-text">Full</span>
-      </button>
     </div>
   </header>
 
@@ -85,19 +93,23 @@
   <aside id="bloom-control-panel" class="bloom-panel hidden" role="region" aria-label="Bloom Effect Adjustment">
     <div class="bloom-panel-header">
       <div class="bloom-panel-title">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path
+            d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
         </svg>
         <span>Bloom FX Settings</span>
       </div>
       <div class="bloom-panel-actions">
         <button id="btn-reset-bloom" class="panel-icon-btn" title="Reset to Defaults" aria-label="Reset to Defaults">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-            <path d="M3 3v5h5"/>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
           </svg>
         </button>
-        <button id="btn-close-bloom" class="panel-icon-btn" title="Close Panel" aria-label="Close Panel">&times;</button>
+        <button id="btn-close-bloom" class="panel-icon-btn" title="Close Panel"
+          aria-label="Close Panel">&times;</button>
       </div>
     </div>
 
@@ -130,9 +142,10 @@
           <span id="val-bloom-strength" class="bloom-val-badge">1.30x</span>
         </div>
         <div class="bloom-slider-wrapper">
-          <input type="range" id="slider-bloom-strength" class="bloom-range-slider" min="0" max="3" step="0.05" value="1.3">
+          <input type="range" id="slider-bloom-strength" class="bloom-range-slider" min="0" max="3" step="0.05"
+            value="1.3">
         </div>
-        
+
         <!-- Preset quick buttons -->
         <div class="bloom-presets">
           <button type="button" class="bloom-preset-btn" data-strength="0.0">Off (0.0)</button>
@@ -152,9 +165,10 @@
           <span id="val-pulse-range" class="bloom-val-badge">±0.40x</span>
         </div>
         <div class="bloom-slider-wrapper">
-          <input type="range" id="slider-pulse-range" class="bloom-range-slider" min="0" max="0.6" step="0.02" value="0.4">
+          <input type="range" id="slider-pulse-range" class="bloom-range-slider" min="0" max="0.6" step="0.02"
+            value="0.4">
         </div>
-        
+
         <!-- Preset quick buttons for pulse -->
         <div class="bloom-presets pulse-presets">
           <button type="button" class="pulse-preset-btn" data-pulse="0.0">Off (0.0)</button>
@@ -173,7 +187,7 @@
           </label>
           <span id="val-dpr" class="bloom-val-badge">Native</span>
         </div>
-        
+
         <!-- Preset quick buttons for 1.0, 1.5, 2.0, Native -->
         <div class="dpr-presets">
           <button type="button" class="dpr-preset-btn" data-dpr="1">1.0x</button>
@@ -191,8 +205,13 @@
           </div>
           <div class="dpr-res-row">
             <span class="res-item-title">📷 相機串流畫素</span>
-            <span id="res-camera-px" class="res-item-value">640 × 360 px</span>
-            <span id="res-camera-mp" class="res-item-badge">0.23 MP</span>
+            <span id="res-camera-px" class="res-item-value">-- × -- px</span>
+            <span id="res-camera-mp" class="res-item-badge">-- MP</span>
+          </div>
+          <div class="dpr-res-row">
+            <span class="res-item-title">📐 視口比例適配</span>
+            <span id="res-viewport-aspect" class="res-item-value">偵測中...</span>
+            <span id="res-viewport-badge" class="res-item-badge status-active">Cover 1:1</span>
           </div>
         </div>
       </div>
@@ -212,14 +231,14 @@
           </label>
         </div>
 
-        <!-- 3D Text Elevation Facing Toggle (Default OFF) -->
+        <!-- 3D Text Elevation Facing Toggle (Default ON) -->
         <div class="bloom-toggle-row">
           <div class="bloom-toggle-info">
             <span class="bloom-toggle-title">Face Camera Elevation (仰角面對鏡頭)</span>
             <span class="bloom-toggle-sub">Tilt 3D text to face camera pitch angle</span>
           </div>
           <label class="switch-toggle" for="chk-pitch-facing">
-            <input type="checkbox" id="chk-pitch-facing">
+            <input type="checkbox" id="chk-pitch-facing" checked>
             <span class="slider-toggle"></span>
           </label>
         </div>
@@ -267,7 +286,8 @@
 
   <!-- Floating Quick Action: Restore HUD Button in Immersive Mode -->
   <button id="btn-restore-hud" class="floating-hud-btn hidden" title="Restore HUD (還原控制列)" aria-label="Restore HUD">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
       <polyline points="4 14 10 14 10 20"></polyline>
       <polyline points="20 10 14 10 14 4"></polyline>
       <line x1="14" y1="10" x2="21" y2="3"></line>
@@ -280,9 +300,8 @@
   <div id="hud-toast" class="hud-toast hidden" role="status" aria-live="polite"></div>
 
   <!-- Embedded AR.js + A-Frame Scene with Proximity Lightning & Selective Bloom Components -->
-  <a-scene embedded
-    loading-screen="dotsColor: #38bdf8; backgroundColor: #000000;"
-    arjs="sourceType: webcam; sourceWidth: 640; sourceHeight: 360; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+  <a-scene embedded loading-screen="dotsColor: #38bdf8; backgroundColor: #000000;"
+    arjs="sourceType: webcam; sourceWidth: 1280; sourceHeight: 720; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
     renderer="precision: mediump; antialias: false; powerPreference: high-performance;"
     proximity-lightning="marker1: #marker-hiro; marker2: #marker-kanji; maxDistance: 3.0; minDistance: 0.35; terminalOffsetY: 0.25; smoothingFactor: 0.3"
     bloom-effect="strength: 1.3; radius: 0.3; threshold: 0.0; downscale: 0.25; pulseRange: 0.4; dynamicIntensity: true"
@@ -306,9 +325,9 @@
         </a-circle>
       </a-entity>
 
-      <!-- 3D Text: "Fu" standing perpendicular to marker (optional dynamic pitch facing via toggle), centered, rounded Fredoka font, with Morandi green glow -->
+      <!-- 3D Text: "Fu" standing perpendicular to marker with dynamic pitch facing towards camera, centered, rounded Fredoka font, with Morandi green glow -->
       <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
-        three-text-3d="text: Fu; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #10b981; emissive: #10b981; emissiveIntensity: 1.0; pitchFacing: false">
+        three-text-3d="text: Fu; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #10b981; emissive: #10b981; emissiveIntensity: 1.0; pitchFacing: true">
       </a-entity>
     </a-marker>
 
@@ -321,9 +340,9 @@
         </a-circle>
       </a-entity>
 
-      <!-- 3D Text: "DW" standing perpendicular to marker (optional dynamic pitch facing via toggle), centered, rounded Fredoka font, with misty blue glow -->
+      <!-- 3D Text: "DW" standing perpendicular to marker with dynamic pitch facing towards camera, centered, rounded Fredoka font, with misty blue glow -->
       <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
-        three-text-3d="text: DW; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #60a5fa; emissive: #60a5fa; emissiveIntensity: 1.0; pitchFacing: false">
+        three-text-3d="text: DW; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #60a5fa; emissive: #60a5fa; emissiveIntensity: 1.0; pitchFacing: true">
       </a-entity>
     </a-marker>
 
