@@ -57,4 +57,10 @@ export class ModalController {
       setTimeout(() => this.hudToast.classList.add('hidden'), 300);
     }, durationMs);
   }
+
+  setResetButtonVisible(visible) {
+    if (this.btnResetBday) {
+      this.btnResetBday.classList.toggle('hidden', !visible);
+    }
+  }
 }

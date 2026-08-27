@@ -16,8 +16,7 @@ export default defineConfig({
     target: 'esnext',
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
-        fu: resolve(__dirname, 'fu.html')
+        main: resolve(__dirname, 'index.html')
       }
     }
   }

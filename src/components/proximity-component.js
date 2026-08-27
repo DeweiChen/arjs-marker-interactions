@@ -50,16 +50,35 @@ if (typeof AFRAME !== 'undefined') {
         this.birthdayFX = new BirthdayFX(sceneEl.object3D, {
           chargeThreshold: 1.6
         });
-
-        sceneEl.addEventListener('reset-birthday', () => {
-          if (this.birthdayFX) {
-            this.birthdayFX.reset();
-          }
-        });
       }
+
+      this._resetBirthdayHandler = () => {
+        if (this.birthdayFX) {
+          this.birthdayFX.reset();
+        }
+      };
+      sceneEl.addEventListener('reset-birthday', this._resetBirthdayHandler);
 
       // Bind marker visibility events
       this._bindMarkerEvents();
+    },
+
+    update: function (oldData) {
+      const sceneEl = this.el.sceneEl;
+      if (oldData && oldData.enableBirthday !== this.data.enableBirthday) {
+        if (this.data.enableBirthday) {
+          if (!this.birthdayFX) {
+            this.birthdayFX = new BirthdayFX(sceneEl.object3D, {
+              chargeThreshold: 1.6
+            });
+          }
+        } else {
+          if (this.birthdayFX) {
+            this.birthdayFX.dispose();
+            this.birthdayFX = null;
+          }
+        }
+      }
     },
 
     _bindMarkerEvents: function () {
@@ -177,6 +196,9 @@ if (typeof AFRAME !== 'undefined') {
     },
 
     remove: function () {
+      if (this._resetBirthdayHandler && this.el.sceneEl) {
+        this.el.sceneEl.removeEventListener('reset-birthday', this._resetBirthdayHandler);
+      }
       if (this.lightningFX) {
         this.lightningFX.dispose();
       }

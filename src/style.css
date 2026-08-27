@@ -259,6 +259,14 @@ button,
   box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
 }
 
+/* HYBD Mode Active Button Styling (Morandi Green Emissive Theme) */
+#btn-toggle-hybd.active {
+  background: rgba(0, 203, 169, 0.22);
+  border-color: #00cba9;
+  color: #00cba9;
+  box-shadow: 0 0 16px rgba(0, 203, 169, 0.45);
+}
+
 .btn-icon-wrapper {
   position: relative;
   display: inline-flex;
