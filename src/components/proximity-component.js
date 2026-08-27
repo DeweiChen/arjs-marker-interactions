@@ -18,7 +18,8 @@ if (typeof AFRAME !== 'undefined') {
       terminalOffsetY: { type: 'number', default: 0.25 },
       smoothingFactor: { type: 'number', default: 0.35 },
       fxType: { type: 'string', default: 'lightning' },
-      enableBirthday: { type: 'boolean', default: false }
+      enableBirthday: { type: 'boolean', default: false },
+      dynamicColorShift: { type: 'boolean', default: true }
     },
 
     init: function () {
@@ -40,7 +41,8 @@ if (typeof AFRAME !== 'undefined') {
       // Initialize primary FX via FXFactory
       this.lightningFX = globalFXFactory.create(this.data.fxType, sceneEl.object3D, {
         maxDistance: this.data.maxDistance,
-        minDistance: this.data.minDistance
+        minDistance: this.data.minDistance,
+        dynamicColorShift: this.data.dynamicColorShift
       });
 
       // Optionally initialize Birthday FX attached to root scene

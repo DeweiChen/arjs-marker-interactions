@@ -101,9 +101,28 @@ export class HUDTelemetryController {
   updateProximityStatus(data) {
     if (!data) return;
     const { distance, proximity, active, birthdayState, chargePercent } = data;
+    const proxClamped = Math.min(1, Math.max(0, proximity || 0));
+
+    // Calculate dynamic color ratio: 0.0 when far (p <= 0.15), 1.0 when close (p >= 0.85)
+    let pColor = 0;
+    if (proxClamped > 0.15) {
+      const t = Math.min(1, (proxClamped - 0.15) / 0.70);
+      pColor = t * t;
+    }
+
+    // Dynamic HUD RGB interpolation (Cyan #38bdf8 -> Pure Crimson Red #ff0000)
+    const r = Math.round(56 + pColor * (255 - 56));
+    const g = Math.round(189 - pColor * 189);
+    const b = Math.round(248 - pColor * 248);
+    const dynamicHex = `rgb(${r}, ${g}, ${b})`;
 
     if (this.distanceVal) {
       this.distanceVal.textContent = distance !== null ? `${distance.toFixed(2)}m` : '--';
+      if (active && (!birthdayState || birthdayState === 'STANDBY')) {
+        this.distanceVal.style.color = dynamicHex;
+      } else {
+        this.distanceVal.style.color = '';
+      }
     }
 
     if (this.energyBar) {
@@ -112,6 +131,16 @@ export class HUDTelemetryController {
         percent = chargePercent || percent;
       }
       this.energyBar.style.width = `${percent}%`;
+
+      if (!birthdayState || birthdayState === 'STANDBY') {
+        if (pColor > 0.05) {
+          this.energyBar.style.background = `linear-gradient(90deg, #38bdf8 ${Math.max(0, 100 - percent)}%, #ff2200 ${Math.max(40, 100 - percent / 2)}%, #ff0000 100%)`;
+          this.energyBar.style.boxShadow = `0 0 16px ${dynamicHex}`;
+        } else {
+          this.energyBar.style.background = '';
+          this.energyBar.style.boxShadow = '';
+        }
+      }
     }
 
     if (this.energyStatusText) {
@@ -125,8 +154,8 @@ export class HUDTelemetryController {
         this.energyStatusText.textContent = `CHARGING (${chargePercent}%)`;
         this.energyStatusText.style.color = '#fbbf24';
       } else if (active) {
-        this.energyStatusText.textContent = 'HIGH VOLTAGE LINK';
-        this.energyStatusText.style.color = '#38bdf8';
+        this.energyStatusText.textContent = pColor > 0.5 ? 'CRIMSON HIGH VOLTAGE OVERLOAD' : 'HIGH VOLTAGE LINK';
+        this.energyStatusText.style.color = dynamicHex;
       } else {
         this.energyStatusText.textContent = 'STANDBY';
         this.energyStatusText.style.color = '#94a3b8';

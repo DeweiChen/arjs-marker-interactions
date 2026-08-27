@@ -16,14 +16,18 @@ export class LightningFX extends BaseFX {
 
     this.options = Object.assign(
       {
-        maxBolts: 5,               // 1 main crisp bolt + 4 energetic branch forks
+        maxBolts: 7,               // 1 main crisp bolt + 6 energetic branch forks
         segmentsPerBolt: 32,       // High subdivision for sharp zigzag arcs
-        maxSparks: 140,            // Rich particle count for explosive bursts
+        maxSparks: 220,            // Rich particle count for explosive bursts
         primaryColor: 0x38bdf8,    // Electric Sky Blue
         secondaryColor: 0xa855f7,  // Ultraviolet Purple
         coreColor: 0xede9fe,       // Lavender-White Core
-        maxDistance: 4.5,          // Max detection distance (m)
-        minDistance: 1.5           // Peak proximity distance (m)
+        closePrimaryColor: 0xff0000, // Target color when close: Pure 100% Red (#FF0000)
+        closeSecondaryColor: 0xcc0000, // Target secondary color when close: Deep Crimson Red (#CC0000)
+        closeCoreColor: 0xff3333,    // Target core color when close: Pure Laser Red (#FF3333)
+        dynamicColorShift: true,    // Enable proximity color transition towards red
+        maxDistance: 4.0,          // Max detection distance (m)
+        minDistance: 0.25          // Peak proximity distance (m)
       },
       options
     );
@@ -57,10 +61,9 @@ export class LightningFX extends BaseFX {
     const ctx = canvas.getContext('2d');
 
     const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    gradient.addColorStop(0, 'rgba(245, 243, 255, 1.0)');     // Lavender-White Core
-    gradient.addColorStop(0.2, 'rgba(237, 233, 254, 0.95)');  // Soft Lavender-White
-    gradient.addColorStop(0.45, 'rgba(56, 189, 248, 0.85)');  // Electric Sky Blue
-    gradient.addColorStop(0.75, 'rgba(168, 85, 247, 0.35)');  // Ultraviolet Purple
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');     // Pure White Core
+    gradient.addColorStop(0.25, 'rgba(255, 255, 255, 0.85)');  // Soft White
+    gradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.4)');   // Halo White
     gradient.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)');
 
     ctx.fillStyle = gradient;
@@ -326,29 +329,81 @@ export class LightningFX extends BaseFX {
     this._applyProximityEffects(effectiveProximity, startPos, endPos, midPoint, delta, chargeProgress);
   }
 
+  /**
+   * Calculate color shift ratio (0.0 to 1.0) based on proximity.
+   * Keeps 100% original Sky Blue & Purple colors when far (p <= 0.15),
+   * and dynamically transitions to Neon Red as markers get close.
+   */
+  _getProximityColorRatio(p) {
+    const THREE = this.THREE;
+    const pClamped = THREE.MathUtils.clamp(p, 0, 1);
+    if (pClamped <= 0.15) return 0;
+    if (pClamped >= 0.85) return 1;
+    const t = (pClamped - 0.15) / 0.70;
+    return t * t; // Smooth quadratic ease-in
+  }
+
   _applyProximityEffects(p, startPos, endPos, midPoint, delta, chargeProgress = 0) {
     const THREE = this.THREE;
     const now = performance.now();
+    const pColor = this._getProximityColorRatio(p);
 
-    const scaleFactor = 0.3 + Math.pow(p, 1.4) * 1.8;
+    // Dramatically expand energy core scale when close
+    const scaleFactor = 0.35 + Math.pow(p, 1.4) * 2.8;
     this.coreGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-    const pulse = 1 + Math.sin(now * 0.018 * (1 + p * 3)) * (0.15 + 0.25 * p);
+    // Violent inner crystal pulse
+    const pulse = 1 + Math.sin(now * 0.025 * (1 + p * 4)) * (0.2 + 0.45 * p);
     this.innerCoreMesh.scale.set(pulse, pulse, pulse);
-    this.innerCoreMesh.rotation.y += 0.04;
-    this.innerCoreMesh.rotation.x += 0.03;
+    this.innerCoreMesh.rotation.y += 0.05 + p * 0.1;
+    this.innerCoreMesh.rotation.x += 0.04 + p * 0.08;
 
-    const rotSpeed = 0.02 + p * 0.09;
+    // Dynamic core mesh & light color shift towards pure high-voltage red as markers approach
+    if (this.options.dynamicColorShift) {
+      const colPrimary = new THREE.Color(this.options.primaryColor).lerp(
+        new THREE.Color(this.options.closePrimaryColor || 0xff0000),
+        pColor
+      );
+      const colSecondary = new THREE.Color(this.options.secondaryColor).lerp(
+        new THREE.Color(this.options.closeSecondaryColor || 0xcc0000),
+        pColor
+      );
+      const colCore = new THREE.Color(this.options.coreColor).lerp(
+        new THREE.Color(0xff3333),
+        pColor
+      );
+
+      if (this.innerCoreMesh) {
+        this.innerCoreMesh.material.color.copy(colCore);
+      }
+      if (this.outerCoreMesh) {
+        this.outerCoreMesh.material.color.copy(colPrimary);
+      }
+      if (this.rings && this.rings[0]) {
+        this.rings[0].material.color.copy(colPrimary);
+      }
+      if (this.rings && this.rings[1]) {
+        this.rings[1].material.color.copy(colSecondary);
+      }
+      if (this.pointLight) {
+        this.pointLight.color.copy(colPrimary);
+      }
+    }
+
+    // High-speed gyro spinning
+    const rotSpeed = 0.03 + p * 0.18;
     this.rings.forEach((ring, i) => {
       ring.rotation.x += (i % 2 === 0 ? 1 : -1) * rotSpeed;
-      ring.rotation.y += rotSpeed * 1.2;
-      ring.rotation.z += rotSpeed * 0.8;
+      ring.rotation.y += rotSpeed * 1.3;
+      ring.rotation.z += rotSpeed * 0.9;
     });
 
-    this.pointLight.intensity = Math.pow(p, 1.3) * 5.0;
-    this.pointLight.distance = 3.0 + p * 2.5;
+    // Intense dynamic point light illuminating scene
+    this.pointLight.intensity = Math.pow(p, 1.2) * 14.0;
+    this.pointLight.distance = 3.5 + p * 4.5;
 
-    if (startPos && endPos && now - this.lastBoltUpdateTime > (this.boltUpdateInterval / (1 + p * 1.5))) {
+    // High-frequency jitter update when close
+    if (startPos && endPos && now - this.lastBoltUpdateTime > (this.boltUpdateInterval / (1 + p * 2.2))) {
       this.lastBoltUpdateTime = now;
       this._updateSleekBolts(startPos, endPos, p, midPoint, chargeProgress);
     }
@@ -368,14 +423,25 @@ export class LightningFX extends BaseFX {
     let vertexIndex = 0;
     const activeBolts = Math.min(maxBolts, Math.max(1, Math.ceil(p * maxBolts)));
 
-    const baseWidth = 0.012 + Math.pow(p, 1.2) * 0.036;
-    const baseJitter = 0.08 + Math.pow(p, 1.1) * 0.28;
+    // Significantly boost bolt thickness and jitter displacement when close
+    const baseWidth = 0.015 + Math.pow(p, 1.3) * 0.075;
+    const baseJitter = 0.08 + Math.pow(p, 1.2) * 0.42;
+
+    const pColor = this._getProximityColorRatio(p);
 
     const colLavenderWhite = new THREE.Color(0xf5f3ff);
     const colSky = new THREE.Color(0x38bdf8);
     const colBlue = new THREE.Color(0x3b82f6);
     const colPurple = new THREE.Color(0xa855f7);
     const colViolet = new THREE.Color(0xc084fc);
+
+    if (this.options.dynamicColorShift) {
+      colLavenderWhite.lerp(new THREE.Color(0xff1111), pColor);
+      colSky.lerp(new THREE.Color(this.options.closePrimaryColor || 0xff0000), pColor);
+      colBlue.lerp(new THREE.Color(0xff0000), pColor);
+      colPurple.lerp(new THREE.Color(this.options.closeSecondaryColor || 0xcc0000), pColor);
+      colViolet.lerp(new THREE.Color(0xee0000), pColor);
+    }
 
     if (chargeProgress > 0) {
       const chargeT = THREE.MathUtils.clamp(chargeProgress, 0, 1);
@@ -514,6 +580,21 @@ export class LightningFX extends BaseFX {
           positions[i * 3] = origin.x + (Math.random() - 0.5) * 0.05;
           positions[i * 3 + 1] = origin.y + (Math.random() - 0.5) * 0.05;
           positions[i * 3 + 2] = origin.z + (Math.random() - 0.5) * 0.05;
+
+          if (this.options.dynamicColorShift) {
+            const THREE = this.THREE;
+            const pColor = this._getProximityColorRatio(p);
+            const colLavenderWhite = new THREE.Color(0xf5f3ff).lerp(new THREE.Color(0xff3333), pColor);
+            const colSky = new THREE.Color(0x38bdf8).lerp(new THREE.Color(this.options.closePrimaryColor || 0xff0000), pColor);
+            const colPurple = new THREE.Color(0xa855f7).lerp(new THREE.Color(this.options.closeSecondaryColor || 0xcc0000), pColor);
+            const colViolet = new THREE.Color(0xc084fc).lerp(new THREE.Color(0xee0000), pColor);
+
+            const sparkColor = r > 0.65 ? colLavenderWhite : (r > 0.4 ? colSky : (r > 0.2 ? colPurple : colViolet));
+            this.sparkColors[i * 3] = sparkColor.r;
+            this.sparkColors[i * 3 + 1] = sparkColor.g;
+            this.sparkColors[i * 3 + 2] = sparkColor.b;
+            this.sparkGeometry.attributes.color.needsUpdate = true;
+          }
 
           const theta = Math.random() * Math.PI * 2;
           const phi = Math.acos(Math.random() * 2 - 1);
