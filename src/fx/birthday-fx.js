@@ -29,7 +29,7 @@ export class BirthdayFX extends BaseFX {
       transitionDuration: 1.5,       // Seconds for transition animation
       celebrationFadeDuration: 1.5,  // Seconds delay before fading out when markers separate
       confettiCount: 180,            // Number of confetti particles
-      textLine1: 'Happy Birthday',   // 3D Text string
+      textLine1: 'Happy Birthday 30',   // 3D Text string
       audioUrl: './assets/HBD.mp3'   // Birthday music track
     }, options);
 
@@ -215,47 +215,83 @@ export class BirthdayFX extends BaseFX {
       this.audio = new Audio(this.options.audioUrl);
       this.audio.loop = false;
       this.audioPlayed = false;
+      this.audioUnlocked = false;
 
       const unlockAudio = () => {
-        if (this.audio && this.audio.paused && !this.audioPlayed) {
-          this.audio.play().then(() => {
-            if (!this.audioPlayed) {
-              this.audio.pause();
-              this.audio.currentTime = 0;
-            }
-          }).catch(() => {});
+        if (this.audioUnlocked) return;
+        if (this.audio) {
+          const promise = this.audio.play();
+          if (promise !== undefined) {
+            promise.then(() => {
+              this.audioUnlocked = true;
+              if (!this.audioPlayed && this.state !== BirthdayState.CELEBRATION && this.state !== BirthdayState.TRANSITION) {
+                this.audio.pause();
+                this.audio.currentTime = 0;
+              }
+            }).catch(() => { });
+          }
         }
         window.removeEventListener('pointerdown', unlockAudio);
         window.removeEventListener('touchstart', unlockAudio);
         window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('keydown', unlockAudio);
       };
 
-      window.addEventListener('pointerdown', unlockAudio, { once: true });
-      window.addEventListener('touchstart', unlockAudio, { once: true });
-      window.addEventListener('click', unlockAudio, { once: true });
+      window.addEventListener('pointerdown', unlockAudio, { passive: true });
+      window.addEventListener('touchstart', unlockAudio, { passive: true });
+      window.addEventListener('click', unlockAudio, { passive: true });
+      window.addEventListener('keydown', unlockAudio, { passive: true });
+
+      // Automatically pause music when tab/window is minimized or hidden
+      this._onVisibilityChange = () => {
+        if (document.hidden || document.visibilityState === 'hidden') {
+          this._pauseAudio();
+        } else if (this.audioUnlocked && (this.state === BirthdayState.CELEBRATION || this.state === BirthdayState.TRANSITION)) {
+          this._playAudio();
+        }
+      };
+
+      document.addEventListener('visibilitychange', this._onVisibilityChange);
+      window.addEventListener('pagehide', this._onVisibilityChange);
     }
   }
 
   /**
-   * Starts or resumes music playback when text appears
+   * Starts or resumes music playback when celebration occurs, with autoplay fallback retry
    */
   _playAudio() {
     if (!this.audio) return;
-    if (!this.audioPlayed) {
+    if (!this.audioPlayed || (this.audio.paused && !this.audio.ended)) {
       this.audioPlayed = true;
-      this.audio.currentTime = 0;
-      this.audio.play().catch((err) => {
-        console.warn('[BirthdayFX] Audio playback prevented:', err);
-      });
-    } else if (this.audio.paused && this.audio.currentTime > 0 && !this.audio.ended) {
-      this.audio.play().catch((err) => {
-        console.warn('[BirthdayFX] Audio resume prevented:', err);
-      });
+      const playPromise = this.audio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          this.audioUnlocked = true;
+        }).catch((err) => {
+          console.warn('[BirthdayFX] Audio playback prevented by browser autoplay policy:', err);
+
+          // Retry playback immediately on the next user interaction
+          const retryOnInteraction = () => {
+            if (this.audio && (this.state === BirthdayState.CELEBRATION || this.state === BirthdayState.TRANSITION)) {
+              this.audio.play().then(() => {
+                this.audioUnlocked = true;
+              }).catch(() => { });
+            }
+            window.removeEventListener('pointerdown', retryOnInteraction);
+            window.removeEventListener('touchstart', retryOnInteraction);
+            window.removeEventListener('click', retryOnInteraction);
+          };
+
+          window.addEventListener('pointerdown', retryOnInteraction, { once: true, passive: true });
+          window.addEventListener('touchstart', retryOnInteraction, { once: true, passive: true });
+          window.addEventListener('click', retryOnInteraction, { once: true, passive: true });
+        });
+      }
     }
   }
 
   /**
-   * Pauses music playback (e.g. when markers are temporarily lost)
+   * Pauses music playback (e.g. when markers are lost)
    */
   _pauseAudio() {
     if (this.audio && !this.audio.paused) {
@@ -617,6 +653,11 @@ export class BirthdayFX extends BaseFX {
   dispose() {
     super.dispose();
     this._stopAudio();
+    if (this._onVisibilityChange) {
+      document.removeEventListener('visibilitychange', this._onVisibilityChange);
+      window.removeEventListener('pagehide', this._onVisibilityChange);
+      this._onVisibilityChange = null;
+    }
     if (this.audio) {
       this.audio.src = '';
       this.audio = null;

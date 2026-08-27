@@ -62,10 +62,46 @@ export function calculateCorrectedProjectionMatrix(originalMatrix, videoEl, arSo
  *
  * @param {HTMLElement} sceneEl - A-Frame scene element
  */
+/**
+ * Ensures active playback of the AR.js webcam stream to prevent intermittent black screen issues
+ * caused by mobile browser autoplay restrictions or video load race conditions.
+ */
+export function ensureARVideoPlaying() {
+  const video = document.querySelector('#arjs-video') || document.querySelector('video');
+  if (!video) return;
+
+  if (video.paused || video.ended || video.readyState < 2) {
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        const resumeOnUserInteraction = () => {
+          const v = document.querySelector('#arjs-video') || document.querySelector('video');
+          if (v && v.paused) {
+            v.play().catch(() => {});
+          }
+          window.removeEventListener('pointerdown', resumeOnUserInteraction);
+          window.removeEventListener('touchstart', resumeOnUserInteraction);
+          window.removeEventListener('click', resumeOnUserInteraction);
+        };
+        window.addEventListener('pointerdown', resumeOnUserInteraction, { once: true });
+        window.addEventListener('touchstart', resumeOnUserInteraction, { once: true });
+        window.addEventListener('click', resumeOnUserInteraction, { once: true });
+      });
+    }
+  }
+}
+
+/**
+ * Initializes listeners for AR.js projection matrix update overrides and camera stream watchdog.
+ *
+ * @param {HTMLElement} sceneEl - A-Frame scene element
+ */
 export function initARAspectCorrection(sceneEl) {
   let isCorrectionInitialized = false;
 
   function applyCorrection() {
+    ensureARVideoPlaying();
+
     const { arContext, arSource, video } = getARObjects(sceneEl);
     if (!arContext) return;
 
@@ -85,6 +121,7 @@ export function initARAspectCorrection(sceneEl) {
   }
 
   function tryInit() {
+    ensureARVideoPlaying();
     if (isCorrectionInitialized) return;
     const { arContext } = getARObjects(sceneEl);
     if (!arContext) return;
@@ -95,7 +132,8 @@ export function initARAspectCorrection(sceneEl) {
 
   sceneEl.addEventListener('loaded', () => {
     tryInit();
-    setTimeout(tryInit, 500);
+    setTimeout(tryInit, 300);
+    setTimeout(tryInit, 800);
     setTimeout(tryInit, 1500);
   });
 
@@ -103,7 +141,9 @@ export function initARAspectCorrection(sceneEl) {
     applyCorrection();
   });
 
-  // Fallback timer checks
-  setTimeout(tryInit, 1000);
+  // Watchdog timer checks to guarantee video recovery if initial load is delayed
+  setTimeout(tryInit, 500);
+  setTimeout(tryInit, 1200);
   setTimeout(tryInit, 2500);
 }
+
