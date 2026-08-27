@@ -29,7 +29,8 @@ export class BirthdayFX extends BaseFX {
       transitionDuration: 1.5,       // Seconds for transition animation
       celebrationFadeDuration: 1.5,  // Seconds delay before fading out when markers separate
       confettiCount: 180,            // Number of confetti particles
-      textLine1: 'Happy Birthday'    // 3D Text string
+      textLine1: 'Happy Birthday',   // 3D Text string
+      audioUrl: './assets/HBD.mp3'   // Birthday music track
     }, options);
 
     // State machine
@@ -43,6 +44,7 @@ export class BirthdayFX extends BaseFX {
     this._initCelebrationText();
     this._initConfetti();
     this._initCelebrationLight();
+    this._initAudio();
 
     // Enable Bloom Layer 1 AFTER all sub-meshes are initialized
     this.enableBloomLayer();
@@ -205,6 +207,73 @@ export class BirthdayFX extends BaseFX {
     this.group.add(this.celebrationLight);
   }
 
+  /**
+   * Initializes audio element and unlocks autoplay policy on first user interaction
+   */
+  _initAudio() {
+    if (this.options.audioUrl) {
+      this.audio = new Audio(this.options.audioUrl);
+      this.audio.loop = false;
+      this.audioPlayed = false;
+
+      const unlockAudio = () => {
+        if (this.audio && this.audio.paused && !this.audioPlayed) {
+          this.audio.play().then(() => {
+            if (!this.audioPlayed) {
+              this.audio.pause();
+              this.audio.currentTime = 0;
+            }
+          }).catch(() => {});
+        }
+        window.removeEventListener('pointerdown', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+        window.removeEventListener('click', unlockAudio);
+      };
+
+      window.addEventListener('pointerdown', unlockAudio, { once: true });
+      window.addEventListener('touchstart', unlockAudio, { once: true });
+      window.addEventListener('click', unlockAudio, { once: true });
+    }
+  }
+
+  /**
+   * Starts or resumes music playback when text appears
+   */
+  _playAudio() {
+    if (!this.audio) return;
+    if (!this.audioPlayed) {
+      this.audioPlayed = true;
+      this.audio.currentTime = 0;
+      this.audio.play().catch((err) => {
+        console.warn('[BirthdayFX] Audio playback prevented:', err);
+      });
+    } else if (this.audio.paused && this.audio.currentTime > 0 && !this.audio.ended) {
+      this.audio.play().catch((err) => {
+        console.warn('[BirthdayFX] Audio resume prevented:', err);
+      });
+    }
+  }
+
+  /**
+   * Pauses music playback (e.g. when markers are temporarily lost)
+   */
+  _pauseAudio() {
+    if (this.audio && !this.audio.paused) {
+      this.audio.pause();
+    }
+  }
+
+  /**
+   * Stops music playback and resets track position
+   */
+  _stopAudio() {
+    if (this.audio) {
+      this.audio.pause();
+      this.audio.currentTime = 0;
+      this.audioPlayed = false;
+    }
+  }
+
   // ─── State Machine ───────────────────────────────────────────────────
 
   _setState(newState) {
@@ -272,6 +341,7 @@ export class BirthdayFX extends BaseFX {
     this.celebrationLight.intensity = 0;
     this.transitionElapsed = 0;
     this.celebrationFadeTimer = 0;
+    this._stopAudio();
 
     if (withinChargeRange) {
       this.chargeAccumulated = 0;
@@ -314,7 +384,14 @@ export class BirthdayFX extends BaseFX {
     const progress = Math.min(1.0, t / duration);
 
     if (pos1 && pos2) {
-      const mid = pos1.clone().add(pos2).multiplyScalar(0.5);
+      if (!this.lastMidpoint) {
+        this.lastMidpoint = new this.THREE.Vector3();
+      }
+      this.lastMidpoint.copy(pos1).add(pos2).multiplyScalar(0.5);
+    }
+
+    const mid = this.lastMidpoint;
+    if (mid) {
       this.textGroup.position.copy(mid);
       this.textGroup.position.y += 0.85;
       this.textGroup.rotation.y = 0;
@@ -338,7 +415,7 @@ export class BirthdayFX extends BaseFX {
       this.celebrationLight.intensity = (1.0 - flashP) * 16.0;
       this.confettiMat.opacity = flashP * 0.85;
 
-      if (pos1 && pos2) {
+      if (mid) {
         this._updateConfettiPhysics(pos1, pos2, deltaSec);
       }
 
@@ -355,10 +432,11 @@ export class BirthdayFX extends BaseFX {
       const springT = this._springEase(supernovaP);
       const textScale = springT * 0.85;
       this.textGroup.scale.set(textScale, textScale, textScale);
+      this._playAudio();
     }
 
     this.confettiMat.opacity = Math.min(0.85, supernovaP * 1.2);
-    if (pos1 && pos2) {
+    if (mid) {
       this._updateConfettiPhysics(pos1, pos2, deltaSec);
     }
 
@@ -381,27 +459,34 @@ export class BirthdayFX extends BaseFX {
   // ─── CELEBRATION ─────────────────────────────────────────────────────
 
   _updateCelebration(deltaSec, markersActive, pos1, pos2) {
+    this.celebrationTime += deltaSec;
 
-    // When markers are lost, hide celebration visuals without resetting CELEBRATION state
-    if (!markersActive || !pos1 || !pos2) {
+    // Cache latest midpoint while markers are actively tracked
+    if (pos1 && pos2) {
+      if (!this.lastMidpoint) {
+        this.lastMidpoint = new this.THREE.Vector3();
+      }
+      this.lastMidpoint.copy(pos1).add(pos2).multiplyScalar(0.5);
+    }
+
+    const mid = this.lastMidpoint;
+
+    // If no midpoint was ever recorded, do not display
+    if (!mid) {
       this.group.visible = false;
       this.textGroup.visible = false;
-      this.confettiMat.opacity = 0;
-      this.celebrationLight.intensity = 0;
       return 0;
     }
 
-    this.celebrationTime += deltaSec;
-
-    // Markers detected: show celebration text and confetti at midpoint
+    // Keep celebration state and 3D text persistent at last known position even when marker tracking is lost
     this.group.visible = true;
-    const mid = pos1.clone().add(pos2).multiplyScalar(0.5);
 
     this.textGroup.position.copy(mid);
     this.celebrationLight.position.copy(mid);
 
     if (this._textReady) {
       this.textGroup.visible = true;
+      this._playAudio();
       const baseScale = 0.85;
       this.textGroup.scale.set(baseScale, baseScale, baseScale);
       this.textGroup.rotation.y = 0;
@@ -435,7 +520,7 @@ export class BirthdayFX extends BaseFX {
   // ─── Confetti Physics ────────────────────────────────────────────────
 
   _spawnConfettiAtMidpoint(pos1, pos2) {
-    const mid = pos1.clone().add(pos2).multiplyScalar(0.5);
+    const mid = (pos1 && pos2) ? pos1.clone().add(pos2).multiplyScalar(0.5) : (this.lastMidpoint || new this.THREE.Vector3());
     const count = this.options.confettiCount;
     const positions = this.confettiPositions;
 
@@ -520,15 +605,22 @@ export class BirthdayFX extends BaseFX {
     this.transitionElapsed = 0;
     this.celebrationFadeTimer = 0;
     this.celebrationTime = 0;
+    this.lastMidpoint = null;
     this.group.visible = false;
     this.textGroup.visible = false;
     this.confettiMat.opacity = 0;
     this.celebrationLight.intensity = 0;
+    this._stopAudio();
     this._setState(BirthdayState.STANDBY);
   }
 
   dispose() {
     super.dispose();
+    this._stopAudio();
+    if (this.audio) {
+      this.audio.src = '';
+      this.audio = null;
+    }
     this.confettiGeo?.dispose();
     this.confettiMat?.dispose();
     this.confettiTexture?.dispose();
