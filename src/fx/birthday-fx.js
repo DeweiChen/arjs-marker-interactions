@@ -24,10 +24,10 @@ export class BirthdayFX extends BaseFX {
     super(scene, options);
 
     this.options = Object.assign({
-      chargeThreshold: 1.6,          // Distance (m) at which charging begins
+      chargeThreshold: 1.8,          // Distance (m) at which charging begins
       chargeDuration: 3.0,           // Seconds to fully charge
       transitionDuration: 1.5,       // Seconds for transition animation
-      celebrationFadeDuration: 10.0, // Seconds delay before fading out when markers separate
+      celebrationFadeDuration: 1.5,  // Seconds delay before fading out when markers separate
       confettiCount: 180,            // Number of confetti particles
       textLine1: 'Happy Birthday'    // 3D Text string
     }, options);
@@ -81,7 +81,7 @@ export class BirthdayFX extends BaseFX {
   }
 
   /**
-   * 3D "Happy Birthday" text in Fredoka font (#00CBA9 color)
+   * 3D "Happy Birthday" text in Fredoka font (Pearl White with Golden Glow)
    */
   _initCelebrationText() {
     const THREE = this.THREE;
@@ -102,9 +102,9 @@ export class BirthdayFX extends BaseFX {
         bevelThickness: 0.008,
         bevelSize: 0.008,
         bevelSegments: 5,
-        color: 0x00CBA9,
-        emissive: 0x00CBA9,
-        emissiveIntensity: 1.2
+        color: 0xF4E0AE,
+        emissive: 0xF4E0AE,
+        emissiveIntensity: 1.5
       });
       mesh.position.y = 0.15;
       mesh.layers.enable(1);
@@ -185,8 +185,8 @@ export class BirthdayFX extends BaseFX {
 
     const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
     gradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
-    gradient.addColorStop(0.3, 'rgba(255, 255, 240, 0.9)');
-    gradient.addColorStop(0.6, 'rgba(0, 203, 169, 0.5)');
+    gradient.addColorStop(0.3, 'rgba(255, 253, 230, 0.9)');
+    gradient.addColorStop(0.6, 'rgba(244, 224, 174, 0.6)');
     gradient.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)');
 
     ctx.fillStyle = gradient;
@@ -197,7 +197,7 @@ export class BirthdayFX extends BaseFX {
 
   _initCelebrationLight() {
     const THREE = this.THREE;
-    this.celebrationLight = new THREE.PointLight(0x00cba9, 0, 5);
+    this.celebrationLight = new THREE.PointLight(0xF4E0AE, 0, 5);
     this.celebrationLight.layers.enable(1);
     this.group.add(this.celebrationLight);
   }
@@ -345,7 +345,7 @@ export class BirthdayFX extends BaseFX {
     const supernovaP = (progress - 0.5) / 0.5;
 
     this.shockwaveMesh.material.opacity = 0;
-    this.celebrationLight.color.setHex(0x00cba9);
+    this.celebrationLight.color.setHex(0xF4E0AE);
 
     if (this._textReady) {
       this.textGroup.visible = true;
@@ -378,54 +378,52 @@ export class BirthdayFX extends BaseFX {
   // ─── CELEBRATION ─────────────────────────────────────────────────────
 
   _updateCelebration(deltaSec, markersActive, pos1, pos2) {
-    this.group.visible = true;
     this.shockwaveMesh.material.opacity = 0;
 
-    if (markersActive && pos1 && pos2) {
-      const mid = pos1.clone().add(pos2).multiplyScalar(0.5);
-      this.textGroup.position.copy(mid);
-      this.celebrationLight.position.copy(mid);
-      this.celebrationFadeTimer = 0;
-    } else {
-      this.celebrationFadeTimer += deltaSec;
-      if (this.celebrationFadeTimer >= this.options.celebrationFadeDuration) {
-        this.chargeAccumulated = 0;
-        this._setState(BirthdayState.STANDBY);
-        return 1.0;
-      }
+    // When markers are lost, hide celebration visuals without resetting CELEBRATION state
+    if (!markersActive || !pos1 || !pos2) {
+      this.group.visible = false;
+      this.textGroup.visible = false;
+      this.confettiMat.opacity = 0;
+      this.celebrationLight.intensity = 0;
+      return 0;
     }
 
-    const fadeFactor = markersActive ? 1.0 : Math.max(0, 1.0 - this.celebrationFadeTimer / this.options.celebrationFadeDuration);
+    // Markers detected: show celebration text and confetti at midpoint
+    this.group.visible = true;
+    const mid = pos1.clone().add(pos2).multiplyScalar(0.5);
+
+    this.textGroup.position.copy(mid);
+    this.celebrationLight.position.copy(mid);
 
     if (this._textReady) {
       this.textGroup.visible = true;
-      const baseScale = 0.85 * fadeFactor;
+      const baseScale = 0.85;
       this.textGroup.scale.set(baseScale, baseScale, baseScale);
       this.textGroup.rotation.y = 0;
 
       const baseHeightOffset = 0.85;
       const bobbingY = Math.sin(performance.now() * 0.003) * 0.09;
-      if (markersActive && pos1 && pos2) {
-        const mid = pos1.clone().add(pos2).multiplyScalar(0.5);
-        this.textGroup.position.copy(mid);
-      }
       this.textGroup.position.y += baseHeightOffset + bobbingY;
 
-      const emPulse = 1.0 + Math.sin(performance.now() * 0.003) * 0.3;
+      const baseEmissive = 2.4;
+      const emPulse = (1.0 + Math.sin(performance.now() * 0.003) * 0.3) * baseEmissive;
       for (const mesh of this._textMeshes) {
         if (mesh.material) {
-          mesh.material.emissiveIntensity = emPulse * fadeFactor;
+          if (mesh.material.emissiveIntensity !== undefined) {
+            mesh.material.emissiveIntensity = emPulse;
+          } else {
+            mesh.material.opacity = 1.0;
+          }
         }
       }
     }
 
-    this.confettiMat.opacity = 0.85 * fadeFactor;
-    if (pos1 && pos2) {
-      this._updateConfettiPhysics(pos1, pos2, deltaSec);
-    }
+    this.confettiMat.opacity = 0.85;
+    this._updateConfettiPhysics(pos1, pos2, deltaSec);
 
-    const lightPulse = 2.5 + Math.sin(performance.now() * 0.004) * 1.0;
-    this.celebrationLight.intensity = lightPulse * fadeFactor;
+    const lightPulse = 5.5 + Math.sin(performance.now() * 0.004) * 1.5;
+    this.celebrationLight.intensity = lightPulse;
 
     return 0;
   }
@@ -459,7 +457,8 @@ export class BirthdayFX extends BaseFX {
   }
 
   _updateConfettiPhysics(pos1, pos2, deltaSec) {
-    const mid = pos1.clone().add(pos2).multiplyScalar(0.5);
+    const THREE = this.THREE;
+    const mid = (pos1 && pos2) ? pos1.clone().add(pos2).multiplyScalar(0.5) : (this.lastMidpoint || new THREE.Vector3(0, 0, 0));
     const count = this.options.confettiCount;
     const positions = this.confettiPositions;
     const now = performance.now();

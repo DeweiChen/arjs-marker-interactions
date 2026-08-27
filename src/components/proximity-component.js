@@ -48,7 +48,7 @@ if (typeof AFRAME !== 'undefined') {
       // Optionally initialize Birthday FX attached to root scene
       if (this.data.enableBirthday) {
         this.birthdayFX = new BirthdayFX(sceneEl.object3D, {
-          chargeThreshold: 1.6
+          chargeThreshold: 1.8
         });
       }
 
@@ -69,7 +69,7 @@ if (typeof AFRAME !== 'undefined') {
         if (this.data.enableBirthday) {
           if (!this.birthdayFX) {
             this.birthdayFX = new BirthdayFX(sceneEl.object3D, {
-              chargeThreshold: 1.6
+              chargeThreshold: 1.8
             });
           }
         } else {

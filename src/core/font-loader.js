@@ -146,12 +146,10 @@ export function buildTextMesh(THREE, fontData, options = {}) {
   geometry.computeBoundingBox();
   geometry.center();
 
-  const material = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(color),
-    emissive: new THREE.Color(emissive),
-    emissiveIntensity,
-    roughness: 0.25,
-    metalness: 0.15
+  const material = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(emissive || color),
+    transparent: true,
+    opacity: 1.0
   });
 
   const mesh = new THREE.Mesh(geometry, material);

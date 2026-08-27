@@ -146,7 +146,7 @@ export class HUDTelemetryController {
     if (this.energyStatusText) {
       if (birthdayState === 'CELEBRATION') {
         this.energyStatusText.textContent = 'HAPPY BIRTHDAY!';
-        this.energyStatusText.style.color = '#00cba9';
+        this.energyStatusText.style.color = '#f4e0ae';
       } else if (birthdayState === 'TRANSITION') {
         this.energyStatusText.textContent = 'SUPERNOVA BURST!';
         this.energyStatusText.style.color = '#ffffff';

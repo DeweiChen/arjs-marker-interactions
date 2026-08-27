@@ -70,9 +70,15 @@ if (typeof AFRAME !== 'undefined') {
         this._buildMesh();
       } else if (this.mesh && this.mesh.material) {
         const THREE = window.THREE || AFRAME.THREE;
-        this.mesh.material.color.set(this.data.color);
-        this.mesh.material.emissive.set(this.data.emissive);
-        this.mesh.material.emissiveIntensity = this.data.emissiveIntensity;
+        if (this.mesh.material.isMeshBasicMaterial) {
+          this.mesh.material.color.set(this.data.emissive || this.data.color);
+        } else {
+          this.mesh.material.color.set(this.data.color);
+          if (this.mesh.material.emissive) {
+            this.mesh.material.emissive.set(this.data.emissive);
+            this.mesh.material.emissiveIntensity = this.data.emissiveIntensity;
+          }
+        }
       }
     },
 
@@ -161,12 +167,10 @@ if (typeof AFRAME !== 'undefined') {
           geometry.computeBoundingBox();
           geometry.center();
 
-          const material = new THREE.MeshStandardMaterial({
-            color: new THREE.Color(data.color),
-            emissive: new THREE.Color(data.emissive),
-            emissiveIntensity: data.emissiveIntensity,
-            roughness: 0.3,
-            metalness: 0.1
+          const material = new THREE.MeshBasicMaterial({
+            color: new THREE.Color(data.emissive || data.color),
+            transparent: true,
+            opacity: 1.0
           });
 
           if (this.mesh) {
