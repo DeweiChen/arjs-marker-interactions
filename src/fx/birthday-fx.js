@@ -1,9 +1,12 @@
 /**
- * BirthdayFX - Happy Birthday Fu Celebration Transition System
- * Manages the STANDBY → CHARGING → TRANSITION → CELEBRATION lifecycle.
- * Renders charge progress ring, implosion-to-supernova transition, and
- * floating "Happy Birthday Fu" 3D text with confetti particles.
+ * BirthdayFX - Happy Birthday Celebration Transition System
+ * Manages STANDBY → CHARGING → TRANSITION → CELEBRATION state machine.
+ * Features progress charging ring, supernova shockwave flash, spring-bounce 3D text reveal,
+ * and floating radial confetti particles.
  */
+
+import { BaseFX } from './base-fx.js';
+import { fetchFont, buildTextMesh } from '../core/font-loader.js';
 
 export const BirthdayState = {
   STANDBY: 'STANDBY',
@@ -12,34 +15,28 @@ export const BirthdayState = {
   CELEBRATION: 'CELEBRATION'
 };
 
-export class BirthdayFX {
+export class BirthdayFX extends BaseFX {
   /**
-   * @param {THREE.Scene} scene - Root Three.js scene (sceneEl.object3D)
+   * @param {THREE.Scene} scene - Root Three.js scene
    * @param {Object} options - Configuration
    */
   constructor(scene, options = {}) {
-    this.scene = scene;
-    this.THREE = window.THREE || AFRAME.THREE;
+    super(scene, options);
 
     this.options = Object.assign({
-      chargeThreshold: 1.6,       // Distance (m) at which charging begins (1.6m avoids marker occlusion)
-      chargeDuration: 3.0,        // Seconds to fully charge
-      transitionDuration: 1.5,    // Seconds for transition animation
-      celebrationFadeDuration: 10.0, // 10 seconds delay before fading out celebration when markers separate
-      confettiCount: 180,         // Number of confetti particles
-      textLine1: 'Happy Birthday' // Single line text without Fu
+      chargeThreshold: 1.6,          // Distance (m) at which charging begins
+      chargeDuration: 3.0,           // Seconds to fully charge
+      transitionDuration: 1.5,       // Seconds for transition animation
+      celebrationFadeDuration: 10.0, // Seconds delay before fading out when markers separate
+      confettiCount: 180,            // Number of confetti particles
+      textLine1: 'Happy Birthday'    // 3D Text string
     }, options);
 
     // State machine
     this.state = BirthdayState.STANDBY;
-    this.chargeAccumulated = 0;   // Seconds accumulated while close
-    this.transitionElapsed = 0;   // Seconds into transition animation
-    this.celebrationFadeTimer = 0; // Fade-out timer when markers separate during celebration
-
-    // Root group for all birthday visuals
-    this.group = new this.THREE.Group();
-    this.group.visible = false;
-    this.scene.add(this.group);
+    this.chargeAccumulated = 0;
+    this.transitionElapsed = 0;
+    this.celebrationFadeTimer = 0;
 
     // Sub-groups
     this._initShockwave();
@@ -47,19 +44,22 @@ export class BirthdayFX {
     this._initConfetti();
     this._initCelebrationLight();
 
-    // Enable bloom layer on all meshes
-    this._enableBloomLayer();
+    // Enable Bloom Layer 1 AFTER all sub-meshes are initialized
+    this.enableBloomLayer();
   }
 
-  // ─── Initialization ──────────────────────────────────────────────────
-
-  _enableBloomLayer() {
+  /**
+   * Enables Layer 1 on all visual objects for Selective Bloom Post-Processing
+   */
+  enableBloomLayer() {
     this.group.traverse((obj) => {
       if (obj.isMesh || obj.isPoints || obj.isLight) {
         obj.layers.enable(1);
       }
     });
   }
+
+  // ─── Sub-system Initialization ───────────────────────────────────────
 
   /**
    * Expanding shockwave ring for the transition flash (Pure Intense White)
@@ -68,7 +68,7 @@ export class BirthdayFX {
     const THREE = this.THREE;
     const geo = new THREE.RingGeometry(0.01, 0.06, 64);
     const mat = new THREE.MeshBasicMaterial({
-      color: 0xffffff, // Pure Intense White Flash
+      color: 0xffffff,
       transparent: true,
       opacity: 0,
       side: THREE.DoubleSide,
@@ -81,7 +81,7 @@ export class BirthdayFX {
   }
 
   /**
-   * 3D "Happy Birthday" text in clean rounded Fredoka font and 0x00CBA9 color
+   * 3D "Happy Birthday" text in Fredoka font (#00CBA9 color)
    */
   _initCelebrationText() {
     const THREE = this.THREE;
@@ -89,125 +89,38 @@ export class BirthdayFX {
     this.textGroup.visible = false;
     this.textGroup.scale.set(0, 0, 0);
 
-    // We'll build text meshes asynchronously via font loading
     this._textMeshes = [];
     this._textReady = false;
 
-    this._loadFont().then((fontData) => {
-      // Single line text "Happy Birthday" in original Teal Green (#00CBA9) with rounded Fredoka font (size 0.48)
-      this._buildTextMesh(fontData, this.options.textLine1, 0.48, 0x00CBA9, 0x00CBA9, 0.15);
+    fetchFont('./fonts/fredoka_light_regular.json').then((fontData) => {
+      const mesh = buildTextMesh(THREE, fontData, {
+        text: this.options.textLine1,
+        size: 0.48,
+        depth: 0.08,
+        curveSegments: 12,
+        bevelEnabled: true,
+        bevelThickness: 0.008,
+        bevelSize: 0.008,
+        bevelSegments: 5,
+        color: 0x00CBA9,
+        emissive: 0x00CBA9,
+        emissiveIntensity: 1.2
+      });
+      mesh.position.y = 0.15;
+      mesh.layers.enable(1);
+      this.textGroup.add(mesh);
+      this._textMeshes.push(mesh);
       this._textReady = true;
     }).catch((err) => {
       console.error('[BirthdayFX] Failed to load font:', err);
     });
 
+    this.textGroup.layers.enable(1);
     this.group.add(this.textGroup);
   }
 
-  async _loadFont() {
-    const url = './fonts/fredoka_light_regular.json';
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
-    } catch {
-      const fallback = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/fonts/helvetiker_bold.typeface.json';
-      const res = await fetch(fallback);
-      return await res.json();
-    }
-  }
-
-  _buildTextMesh(fontData, text, size, color, emissive, yOffset) {
-    const THREE = this.THREE;
-    const paths = this._createPaths(text, size, fontData);
-    const shapes = [];
-    for (const p of paths) {
-      shapes.push(...p.toShapes());
-    }
-
-    const geometry = new THREE.ExtrudeGeometry(shapes, {
-      depth: 0.08,
-      curveSegments: 12,
-      bevelEnabled: true,
-      bevelThickness: 0.008,
-      bevelSize: 0.008,
-      bevelOffset: 0,
-      bevelSegments: 5
-    });
-
-    geometry.computeBoundingBox();
-    geometry.center();
-
-    const material = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(color),
-      emissive: new THREE.Color(emissive),
-      emissiveIntensity: 1.2,
-      roughness: 0.25,
-      metalness: 0.15
-    });
-
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.y = yOffset;
-    mesh.layers.enable(1);
-    this.textGroup.add(mesh);
-    this._textMeshes.push(mesh);
-  }
-
   /**
-   * Minimal font path generator (same logic as three-text-3d.js createPaths)
-   */
-  _createPaths(text, size, data) {
-    const THREE = this.THREE;
-    const chars = Array.from(text);
-    const scale = size / data.resolution;
-    const paths = [];
-    let offsetX = 0;
-
-    for (const char of chars) {
-      const glyph = data.glyphs[char] || data.glyphs['?'];
-      if (!glyph) continue;
-
-      const path = new THREE.ShapePath();
-      if (glyph.o) {
-        const outline = glyph._cachedOutline || (glyph._cachedOutline = glyph.o.split(' '));
-        for (let j = 0; j < outline.length;) {
-          const action = outline[j++];
-          switch (action) {
-            case 'm':
-              path.moveTo(outline[j++] * scale + offsetX, outline[j++] * scale);
-              break;
-            case 'l':
-              path.lineTo(outline[j++] * scale + offsetX, outline[j++] * scale);
-              break;
-            case 'q': {
-              const cpx = outline[j++] * scale + offsetX;
-              const cpy = outline[j++] * scale;
-              const cpx1 = outline[j++] * scale + offsetX;
-              const cpy1 = outline[j++] * scale;
-              path.quadraticCurveTo(cpx1, cpy1, cpx, cpy);
-              break;
-            }
-            case 'b': {
-              const bpx = outline[j++] * scale + offsetX;
-              const bpy = outline[j++] * scale;
-              const bpx1 = outline[j++] * scale + offsetX;
-              const bpy1 = outline[j++] * scale;
-              const bpx2 = outline[j++] * scale + offsetX;
-              const bpy2 = outline[j++] * scale;
-              path.bezierCurveTo(bpx1, bpy1, bpx2, bpy2, bpx, bpy);
-              break;
-            }
-          }
-        }
-      }
-      offsetX += glyph.ha * scale;
-      paths.push(path);
-    }
-    return paths;
-  }
-
-  /**
-   * Confetti particle system with gold/pink/lavender colors
+   * Confetti particle system with soft radial glowing particles
    */
   _initConfetti() {
     const THREE = this.THREE;
@@ -219,7 +132,7 @@ export class BirthdayFX {
     this.confettiPhases = [];
 
     const palette = [
-      new THREE.Color(0x00cba9), // Teal Green (Original)
+      new THREE.Color(0x00cba9), // Teal Green
       new THREE.Color(0xfbbf24), // Gold
       new THREE.Color(0xf59e0b), // Amber
       new THREE.Color(0xf472b6), // Pink
@@ -230,7 +143,6 @@ export class BirthdayFX {
     ];
 
     for (let i = 0; i < count; i++) {
-      // Start at origin (will be repositioned during celebration)
       this.confettiPositions[i * 3] = 0;
       this.confettiPositions[i * 3 + 1] = 0;
       this.confettiPositions[i * 3 + 2] = 0;
@@ -244,26 +156,23 @@ export class BirthdayFX {
       this.confettiPhases.push(Math.random() * Math.PI * 2);
     }
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(this.confettiPositions, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(this.confettiColors, 3));
+    this.confettiGeo = new THREE.BufferGeometry();
+    this.confettiGeo.setAttribute('position', new THREE.BufferAttribute(this.confettiPositions, 3));
+    this.confettiGeo.setAttribute('color', new THREE.BufferAttribute(this.confettiColors, 3));
 
-    // Create soft glow texture for confetti
     this.confettiTexture = this._createConfettiTexture();
 
-    const mat = new THREE.PointsMaterial({
+    this.confettiMat = new THREE.PointsMaterial({
       map: this.confettiTexture,
       vertexColors: true,
-      size: 0.1,
+      size: 0.08,
       transparent: true,
       opacity: 0,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     });
 
-    this.confettiGeo = geo;
-    this.confettiMat = mat;
-    this.confettiPoints = new THREE.Points(geo, mat);
+    this.confettiPoints = new THREE.Points(this.confettiGeo, this.confettiMat);
     this.confettiPoints.layers.enable(1);
     this.group.add(this.confettiPoints);
   }
@@ -295,25 +204,33 @@ export class BirthdayFX {
 
   // ─── State Machine ───────────────────────────────────────────────────
 
+  _setState(newState) {
+    if (this.state === newState) return;
+    const oldState = this.state;
+    this.state = newState;
+    console.log(`[BirthdayFX] State transition: ${oldState} -> ${newState}`);
+  }
+
   /**
-   * Main update called each tick from proximity-component.
+   * Main update loop called each frame.
+   *
    * @param {THREE.Vector3|null} pos1 - Marker 1 smoothed world position
    * @param {THREE.Vector3|null} pos2 - Marker 2 smoothed world position
    * @param {number} distance - Current distance between markers
-   * @param {number} proximity - Normalized proximity (0-1)
-   * @param {number} deltaMs - Frame delta in milliseconds
-   * @returns {{ state: string, chargePercent: number, lightningIntensity: number }}
+   * @param {number} proximity - Normalized proximity (0 to 1)
+   * @param {number} deltaMs - Frame delta milliseconds
+   * @returns {{ state: string, chargePercent: number, chargeProgress: number, lightningIntensity: number }}
    */
   update(pos1, pos2, distance, proximity, deltaMs) {
     const deltaSec = deltaMs / 1000;
-    const markersActive = pos1 !== null && pos2 !== null;
+    const markersActive = pos1 !== null && pos2 !== null && distance < 900;
     const withinChargeRange = markersActive && distance <= this.options.chargeThreshold;
 
-    let lightningIntensity = 1.0; // Default: normal lightning
+    let lightningIntensity = 1.0;
 
     switch (this.state) {
       case BirthdayState.STANDBY:
-        this._updateStandby(withinChargeRange, deltaSec);
+        this._updateStandby(withinChargeRange);
         break;
 
       case BirthdayState.CHARGING:
@@ -340,17 +257,9 @@ export class BirthdayFX {
     };
   }
 
-  _setState(newState) {
-    if (this.state === newState) return;
-    const oldState = this.state;
-    this.state = newState;
-    console.log(`[BirthdayFX] State: ${oldState} → ${newState}`);
-  }
-
   // ─── STANDBY ─────────────────────────────────────────────────────────
 
-  _updateStandby(withinChargeRange, deltaSec) {
-    // Hide birthday visuals
+  _updateStandby(withinChargeRange) {
     this.group.visible = false;
     this.textGroup.visible = false;
     this.shockwaveMesh.material.opacity = 0;
@@ -368,32 +277,21 @@ export class BirthdayFX {
   // ─── CHARGING ────────────────────────────────────────────────────────
 
   _updateCharging(withinChargeRange, markersActive, deltaSec, pos1, pos2) {
-    if (!markersActive) {
-      // Lost markers entirely — reset
+    if (!markersActive || !withinChargeRange) {
       this.chargeAccumulated = 0;
       this._setState(BirthdayState.STANDBY);
       return 1.0;
     }
 
-    if (!withinChargeRange) {
-      // Markers moved apart — reset charge
-      this.chargeAccumulated = 0;
-      this._setState(BirthdayState.STANDBY);
-      return 1.0;
-    }
-
-    // Accumulate charge
     this.chargeAccumulated += deltaSec;
-    const progress = Math.min(1, this.chargeAccumulated / this.options.chargeDuration);
+    const progress = Math.min(1.0, this.chargeAccumulated / this.options.chargeDuration);
 
-    // Lightning intensifies and shifts color during charging (1.0 → 1.8x)
+    // Lightning intensifies and shifts color during charging (1.0 -> 1.8x)
     const lightningIntensity = 1.0 + progress * 0.8;
 
-    // Check if fully charged
     if (progress >= 1.0) {
       this.transitionElapsed = 0;
       this._setState(BirthdayState.TRANSITION);
-      // Spawn confetti positions at midpoint
       if (pos1 && pos2) {
         this._spawnConfettiAtMidpoint(pos1, pos2);
       }
@@ -408,7 +306,7 @@ export class BirthdayFX {
     this.transitionElapsed += deltaSec;
     const t = this.transitionElapsed;
     const duration = this.options.transitionDuration;
-    const progress = Math.min(1, t / duration);
+    const progress = Math.min(1.0, t / duration);
 
     if (pos1 && pos2) {
       const mid = pos1.clone().add(pos2).multiplyScalar(0.5);
@@ -422,39 +320,33 @@ export class BirthdayFX {
 
     this.group.visible = true;
 
-    // Phase 1: Implosion / Overload (0–0.3)
+    // Phase 1: Implosion / Overload (0 - 0.3)
     if (progress < 0.3) {
       const implosionP = progress / 0.3;
-      // Return high intensity for white lightning overload
       return Math.max(0, 1.8 - implosionP * 1.8);
     }
 
-    // Phase 2: Blinding Pure White Flash & Expanding Shockwave (0.3–0.5)
+    // Phase 2: Blinding Pure White Flash & Expanding Shockwave (0.3 - 0.5)
     if (progress < 0.5) {
       const flashP = (progress - 0.3) / 0.2;
 
-      // Pure White Shockwave expands outwards
       const shockScale = 0.1 + flashP * 5.0;
       this.shockwaveMesh.scale.set(shockScale, shockScale, shockScale);
       this.shockwaveMesh.material.color.setHex(0xffffff);
       this.shockwaveMesh.material.opacity = (1.0 - flashP) * 1.0;
 
-      // Celebration light creates a blinding Pure White flash
       this.celebrationLight.color.setHex(0xffffff);
       this.celebrationLight.intensity = (1.0 - flashP) * 12.0;
 
-      return 0; // Lightning is gone
+      return 0; // Lightning dims during explosion
     }
 
-    // Phase 3: Supernova / Text Reveal (0.5–1.0)
+    // Phase 3: Supernova / Spring-bounce Text Reveal + Confetti Burst (0.5 - 1.0)
     const supernovaP = (progress - 0.5) / 0.5;
 
     this.shockwaveMesh.material.opacity = 0;
-
-    // Restore celebration light color to teal green (#00CBA9) for text
     this.celebrationLight.color.setHex(0x00cba9);
 
-    // Text appears with spring-bounce scale
     if (this._textReady) {
       this.textGroup.visible = true;
       const springT = this._springEase(supernovaP);
@@ -462,16 +354,13 @@ export class BirthdayFX {
       this.textGroup.scale.set(textScale, textScale, textScale);
     }
 
-    // Confetti appears
     this.confettiMat.opacity = Math.min(0.85, supernovaP * 1.2);
     if (pos1 && pos2) {
       this._updateConfettiPhysics(pos1, pos2, deltaSec);
     }
 
-    // Celebration light
     this.celebrationLight.intensity = supernovaP * 3.0;
 
-    // Transition complete
     if (progress >= 1.0) {
       this._setState(BirthdayState.CELEBRATION);
     }
@@ -479,9 +368,6 @@ export class BirthdayFX {
     return 0;
   }
 
-  /**
-   * Spring-bounce easing for text reveal
-   */
   _springEase(t) {
     if (t <= 0) return 0;
     if (t >= 1) return 1;
@@ -501,29 +387,22 @@ export class BirthdayFX {
       this.celebrationLight.position.copy(mid);
       this.celebrationFadeTimer = 0;
     } else {
-      // Markers lost — start fade timer
       this.celebrationFadeTimer += deltaSec;
       if (this.celebrationFadeTimer >= this.options.celebrationFadeDuration) {
-        // Reset to standby
         this.chargeAccumulated = 0;
         this._setState(BirthdayState.STANDBY);
         return 1.0;
       }
     }
 
-    // Calculate fade factor
     const fadeFactor = markersActive ? 1.0 : Math.max(0, 1.0 - this.celebrationFadeTimer / this.options.celebrationFadeDuration);
 
-    // Animate text (No rotation, elevated height, smooth up-and-down bobbing)
     if (this._textReady) {
       this.textGroup.visible = true;
       const baseScale = 0.85 * fadeFactor;
       this.textGroup.scale.set(baseScale, baseScale, baseScale);
-
-      // Fixed orientation (NO rotation)
       this.textGroup.rotation.y = 0;
 
-      // Elevated height above midpoint (+0.85m) + smooth up & down bobbing (±0.09m)
       const baseHeightOffset = 0.85;
       const bobbingY = Math.sin(performance.now() * 0.003) * 0.09;
       if (markersActive && pos1 && pos2) {
@@ -532,7 +411,6 @@ export class BirthdayFX {
       }
       this.textGroup.position.y += baseHeightOffset + bobbingY;
 
-      // Pulse emissive intensity on text meshes
       const emPulse = 1.0 + Math.sin(performance.now() * 0.003) * 0.3;
       for (const mesh of this._textMeshes) {
         if (mesh.material) {
@@ -541,17 +419,15 @@ export class BirthdayFX {
       }
     }
 
-    // Confetti animation
     this.confettiMat.opacity = 0.85 * fadeFactor;
     if (pos1 && pos2) {
       this._updateConfettiPhysics(pos1, pos2, deltaSec);
     }
 
-    // Celebration light
     const lightPulse = 2.5 + Math.sin(performance.now() * 0.004) * 1.0;
     this.celebrationLight.intensity = lightPulse * fadeFactor;
 
-    return 0; // No lightning during celebration
+    return 0;
   }
 
   // ─── Confetti Physics ────────────────────────────────────────────────
@@ -562,19 +438,17 @@ export class BirthdayFX {
     const positions = this.confettiPositions;
 
     for (let i = 0; i < count; i++) {
-      // Start at midpoint with slight random offset
       positions[i * 3] = mid.x + (Math.random() - 0.5) * 0.1;
       positions[i * 3 + 1] = mid.y + (Math.random() - 0.5) * 0.1;
       positions[i * 3 + 2] = mid.z + (Math.random() - 0.5) * 0.1;
 
-      // Radial burst velocity
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(Math.random() * 2 - 1);
       const speed = 0.02 + Math.random() * 0.04;
 
       this.confettiVelocities[i].set(
         Math.sin(phi) * Math.cos(theta) * speed,
-        Math.sin(phi) * Math.sin(theta) * speed + 0.015, // Slight upward bias
+        Math.sin(phi) * Math.sin(theta) * speed + 0.015,
         Math.cos(phi) * speed
       );
 
@@ -594,30 +468,24 @@ export class BirthdayFX {
       const vel = this.confettiVelocities[i];
       const phase = this.confettiPhases[i];
 
-      // Apply velocity
       positions[i * 3] += vel.x;
       positions[i * 3 + 1] += vel.y;
       positions[i * 3 + 2] += vel.z;
 
-      // Gentle gravity
       vel.y -= 0.0004;
 
-      // Sine-wave drift for floaty feel
       positions[i * 3] += Math.sin(now * 0.002 + phase) * 0.001;
       positions[i * 3 + 2] += Math.cos(now * 0.0015 + phase) * 0.001;
 
-      // Drag
       vel.x *= 0.995;
       vel.y *= 0.997;
       vel.z *= 0.995;
 
-      // Distance from midpoint
       const dx = positions[i * 3] - mid.x;
       const dy = positions[i * 3 + 1] - mid.y;
       const dz = positions[i * 3 + 2] - mid.z;
       const distSq = dx * dx + dy * dy + dz * dz;
 
-      // Re-spawn if too far (> 1.5m radius) or fallen below midpoint
       if (distSq > 2.25 || positions[i * 3 + 1] < mid.y - 0.8) {
         positions[i * 3] = mid.x + (Math.random() - 0.5) * 0.3;
         positions[i * 3 + 1] = mid.y + Math.random() * 0.3;
@@ -633,16 +501,10 @@ export class BirthdayFX {
       }
     }
 
-    // Dynamic confetti size
     this.confettiMat.size = 0.08 + Math.sin(now * 0.003) * 0.02;
     this.confettiGeo.attributes.position.needsUpdate = true;
   }
 
-  // ─── Public API ──────────────────────────────────────────────────────
-
-  /**
-   * Force reset to standby (e.g. from external control)
-   */
   reset() {
     this.chargeAccumulated = 0;
     this.transitionElapsed = 0;
@@ -655,19 +517,8 @@ export class BirthdayFX {
     this._setState(BirthdayState.STANDBY);
   }
 
-  /**
-   * Dispose all Three.js resources
-   */
   dispose() {
-    if (this.group && this.scene) {
-      this.scene.remove(this.group);
-    }
-    if (this.chargeRingMesh && this.chargeRingMesh.geometry) {
-      this.chargeRingMesh.geometry.dispose();
-    }
-    this.chargeRingMat?.dispose();
-    this.chargeTrackMesh?.geometry?.dispose();
-    this.chargeTrackMesh?.material?.dispose();
+    super.dispose();
     this.shockwaveMesh?.geometry?.dispose();
     this.shockwaveMesh?.material?.dispose();
     this.confettiGeo?.dispose();

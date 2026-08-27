@@ -1,12 +1,6 @@
 /**
- * A-Frame Custom Component: bloom-effect (Plan A Streamlined Pipeline)
+ * A-Frame Custom Component: bloom-effect
  * High-Performance Single-Composer Selective Bloom with Direct Screen Blending.
- *
- * Optimizations:
- * 1. Single EffectComposer for Layer 1 Glow extraction (0.25x downscaled, 8-bit UnsignedByte).
- * 2. Main scene is rendered ONCE directly to the screen canvas (0 double-draw penalty).
- * 3. Additive full-screen quad blends glow directly onto screen canvas with ACES Filmic preservation.
- * 4. Reduces GPU Framebuffer switches by >65% and memory bandwidth by >75% for stable 60 FPS on mobile TBDR GPUs.
  */
 
 import * as THREE from 'three';
@@ -35,7 +29,6 @@ const GlowAdditiveShader = {
     uniform float exposure;
     varying vec2 vUv;
 
-    // ACES Filmic Tone Mapping curve to prevent color burnout
     vec3 ACESFilm(vec3 x) {
       float a = 2.51;
       float b = 0.03;
@@ -85,13 +78,11 @@ if (typeof AFRAME !== 'undefined') {
         this.sceneEl.addEventListener('loaded', setup, { once: true });
       }
 
-      // Listen to proximity updates to dynamically scale bloom intensity
       this.sceneEl.addEventListener('proximity-update', (e) => {
         const { proximity, active } = e.detail;
         this.currentProximity = active ? proximity : 0;
       });
 
-      // Listen to external custom events to update bloom parameters in real time
       this.sceneEl.addEventListener('set-bloom-params', (e) => {
         const { enabled, strength, radius, threshold, pulseRange, dynamicIntensity } = e.detail || {};
         if (enabled !== undefined) this.setEnabled(enabled);
@@ -102,7 +93,6 @@ if (typeof AFRAME !== 'undefined') {
         if (dynamicIntensity !== undefined) this.setDynamicIntensity(dynamicIntensity);
       });
 
-      // Listen to dynamic DPR scale changes
       this.sceneEl.addEventListener('set-dpr', (e) => {
         const { dpr } = e.detail || {};
         if (dpr && this.sceneEl && this.sceneEl.renderer) {
@@ -199,16 +189,13 @@ if (typeof AFRAME !== 'undefined') {
         sceneEl.object3D.background = null;
       }
 
-      // Restore native device pixel ratio for full-sharpness rendering
       const targetDpr = window.devicePixelRatio || 1;
       renderer.setPixelRatio(targetDpr);
 
-      // Initial Layer 1 synchronization
       this._syncBloomLayers();
       sceneEl.addEventListener('three-text-loaded', () => this._syncBloomLayers());
       sceneEl.addEventListener('child-attached', () => this._syncBloomLayers());
 
-      // Resolution & Downscale setup (0.25x default for 16x fewer blur pixels)
       const size = new THREE.Vector2();
       renderer.getSize(size);
       const pr = renderer.getPixelRatio() || 1;
@@ -219,9 +206,6 @@ if (typeof AFRAME !== 'undefined') {
       const bloomW = Math.max(1, Math.floor(width * downscale));
       const bloomH = Math.max(1, Math.floor(height * downscale));
 
-      // ----------------------------------------------------------------------
-      // 1. Single Downscaled Bloom Composer (Calculates Glow on Layer 1)
-      // ----------------------------------------------------------------------
       const bloomRenderTarget = new THREE.WebGLRenderTarget(bloomW, bloomH, {
         type: THREE.UnsignedByteType,
         format: THREE.RGBAFormat,
@@ -246,9 +230,6 @@ if (typeof AFRAME !== 'undefined') {
       this.bloomPass.renderToScreen = false;
       this.bloomComposer.addPass(this.bloomPass);
 
-      // ----------------------------------------------------------------------
-      // 2. Additive Screen Quad (Directly blends bloom texture onto canvas)
-      // ----------------------------------------------------------------------
       this.postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
       this.postQuadGeom = new THREE.PlaneGeometry(2, 2);
       this.postQuadMat = new THREE.ShaderMaterial({
@@ -267,9 +248,6 @@ if (typeof AFRAME !== 'undefined') {
       this.postQuadScene = new THREE.Scene();
       this.postQuadScene.add(new THREE.Mesh(this.postQuadGeom, this.postQuadMat));
 
-      // ----------------------------------------------------------------------
-      // 3. Intercept A-Frame's renderer.render Loop
-      // ----------------------------------------------------------------------
       const self = this;
       const originalRender = renderer.render.bind(renderer);
       this._originalRender = originalRender;
@@ -284,7 +262,6 @@ if (typeof AFRAME !== 'undefined') {
         const activeCamera = (sceneEl.camera && sceneEl.camera.isCamera) ? sceneEl.camera : camera;
         const activeScene = sceneEl.object3D || scene;
 
-        // CRITICAL: If bloom is disabled or strength <= 0, bypass post-processing completely!
         if (!self.data.enabled || !self.enabled || self.data.strength <= 0) {
           if (activeScene && activeScene.background) {
             activeScene.background = null;
@@ -310,11 +287,9 @@ if (typeof AFRAME !== 'undefined') {
             return;
           }
 
-          // Ensure pass references point to active scene and camera
           self.bloomRenderPass.camera = activeCamera;
           self.bloomRenderPass.scene = activeScene;
 
-          // Configurable organic breathing pulse oscillation
           const now = performance.now();
           const pulseRange = self.data.pulseRange !== undefined ? self.data.pulseRange : 0.25;
           const breathOffset = (self.data.strength > 0 && pulseRange > 0)
@@ -322,7 +297,6 @@ if (typeof AFRAME !== 'undefined') {
             : 0;
           const baseStrength = Math.max(0, self.data.strength + breathOffset);
 
-          // Dynamic bloom intensity modulation based on proximity
           if (self.data.dynamicIntensity) {
             const prox = self.currentProximity;
             let dynamicMult = 1.0 + Math.pow(prox, 1.2) * 0.75;
@@ -334,18 +308,15 @@ if (typeof AFRAME !== 'undefined') {
             self.bloomPass.strength = baseStrength;
           }
 
-          // Step 1: Render Layer 1 Only (3D Text, Lightning, Beacons, Sparks) to 0.25x Bloom Composer
           activeCamera.layers.set(1);
           self.bloomComposer.render();
 
-          // Step 2: Render Main Scene (All Layers) directly to Screen Canvas (Single Pass!)
           activeCamera.layers.enableAll();
           renderer.setRenderTarget(null);
           renderer.setClearColor(0x000000, 0);
           renderer.autoClear = true;
           originalRender(activeScene, activeCamera);
 
-          // Step 3: Additive blend the blurred bloom glow texture on top of screen canvas
           renderer.autoClear = false;
           self.postQuadMat.uniforms.tDiffuse.value = self.bloomComposer.readBuffer.texture;
           originalRender(self.postQuadScene, self.postCamera);
@@ -359,9 +330,6 @@ if (typeof AFRAME !== 'undefined') {
         }
       };
 
-      // ----------------------------------------------------------------------
-      // 4. Handle Window Resize
-      // ----------------------------------------------------------------------
       this._onResize = this._onResize.bind(this);
       window.addEventListener('resize', this._onResize);
 
@@ -389,14 +357,12 @@ if (typeof AFRAME !== 'undefined') {
     _syncBloomLayers: function () {
       if (!this.sceneEl || !this.sceneEl.object3D) return;
 
-      // Enable lights on Layer 1
       this.sceneEl.object3D.traverse((obj) => {
         if (obj.isLight) {
           obj.layers.enable(1);
         }
       });
 
-      // Enable Layer 1 on bloom elements
       const bloomEntities = this.sceneEl.querySelectorAll('.bloom-fx, [three-text-3d]');
       bloomEntities.forEach((el) => {
         if (el.object3D) {
@@ -407,10 +373,6 @@ if (typeof AFRAME !== 'undefined') {
           });
         }
       });
-    },
-
-    tick: function () {
-      // Event-driven sync avoids frequent scene-graph traversals
     },
 
     remove: function () {

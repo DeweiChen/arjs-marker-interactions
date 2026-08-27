@@ -1,11 +1,12 @@
 /**
  * A-Frame Custom Component: proximity-lightning
- * Connects two tracked AR markers with procedural lightning and plasma FX.
- * Scales dynamically as markers approach each other and disables beyond threshold distance.
+ * Connects two tracked AR markers with dynamic procedural proximity FX.
+ * Uses FXFactory strategy pattern for pluggable visual effects (lightning, laser, etc.).
+ * Optionally enables BirthdayFX celebration state machine when configured.
  */
 
-import { LightningFX } from './lightning-fx.js';
-import { BirthdayFX } from './birthday-fx.js';
+import { globalFXFactory } from '../fx/fx-factory.js';
+import { BirthdayFX } from '../fx/birthday-fx.js';
 
 if (typeof AFRAME !== 'undefined') {
   AFRAME.registerComponent('proximity-lightning', {
@@ -15,14 +16,16 @@ if (typeof AFRAME !== 'undefined') {
       maxDistance: { type: 'number', default: 4.5 },
       minDistance: { type: 'number', default: 1.5 },
       terminalOffsetY: { type: 'number', default: 0.25 },
-      smoothingFactor: { type: 'number', default: 0.35 }
+      smoothingFactor: { type: 'number', default: 0.35 },
+      fxType: { type: 'string', default: 'lightning' },
+      enableBirthday: { type: 'boolean', default: false }
     },
 
     init: function () {
       const sceneEl = this.el.sceneEl;
       const THREE = window.THREE || AFRAME.THREE;
 
-      // Tracked world positions with lerp smoothing to reduce camera jitter
+      // Tracked world positions with lerp smoothing
       this.pos1 = new THREE.Vector3();
       this.pos2 = new THREE.Vector3();
       this.smoothedPos1 = new THREE.Vector3();
@@ -34,23 +37,24 @@ if (typeof AFRAME !== 'undefined') {
       this.isMarker1Visible = false;
       this.isMarker2Visible = false;
 
-      // Initialize Lightning FX attached to the root Three.js scene
-      this.lightningFX = new LightningFX(sceneEl.object3D, {
+      // Initialize primary FX via FXFactory
+      this.lightningFX = globalFXFactory.create(this.data.fxType, sceneEl.object3D, {
         maxDistance: this.data.maxDistance,
         minDistance: this.data.minDistance
       });
 
-      // Initialize Birthday FX attached to the root Three.js scene
-      this.birthdayFX = new BirthdayFX(sceneEl.object3D, {
-        chargeThreshold: 1.6
-      });
+      // Optionally initialize Birthday FX attached to root scene
+      if (this.data.enableBirthday) {
+        this.birthdayFX = new BirthdayFX(sceneEl.object3D, {
+          chargeThreshold: 1.6
+        });
 
-      // Event listener for manual birthday state reset
-      sceneEl.addEventListener('reset-birthday', () => {
-        if (this.birthdayFX) {
-          this.birthdayFX.reset();
-        }
-      });
+        sceneEl.addEventListener('reset-birthday', () => {
+          if (this.birthdayFX) {
+            this.birthdayFX.reset();
+          }
+        });
+      }
 
       // Bind marker visibility events
       this._bindMarkerEvents();
@@ -91,13 +95,11 @@ if (typeof AFRAME !== 'undefined') {
 
       if (!marker1 || !marker2 || !this.lightningFX) return;
 
-      // Check visibility and stabilization from marker-stabilizer and AR.js object3D state
       const stab1 = marker1.components['marker-stabilizer'];
       const stab2 = marker2.components['marker-stabilizer'];
       const m1Visible = stab1 ? stab1.isStable : ((marker1.object3D && marker1.object3D.visible) || this.isMarker1Visible);
       const m2Visible = stab2 ? stab2.isStable : ((marker2.object3D && marker2.object3D.visible) || this.isMarker2Visible);
 
-      // Sync state if object3D visibility changes directly
       if (m1Visible !== this._lastM1Visible) {
         this._lastM1Visible = m1Visible;
         this.el.emit('marker-status-change', { marker: 'hiro', visible: m1Visible });
@@ -108,19 +110,15 @@ if (typeof AFRAME !== 'undefined') {
       }
 
       if (m1Visible && m2Visible) {
-        // Ensure synchronized world matrices before sampling positions
         marker1.object3D.updateMatrixWorld(true);
         marker2.object3D.updateMatrixWorld(true);
 
-        // Extract raw world positions
         marker1.object3D.getWorldPosition(this.pos1);
         marker2.object3D.getWorldPosition(this.pos2);
 
-        // Apply vertical terminal offset so lightning connects model heads/cores
         this.pos1.y += this.data.terminalOffsetY;
         this.pos2.y += this.data.terminalOffsetY;
 
-        // Exponential smoothing (reduces AR tracking position jitter)
         const alpha = this.data.smoothingFactor;
         if (!this.hasInitPos1) {
           this.smoothedPos1.copy(this.pos1);
@@ -136,14 +134,14 @@ if (typeof AFRAME !== 'undefined') {
           this.smoothedPos2.lerp(this.pos2, alpha);
         }
 
-        // Update Birthday FX state machine
         const dist = this.pos1.distanceTo(this.pos2);
-        const prox = this.lightningFX.smoothedProximity;
-        const bdayResult = this.birthdayFX
-          ? this.birthdayFX.update(this.smoothedPos1, this.smoothedPos2, dist, prox, timeDelta)
-          : { state: 'STANDBY', chargePercent: 0, chargeProgress: 0, lightningIntensity: 1.0 };
+        const prox = this.lightningFX.smoothedProximity || 0;
 
-        // Update procedural lightning FX with birthday intensity modifier & charge progress color shift
+        let bdayResult = { state: 'STANDBY', chargePercent: 0, chargeProgress: 0, lightningIntensity: 1.0 };
+        if (this.birthdayFX) {
+          bdayResult = this.birthdayFX.update(this.smoothedPos1, this.smoothedPos2, dist, prox, timeDelta);
+        }
+
         this.lightningFX.update(
           this.smoothedPos1,
           this.smoothedPos2,
@@ -152,7 +150,6 @@ if (typeof AFRAME !== 'undefined') {
           bdayResult.chargeProgress || 0
         );
 
-        // Dispatch status event for HUD updates
         this.el.emit('proximity-update', {
           distance: dist,
           proximity: prox,
@@ -161,10 +158,10 @@ if (typeof AFRAME !== 'undefined') {
           chargePercent: bdayResult.chargePercent
         });
       } else {
-        // One or both markers are lost
-        const bdayResult = this.birthdayFX
-          ? this.birthdayFX.update(null, null, 999, 0, timeDelta)
-          : { state: 'STANDBY', chargePercent: 0, lightningIntensity: 0 };
+        let bdayResult = { state: 'STANDBY', chargePercent: 0, chargeProgress: 0, lightningIntensity: 0 };
+        if (this.birthdayFX) {
+          bdayResult = this.birthdayFX.update(null, null, 999, 0, timeDelta);
+        }
 
         this.lightningFX.update(null, null, timeDelta, 0);
         this.el.emit('proximity-update', {

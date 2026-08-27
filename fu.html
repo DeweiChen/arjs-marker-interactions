@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#000000" />
+  <title>Fu Birthday Celebration Experience - WebAR</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- A-Frame Core Library (v1.6.0) -->
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+
+  <!-- AR.js A-Frame Build -->
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+
+  <!-- Dedicated Entry Script for Fu Page -->
+  <script type="module" src="/src/pages/fu.js"></script>
+</head>
+
+<body>
+  <!-- Top Telemetry & Control HUD -->
+  <header class="hud-header">
+    <div class="hud-telemetry">
+      <!-- FPS & Frame Timing -->
+      <div id="badge-fps" class="telemetry-chip fps-chip">
+        <span class="pulse-dot"></span>
+        <span class="chip-label">FPS</span>
+        <span id="fps-val" class="chip-val">--</span>
+        <span id="frametime-val" class="chip-sub">(--ms)</span>
+      </div>
+    </div>
+
+    <div class="hud-actions">
+      <!-- Fullscreen Viewport Mode Toggle Button -->
+      <button id="btn-toggle-fullscreen" class="hud-btn" title="Toggle Fullscreen Mode" aria-label="Toggle Fullscreen Mode">
+        <svg id="icon-fs-enter" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+        </svg>
+        <svg id="icon-fs-exit" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+        </svg>
+        <span id="fs-btn-text">Full</span>
+      </button>
+
+      <!-- Reset Birthday FX Button -->
+      <button id="btn-reset-bday" class="hud-btn" title="Reset Birthday FX (重設生日狀態)" aria-label="Reset Birthday FX">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+        </svg>
+        <span>Reset</span>
+      </button>
+
+      <!-- View Markers Button -->
+      <button id="btn-show-markers" class="hud-btn" title="View & Download Marker Patterns">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+        <span>Markers</span>
+      </button>
+
+      <!-- Bloom FX Control Toggle Button -->
+      <button id="btn-toggle-bloom" class="hud-btn" title="Adjust Bloom Effect Settings">
+        <span class="btn-icon-wrapper">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2"></path>
+            <path d="M12 20v2"></path>
+          </svg>
+          <span id="bloom-hud-dot" class="hud-status-dot active"></span>
+        </span>
+        <span>FX / DPR</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 2D Bloom FX Glassmorphic Control Panel -->
+  <aside id="bloom-control-panel" class="bloom-panel hidden" role="region" aria-label="Bloom Effect Adjustment">
+    <div class="bloom-panel-header">
+      <div class="bloom-panel-title">
+        <span>Bloom FX Settings (Fu Page)</span>
+      </div>
+      <div class="bloom-panel-actions">
+        <button id="btn-close-bloom" class="panel-icon-btn">&times;</button>
+      </div>
+    </div>
+
+    <div class="bloom-panel-body">
+      <!-- Master Bloom Switch -->
+      <div class="bloom-master-section">
+        <div class="bloom-toggle-row master-toggle-row">
+          <div class="bloom-toggle-info">
+            <span class="bloom-toggle-title">Bloom 特效開關</span>
+          </div>
+          <div class="master-switch-wrapper">
+            <span id="val-bloom-status" class="bloom-status-badge status-active">ON</span>
+            <label class="switch-toggle" for="chk-master-bloom">
+              <input type="checkbox" id="chk-master-bloom" checked>
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strength Control -->
+      <div id="bloom-strength-group" class="bloom-control-group bloom-strength-group">
+        <div class="bloom-control-label-row">
+          <label for="slider-bloom-strength" class="bloom-control-label">Strength (強烈度)</label>
+          <span id="val-bloom-strength" class="bloom-val-badge">1.30x</span>
+        </div>
+        <div class="bloom-slider-wrapper">
+          <input type="range" id="slider-bloom-strength" class="bloom-range-slider" min="0" max="3" step="0.05" value="1.3">
+        </div>
+      </div>
+
+      <!-- Breathing Pulse Control -->
+      <div id="bloom-pulse-group" class="bloom-control-group bloom-pulse-group">
+        <div class="bloom-control-label-row">
+          <label for="slider-pulse-range" class="bloom-control-label">Breathing Pulse</label>
+          <span id="val-pulse-range" class="bloom-val-badge">±0.40x</span>
+        </div>
+        <div class="bloom-slider-wrapper">
+          <input type="range" id="slider-pulse-range" class="bloom-range-slider" min="0" max="0.6" step="0.02" value="0.4">
+        </div>
+      </div>
+
+      <!-- DPR Resolution Scale Control -->
+      <div class="bloom-control-group dpr-control-group">
+        <div class="bloom-control-label-row">
+          <label class="bloom-control-label">Rendering DPR</label>
+          <span id="val-dpr" class="bloom-val-badge">Native</span>
+        </div>
+        <div class="dpr-presets">
+          <button type="button" class="dpr-preset-btn" data-dpr="1">1.0x</button>
+          <button type="button" class="dpr-preset-btn" data-dpr="1.5">1.5x</button>
+          <button type="button" class="dpr-preset-btn" data-dpr="2">2.0x</button>
+          <button type="button" class="dpr-preset-btn active" data-dpr="native">Native</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Bottom Interaction & Proximity Status Panel -->
+  <footer class="hud-status-panel">
+    <div class="energy-card">
+      <div class="energy-header">
+        <span id="energy-status-text" class="energy-status">STANDBY</span>
+        <span id="distance-val" class="distance-badge">--</span>
+      </div>
+      <div class="energy-progress-wrapper">
+        <div id="energy-bar" class="energy-progress-bar"></div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Marker Patterns Modal Dialog -->
+  <div id="markers-modal" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>AR Marker Patterns</h2>
+        <button id="btn-close-modal" class="modal-close-btn">&times;</button>
+      </div>
+      <p class="modal-desc">Scan both markers simultaneously with your camera. Bring them closer to trigger Fu Birthday celebration!</p>
+      <div class="markers-grid">
+        <div class="marker-item">
+          <h3>Hiro Marker ("Fu" - Morandi Green Node)</h3>
+          <img src="./markers/images/hiro.png" alt="Hiro Marker Pattern" />
+          <a href="./markers/images/hiro.png" download="pattern-hiro.png" class="download-link">Download Pattern</a>
+        </div>
+        <div class="marker-item">
+          <h3>Kanji Marker ("DW" - Misty Blue Node)</h3>
+          <img src="./markers/images/kanji.png" alt="Kanji Marker Pattern" />
+          <a href="./markers/images/kanji.png" download="pattern-kanji.png" class="download-link">Download Pattern</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="hud-toast" class="hud-toast hidden" role="status" aria-live="polite"></div>
+
+  <!-- Embedded AR.js Scene with Birthday FX enabled -->
+  <a-scene embedded loading-screen="dotsColor: #00cba9; backgroundColor: #000000;"
+    arjs="sourceType: webcam; sourceWidth: 1920; sourceHeight: 1080; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    renderer="precision: mediump; antialias: false; powerPreference: high-performance;"
+    proximity-lightning="marker1: #marker-hiro; marker2: #marker-kanji; maxDistance: 3.0; minDistance: 0.35; terminalOffsetY: 0.25; smoothingFactor: 0.3; enableBirthday: true; fxType: lightning"
+    bloom-effect="strength: 1.3; radius: 0.3; threshold: 0.0; downscale: 0.25; pulseRange: 0.4; dynamicIntensity: true">
+
+    <a-assets>
+      <a-asset-item id="typeface-font" src="/fonts/fredoka_light_regular.json"></a-asset-item>
+    </a-assets>
+
+    <a-entity light="type: ambient; color: #ffffff; intensity: 0.8"></a-entity>
+    <a-entity light="type: directional; color: #ffffff; intensity: 1.2; position: 1 4 2"></a-entity>
+
+    <!-- Marker 1: Hiro Marker Configuration ("Fu") -->
+    <a-marker preset="hiro" id="marker-hiro" emitevents="true" marker-stabilizer="warmupFrames: 4">
+      <a-entity position="0 0.01 0" rotation="-90 0 0">
+        <a-circle radius="0.65" color="#050508"
+          material="shader: standard; roughness: 0.9; metalness: 0.1; opacity: 0.98; transparent: true">
+        </a-circle>
+      </a-entity>
+      <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
+        three-text-3d="text: Fu; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #00cba9; emissive: #00cba9; emissiveIntensity: 1.0; pitchFacing: true">
+      </a-entity>
+    </a-marker>
+
+    <!-- Marker 2: Kanji Marker Configuration ("DW") -->
+    <a-marker preset="kanji" id="marker-kanji" emitevents="true" marker-stabilizer="warmupFrames: 4">
+      <a-entity position="0 0.01 0" rotation="-90 0 0">
+        <a-circle radius="0.65" color="#050508"
+          material="shader: standard; roughness: 0.9; metalness: 0.1; opacity: 0.98; transparent: true">
+        </a-circle>
+      </a-entity>
+      <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
+        three-text-3d="text: DW; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #60a5fa; emissive: #60a5fa; emissiveIntensity: 1.0; pitchFacing: true">
+      </a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+</body>
+
+</html>

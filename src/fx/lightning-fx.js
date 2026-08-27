@@ -1,17 +1,18 @@
 /**
- * LightningFX - Sleek High-Voltage Procedural Lightning & Particle Burst System
- * Generates crisp electric arcs, smooth glowing circular spark explosions,
- * and dynamic energy core calibrated for WebAR dual-marker interaction.
+ * LightningFX - High-Voltage Procedural Lightning & Particle Explosion Strategy
+ * Generates crisp electric arcs, smooth glowing spark particle explosions,
+ * and dynamic plasma core calibrated for WebAR dual-marker proximity interaction.
  */
 
-export class LightningFX {
+import { BaseFX } from './base-fx.js';
+
+export class LightningFX extends BaseFX {
   /**
    * @param {THREE.Scene} scene - The Three.js / A-Frame scene
    * @param {Object} options - Configuration parameters
    */
   constructor(scene, options = {}) {
-    this.scene = scene;
-    this.THREE = window.THREE || AFRAME.THREE;
+    super(scene, options);
 
     this.options = Object.assign(
       {
@@ -26,11 +27,6 @@ export class LightningFX {
       },
       options
     );
-
-    // Root Three.js Object3D container for all visual FX
-    this.group = new this.THREE.Group();
-    this.group.visible = false;
-    this.scene.add(this.group);
 
     // Proximity state
     this.proximity = 0; // 0 (standby) to 1 (maximum overload)
@@ -47,24 +43,12 @@ export class LightningFX {
     this._initExplosiveSparks();
     this._initDynamicLight();
 
-    // Enable Layer 1 on all visual FX meshes & particles for Selective Bloom Post-Processing
-    this._enableBloomLayer();
-  }
-
-  /**
-   * Traverse all child objects and enable Layer 1 for selective bloom rendering.
-   */
-  _enableBloomLayer() {
-    this.group.traverse((obj) => {
-      if (obj.isMesh || obj.isPoints || obj.isLight) {
-        obj.layers.enable(1);
-      }
-    });
+    // Enable Layer 1 on all visual FX meshes & particles for Selective Bloom
+    this.enableBloomLayer();
   }
 
   /**
    * Create a soft circular radial glow texture in-memory via 2D Canvas.
-   * Eliminates square pixel block artifacts and creates smooth glowing sparks.
    */
   _createSoftGlowTexture() {
     const canvas = document.createElement('canvas');
@@ -88,7 +72,6 @@ export class LightningFX {
 
   /**
    * Initialize crisp ribbon quads for electric lightning arcs.
-   * Balanced width for sharp, razor-thin yet luminous appearance.
    */
   _initSleekLightning() {
     const THREE = this.THREE;
@@ -186,7 +169,7 @@ export class LightningFX {
   }
 
   /**
-   * Initialize large-radius explosive particle system with smooth circular texture.
+   * Initialize explosive particle system.
    */
   _initExplosiveSparks() {
     const THREE = this.THREE;
@@ -197,25 +180,23 @@ export class LightningFX {
     this.sparkVelocities = [];
     this.sparkLifes = [];
 
-    const colLavenderWhite = new THREE.Color(0xf5f3ff); // Lavender-White Core
-    const colSky = new THREE.Color(0x38bdf8);           // Electric Sky Blue
-    const colBlue = new THREE.Color(0x3b82f6);          // Neon Cobalt Blue
-    const colPurple = new THREE.Color(0xa855f7);        // Ultraviolet Purple
-    const colViolet = new THREE.Color(0xc084fc);        // Radiant Violet
+    const colLavenderWhite = new THREE.Color(0xf5f3ff);
+    const colSky = new THREE.Color(0x38bdf8);
+    const colBlue = new THREE.Color(0x3b82f6);
+    const colPurple = new THREE.Color(0xa855f7);
+    const colViolet = new THREE.Color(0xc084fc);
 
     for (let i = 0; i < maxSparks; i++) {
       this.sparkPositions[i * 3] = 0;
       this.sparkPositions[i * 3 + 1] = 0;
       this.sparkPositions[i * 3 + 2] = 0;
 
-      // Dynamic blend of white-purple high light, electric sky blue, and ultraviolet purple
       const r = Math.random();
       const randColor = r > 0.65 ? colLavenderWhite : (r > 0.4 ? colSky : (r > 0.2 ? colPurple : colViolet));
       this.sparkColors[i * 3] = randColor.r;
       this.sparkColors[i * 3 + 1] = randColor.g;
       this.sparkColors[i * 3 + 2] = randColor.b;
 
-      // Radial explosive velocities
       this.sparkVelocities.push(new THREE.Vector3());
       this.sparkLifes.push(Math.random());
     }
@@ -230,7 +211,6 @@ export class LightningFX {
       new THREE.BufferAttribute(this.sparkColors, 3)
     );
 
-    // Particle material with custom smooth circular soft-glow texture
     this.sparkMaterial = new THREE.PointsMaterial({
       map: this.sparkTexture,
       vertexColors: true,
@@ -246,7 +226,7 @@ export class LightningFX {
   }
 
   /**
-   * Dynamic point light to illuminate surrounding 3D models with indigo-violet glow.
+   * Dynamic point light to illuminate surrounding 3D models with glow.
    */
   _initDynamicLight() {
     const THREE = this.THREE;
@@ -293,7 +273,8 @@ export class LightningFX {
   }
 
   /**
-   * Update visual effects on every animation frame tick.
+   * Update visual effects on every frame.
+   *
    * @param {THREE.Vector3|null} startPos
    * @param {THREE.Vector3|null} endPos
    * @param {number} delta
@@ -338,7 +319,6 @@ export class LightningFX {
 
     this.group.visible = true;
 
-    // Midpoint
     const midPoint = startPos.clone().add(endPos).multiplyScalar(0.5);
     this.coreGroup.position.copy(midPoint);
     this.pointLight.position.copy(midPoint);
@@ -346,18 +326,13 @@ export class LightningFX {
     this._applyProximityEffects(effectiveProximity, startPos, endPos, midPoint, delta, chargeProgress);
   }
 
-  /**
-   * Apply dynamic scaling, sharp lightning mesh generation, and particle bursts.
-   */
   _applyProximityEffects(p, startPos, endPos, midPoint, delta, chargeProgress = 0) {
     const THREE = this.THREE;
     const now = performance.now();
 
-    // 1. Sleek Plasma Core Scale
     const scaleFactor = 0.3 + Math.pow(p, 1.4) * 1.8;
     this.coreGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-    // Core pulsing & spin
     const pulse = 1 + Math.sin(now * 0.018 * (1 + p * 3)) * (0.15 + 0.25 * p);
     this.innerCoreMesh.scale.set(pulse, pulse, pulse);
     this.innerCoreMesh.rotation.y += 0.04;
@@ -370,25 +345,19 @@ export class LightningFX {
       ring.rotation.z += rotSpeed * 0.8;
     });
 
-    // 2. Light intensity
     this.pointLight.intensity = Math.pow(p, 1.3) * 5.0;
     this.pointLight.distance = 3.0 + p * 2.5;
 
-    // 3. Crisp Lightning Mesh
     if (startPos && endPos && now - this.lastBoltUpdateTime > (this.boltUpdateInterval / (1 + p * 1.5))) {
       this.lastBoltUpdateTime = now;
       this._updateSleekBolts(startPos, endPos, p, midPoint, chargeProgress);
     }
 
-    // 4. Large-Radius Particle Sparks Explosion
     if (midPoint && startPos && endPos) {
       this._updateExplosionSparks(midPoint, startPos, endPos, p, delta);
     }
   }
 
-  /**
-   * Rebuild crisp, sleek lightning ribbon quads with dynamic charging color shift.
-   */
   _updateSleekBolts(startPos, endPos, p, midPoint, chargeProgress = 0) {
     const THREE = this.THREE;
     const { maxBolts, segmentsPerBolt } = this.options;
@@ -397,21 +366,17 @@ export class LightningFX {
     const uvs = this.boltUvs;
 
     let vertexIndex = 0;
-
-    // Active bolts scale from 1 (at distance) to maxBolts (5) at close proximity
     const activeBolts = Math.min(maxBolts, Math.max(1, Math.ceil(p * maxBolts)));
 
-    // Refined sleek ribbon width: 0.012 (crisp) to 0.048 (intense discharge)
     const baseWidth = 0.012 + Math.pow(p, 1.2) * 0.036;
     const baseJitter = 0.08 + Math.pow(p, 1.1) * 0.28;
 
-    const colLavenderWhite = new THREE.Color(0xf5f3ff); // Lavender-White Core
-    const colSky = new THREE.Color(0x38bdf8);           // Electric Sky Blue
-    const colBlue = new THREE.Color(0x3b82f6);          // Neon Cobalt Blue
-    const colPurple = new THREE.Color(0xa855f7);        // Ultraviolet Purple
-    const colViolet = new THREE.Color(0xc084fc);        // Radiant Violet
+    const colLavenderWhite = new THREE.Color(0xf5f3ff);
+    const colSky = new THREE.Color(0x38bdf8);
+    const colBlue = new THREE.Color(0x3b82f6);
+    const colPurple = new THREE.Color(0xa855f7);
+    const colViolet = new THREE.Color(0xc084fc);
 
-    // Dynamic charging color shift: Electric Blue -> Golden Amber -> White-Hot Overload
     if (chargeProgress > 0) {
       const chargeT = THREE.MathUtils.clamp(chargeProgress, 0, 1);
       const colGold = new THREE.Color(0xfbbf24);
@@ -440,10 +405,8 @@ export class LightningFX {
       let boltWidth = baseWidth;
 
       if (b === 0) {
-        // Main Core Bolt: Crisp & Brightest
         boltWidth *= 1.2;
       } else {
-        // Branch bolts fork outwards
         boltWidth *= 0.7;
         jitter *= 0.85;
         if (b % 2 === 1) {
@@ -482,7 +445,6 @@ export class LightningFX {
         const v3 = p2.clone().addScaledVector(norm, halfW);
         const v4 = p2.clone().addScaledVector(norm, -halfW);
 
-        // Main bolt has radiant lavender-white core + sky blue, branches alternate ultraviolet purple & electric blue
         let segColor;
         if (b === 0) {
           const r = Math.random();
@@ -519,19 +481,11 @@ export class LightningFX {
     this.boltGeometry.attributes.uv.needsUpdate = true;
   }
 
-  /**
-   * Update particle explosion physics scaling dynamically with distance proximity.
-   * Far distance: tight subtle micro-sparks (0.1m).
-   * Close distance: massive energetic particle burst expanding up to 1.8m.
-   */
   _updateExplosionSparks(midPoint, startPos, endPos, p, delta) {
     const { maxSparks } = this.options;
     const positions = this.sparkPositions;
-    
-    // Active spark count scales smoothly from 12 (far) to maxSparks (closest)
     const activeSparks = Math.max(12, Math.floor(Math.pow(p, 1.2) * maxSparks));
 
-    // Dynamic explosion spread radius: 0.12m (tight sizzle) -> 1.8m (wide blast)
     const explosionRadius = 0.12 + Math.pow(p, 1.8) * 1.68;
     const speedMultiplier = 0.4 + Math.pow(p, 2.0) * 3.6;
 
@@ -539,24 +493,19 @@ export class LightningFX {
       if (i < activeSparks) {
         const vel = this.sparkVelocities[i];
 
-        // Move spark along explosive velocity vector
         positions[i * 3] += vel.x * speedMultiplier;
         positions[i * 3 + 1] += vel.y * speedMultiplier;
         positions[i * 3 + 2] += vel.z * speedMultiplier;
 
-        // Swirling vortex force increasing with closeness
         positions[i * 3] += -vel.z * 0.15 * p;
         positions[i * 3 + 2] += vel.x * 0.15 * p;
 
-        // Distance from center
         const dx = positions[i * 3] - midPoint.x;
         const dy = positions[i * 3 + 1] - midPoint.y;
         const dz = positions[i * 3 + 2] - midPoint.z;
         const distSq = dx * dx + dy * dy + dz * dz;
 
-        // Re-spawn particle when exceeding dynamic radius threshold
         if (distSq > explosionRadius * explosionRadius || Math.random() < 0.05) {
-          // Spawn origins: mostly midpoint, with terminal sparks
           let origin = midPoint;
           const r = Math.random();
           if (r < 0.18) origin = startPos;
@@ -566,7 +515,6 @@ export class LightningFX {
           positions[i * 3 + 1] = origin.y + (Math.random() - 0.5) * 0.05;
           positions[i * 3 + 2] = origin.z + (Math.random() - 0.5) * 0.05;
 
-          // Radial explosion vector with variable speed
           const theta = Math.random() * Math.PI * 2;
           const phi = Math.acos(Math.random() * 2 - 1);
           const speed = (0.015 + Math.random() * 0.04) * (0.5 + p * 1.5);
@@ -586,18 +534,11 @@ export class LightningFX {
 
     this.sparkGeometry.setDrawRange(0, activeSparks);
     this.sparkGeometry.attributes.position.needsUpdate = true;
-
-    // Balanced glowing electric spark size (clearly visible, crisp sparks)
     this.sparkMaterial.size = 0.065 + Math.pow(p, 1.2) * 0.075;
   }
 
-  /**
-   * Dispose all Three.js resources and textures.
-   */
   dispose() {
-    if (this.group && this.scene) {
-      this.scene.remove(this.group);
-    }
+    super.dispose();
     if (this.boltGeometry) this.boltGeometry.dispose();
     if (this.boltMaterial) this.boltMaterial.dispose();
     if (this.sparkGeometry) this.sparkGeometry.dispose();

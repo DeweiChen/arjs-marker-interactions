@@ -4,91 +4,7 @@
  * automatically centers it, and applies emissive glowing material.
  */
 
-const fontCache = new Map();
-
-function createPaths(text, size, data, THREE) {
-  const chars = Array.from(text);
-  const scale = size / data.resolution;
-  const line_height = (data.boundingBox.yMax - data.boundingBox.yMin + data.underlineThickness) * scale;
-  const paths = [];
-
-  let offsetX = 0;
-  let offsetY = 0;
-
-  for (let i = 0; i < chars.length; i++) {
-    const char = chars[i];
-    if (char === '\n') {
-      offsetX = 0;
-      offsetY -= line_height;
-    } else {
-      const glyph = data.glyphs[char] || data.glyphs['?'];
-      if (glyph) {
-        const path = new THREE.ShapePath();
-        let x, y, cpx, cpy, cpx1, cpy1, cpx2, cpy2;
-
-        if (glyph.o) {
-          const outline = glyph._cachedOutline || (glyph._cachedOutline = glyph.o.split(' '));
-          for (let j = 0, l = outline.length; j < l;) {
-            const action = outline[j++];
-            switch (action) {
-              case 'm':
-                x = outline[j++] * scale + offsetX;
-                y = outline[j++] * scale + offsetY;
-                path.moveTo(x, y);
-                break;
-              case 'l':
-                x = outline[j++] * scale + offsetX;
-                y = outline[j++] * scale + offsetY;
-                path.lineTo(x, y);
-                break;
-              case 'q':
-                cpx = outline[j++] * scale + offsetX;
-                cpy = outline[j++] * scale + offsetY;
-                cpx1 = outline[j++] * scale + offsetX;
-                cpy1 = outline[j++] * scale + offsetY;
-                path.quadraticCurveTo(cpx1, cpy1, cpx, cpy);
-                break;
-              case 'b':
-                cpx = outline[j++] * scale + offsetX;
-                cpy = outline[j++] * scale + offsetY;
-                cpx1 = outline[j++] * scale + offsetX;
-                cpy1 = outline[j++] * scale + offsetY;
-                cpx2 = outline[j++] * scale + offsetX;
-                cpy2 = outline[j++] * scale + offsetY;
-                path.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, cpx, cpy);
-                break;
-            }
-          }
-        }
-        offsetX += glyph.ha * scale;
-        paths.push(path);
-      }
-    }
-  }
-
-  return paths;
-}
-
-function fetchFont(url) {
-  if (fontCache.has(url)) {
-    return Promise.resolve(fontCache.get(url));
-  }
-
-  return fetch(url)
-    .then((res) => {
-      if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-      return res.json();
-    })
-    .catch(() => {
-      // CDN Fallback if local path fails
-      const fallbackUrl = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/fonts/helvetiker_bold.typeface.json';
-      return fetch(fallbackUrl).then((r) => r.json());
-    })
-    .then((data) => {
-      fontCache.set(url, data);
-      return data;
-    });
-}
+import { fetchFont, createPaths } from '../core/font-loader.js';
 
 if (typeof AFRAME !== 'undefined') {
   AFRAME.registerComponent('three-text-3d', {
@@ -121,7 +37,6 @@ if (typeof AFRAME !== 'undefined') {
       this._localCam = null;
       this._currentPitch = null;
 
-      // Bind marker stabilization events on parent marker entity if available
       const parentEl = this.el.parentEl;
       if (parentEl) {
         parentEl.addEventListener('markerFound', this._onMarkerFound);
@@ -169,7 +84,6 @@ if (typeof AFRAME !== 'undefined') {
 
       const THREE = window.THREE || AFRAME.THREE;
 
-      // If pitch facing is disabled, smoothly return to 0 (perpendicular)
       if (!this.data.pitchFacing) {
         if (this._currentPitch !== null && this._currentPitch !== 0) {
           this._currentPitch = THREE.MathUtils.lerp(this._currentPitch, 0, 0.25);
@@ -189,7 +103,6 @@ if (typeof AFRAME !== 'undefined') {
       const camera = (sceneEl.camera && sceneEl.camera.isCamera) ? sceneEl.camera : (sceneEl.cameraEl && sceneEl.cameraEl.getObject3D('camera'));
       if (!camera) return;
 
-      // Avoid computing when parent marker is hidden/not tracked
       if (obj3D.parent.visible === false && this._currentPitch !== null) return;
 
       if (!this._camWorldPos) {
@@ -200,23 +113,18 @@ if (typeof AFRAME !== 'undefined') {
       camera.getWorldPosition(this._camWorldPos);
       this._localCam.copy(this._camWorldPos);
 
-      // Transform camera world coordinate into parent (marker) local frame
       obj3D.parent.updateMatrixWorld(true);
       obj3D.parent.worldToLocal(this._localCam);
 
-      // Vector from text origin to camera in parent space
       const relY = this._localCam.y - obj3D.position.y;
       const relZ = this._localCam.z - obj3D.position.z;
 
-      // Elevation angle (pitch) in local Y-Z plane
       let targetPitch = -Math.atan2(relY, relZ);
 
-      // Convert degree limits to radians and clamp
       const minPitch = THREE.MathUtils.degToRad(this.data.minPitch);
       const maxPitch = THREE.MathUtils.degToRad(this.data.maxPitch);
       targetPitch = THREE.MathUtils.clamp(targetPitch, minPitch, maxPitch);
 
-      // Smooth lerp to eliminate AR camera tracking micro-jitter
       if (this._currentPitch === null || isNaN(this._currentPitch)) {
         this._currentPitch = targetPitch;
       } else {
@@ -224,7 +132,6 @@ if (typeof AFRAME !== 'undefined') {
         this._currentPitch = THREE.MathUtils.lerp(this._currentPitch, targetPitch, alpha);
       }
 
-      // Update ONLY elevation pitch (rotation.x). Leave rotation.y (yaw) and rotation.z (roll) intact.
       obj3D.rotation.x = this._currentPitch;
     },
 
@@ -251,11 +158,9 @@ if (typeof AFRAME !== 'undefined') {
             bevelSegments: data.bevelSegments
           });
 
-          // Auto-center geometry bounding box around local origin
           geometry.computeBoundingBox();
           geometry.center();
 
-          // Create standard emissive material
           const material = new THREE.MeshStandardMaterial({
             color: new THREE.Color(data.color),
             emissive: new THREE.Color(data.emissive),
@@ -264,7 +169,6 @@ if (typeof AFRAME !== 'undefined') {
             metalness: 0.1
           });
 
-          // Clean up old mesh if existing
           if (this.mesh) {
             if (this.mesh.geometry) this.mesh.geometry.dispose();
             if (this.mesh.material) this.mesh.material.dispose();
@@ -272,7 +176,7 @@ if (typeof AFRAME !== 'undefined') {
           }
 
           this.mesh = new THREE.Mesh(geometry, material);
-          this.mesh.layers.enable(1); // Enable Layer 1 for Bloom Post-Processing
+          this.mesh.layers.enable(1);
           this.el.setObject3D('mesh', this.mesh);
           this.el.emit('three-text-loaded', { mesh: this.mesh });
         })

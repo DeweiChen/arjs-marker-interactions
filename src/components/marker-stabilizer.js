@@ -7,7 +7,7 @@
 if (typeof AFRAME !== 'undefined') {
   AFRAME.registerComponent('marker-stabilizer', {
     schema: {
-      warmupFrames: { type: 'int', default: 4 }, // Number of consecutive stable detection frames required
+      warmupFrames: { type: 'int', default: 4 },
       smoothUpdate: { type: 'boolean', default: true }
     },
 
@@ -57,21 +57,17 @@ if (typeof AFRAME !== 'undefined') {
       const obj3D = this.el.object3D;
       if (!obj3D) return;
 
-      // AR.js internally toggles object3D.visible on its anchor
       const isDetected = obj3D.visible || this.isFound;
 
       if (isDetected) {
-        // Force synchronous world matrix update to eliminate latency & stale transformations
         obj3D.updateMatrixWorld(true);
 
         if (!this.isStable) {
           this.stableFrameCount++;
 
-          // Keep children hidden during the warm-up threshold
           if (this.stableFrameCount < this.data.warmupFrames) {
             this._setChildrenVisibility(false);
           } else {
-            // Reached stable frame count: Reveal child objects cleanly
             this.isStable = true;
             this._setChildrenVisibility(true);
             this.el.emit('marker-stabilized', { el: this.el, frames: this.stableFrameCount });
