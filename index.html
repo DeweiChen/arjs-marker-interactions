@@ -11,6 +11,20 @@
   <meta name="theme-color" content="#000000" />
   <title>AR.js Dynamic Dual Marker Lightning Interaction</title>
 
+  <!-- Anti-FOUC Critical Baseline Styles (Prevents white background & unstyled content flash on refresh) -->
+  <style>
+    html, body {
+      background-color: #000000 !important;
+      color: #f8fafc;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  </style>
+
+  <!-- Main Application Stylesheet -->
+  <link rel="stylesheet" href="/src/style.css" />
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
