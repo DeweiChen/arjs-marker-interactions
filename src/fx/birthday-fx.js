@@ -37,9 +37,9 @@ export class BirthdayFX extends BaseFX {
     this.chargeAccumulated = 0;
     this.transitionElapsed = 0;
     this.celebrationFadeTimer = 0;
+    this.celebrationTime = 0;
 
     // Sub-groups
-    this._initShockwave();
     this._initCelebrationText();
     this._initConfetti();
     this._initCelebrationLight();
@@ -60,25 +60,6 @@ export class BirthdayFX extends BaseFX {
   }
 
   // ─── Sub-system Initialization ───────────────────────────────────────
-
-  /**
-   * Expanding shockwave ring for the transition flash (Pure Intense White)
-   */
-  _initShockwave() {
-    const THREE = this.THREE;
-    const geo = new THREE.RingGeometry(0.01, 0.06, 64);
-    const mat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending
-    });
-    this.shockwaveMesh = new THREE.Mesh(geo, mat);
-    this.shockwaveMesh.layers.enable(1);
-    this.group.add(this.shockwaveMesh);
-  }
 
   /**
    * 3D "Happy Birthday" text in Fredoka font (Pearl White with Golden Glow)
@@ -132,14 +113,13 @@ export class BirthdayFX extends BaseFX {
     this.confettiPhases = [];
 
     const palette = [
-      new THREE.Color(0x00cba9), // Teal Green
-      new THREE.Color(0xfbbf24), // Gold
-      new THREE.Color(0xf59e0b), // Amber
-      new THREE.Color(0xf472b6), // Pink
-      new THREE.Color(0xc084fc), // Lavender
-      new THREE.Color(0xfef3c7), // Cream
-      new THREE.Color(0x34d399), // Emerald
-      new THREE.Color(0x60a5fa)  // Sky Blue
+      new THREE.Color(0xffffff), // Pure Radiant White Sparkle
+      new THREE.Color(0xffd700), // Vibrant Gold Spark
+      new THREE.Color(0x00cba9), // Bright Teal Green
+      new THREE.Color(0xf472b6), // Electric Pink
+      new THREE.Color(0x60a5fa), // Vivid Sky Blue
+      new THREE.Color(0xfbbf24), // Warm Gold
+      new THREE.Color(0xc084fc)  // Lavender Sparkle
     ];
 
     for (let i = 0; i < count; i++) {
@@ -153,7 +133,7 @@ export class BirthdayFX extends BaseFX {
       this.confettiColors[i * 3 + 2] = col.b;
 
       this.confettiVelocities.push(new THREE.Vector3());
-      this.confettiPhases.push(Math.random() * Math.PI * 2);
+      this.confettiPhases[i] = Math.random() * Math.PI * 2;
     }
 
     this.confettiGeo = new THREE.BufferGeometry();
@@ -165,7 +145,7 @@ export class BirthdayFX extends BaseFX {
     this.confettiMat = new THREE.PointsMaterial({
       map: this.confettiTexture,
       vertexColors: true,
-      size: 0.08,
+      size: 0.065,
       transparent: true,
       opacity: 0,
       blending: THREE.AdditiveBlending,
@@ -177,20 +157,43 @@ export class BirthdayFX extends BaseFX {
     this.group.add(this.confettiPoints);
   }
 
+  /**
+   * Generates a 64x64 multi-layered starburst spark canvas texture with crisp cross flare lines
+   */
   _createConfettiTexture() {
     const canvas = document.createElement('canvas');
-    canvas.width = 32;
-    canvas.height = 32;
+    canvas.width = 64;
+    canvas.height = 64;
     const ctx = canvas.getContext('2d');
 
-    const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+    ctx.clearRect(0, 0, 64, 64);
+
+    // Multi-stage radial glow core
+    const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
     gradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
-    gradient.addColorStop(0.3, 'rgba(255, 253, 230, 0.9)');
-    gradient.addColorStop(0.6, 'rgba(244, 224, 174, 0.6)');
+    gradient.addColorStop(0.2, 'rgba(255, 245, 200, 0.95)');
+    gradient.addColorStop(0.45, 'rgba(255, 215, 0, 0.5)');
+    gradient.addColorStop(0.8, 'rgba(244, 114, 182, 0.2)');
     gradient.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)');
 
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 32, 32);
+    ctx.fillRect(0, 0, 64, 64);
+
+    // Primary cross flare lines (starburst)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(32, 6); ctx.lineTo(32, 58);
+    ctx.moveTo(6, 32); ctx.lineTo(58, 32);
+    ctx.stroke();
+
+    // Secondary diagonal sub-rays for starburst bloom
+    ctx.strokeStyle = 'rgba(255, 235, 180, 0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(14, 14); ctx.lineTo(50, 50);
+    ctx.moveTo(50, 14); ctx.lineTo(14, 50);
+    ctx.stroke();
 
     return new this.THREE.CanvasTexture(canvas);
   }
@@ -208,6 +211,9 @@ export class BirthdayFX extends BaseFX {
     if (this.state === newState) return;
     const oldState = this.state;
     this.state = newState;
+    if (newState === BirthdayState.CELEBRATION) {
+      this.celebrationTime = 0;
+    }
     console.log(`[BirthdayFX] State transition: ${oldState} -> ${newState}`);
   }
 
@@ -262,7 +268,6 @@ export class BirthdayFX extends BaseFX {
   _updateStandby(withinChargeRange) {
     this.group.visible = false;
     this.textGroup.visible = false;
-    this.shockwaveMesh.material.opacity = 0;
     this.confettiMat.opacity = 0;
     this.celebrationLight.intensity = 0;
     this.transitionElapsed = 0;
@@ -313,7 +318,6 @@ export class BirthdayFX extends BaseFX {
       this.textGroup.position.copy(mid);
       this.textGroup.position.y += 0.85;
       this.textGroup.rotation.y = 0;
-      this.shockwaveMesh.position.copy(mid);
       this.celebrationLight.position.copy(mid);
       this.celebrationLight.position.y += 0.85;
     }
@@ -326,25 +330,24 @@ export class BirthdayFX extends BaseFX {
       return Math.max(0, 1.8 - implosionP * 1.8);
     }
 
-    // Phase 2: Blinding Pure White Flash & Expanding Shockwave (0.3 - 0.5)
+    // Phase 2: Intense Pure White Flash Burst & Particle Ejection (0.3 - 0.5)
     if (progress < 0.5) {
       const flashP = (progress - 0.3) / 0.2;
 
-      const shockScale = 0.1 + flashP * 5.0;
-      this.shockwaveMesh.scale.set(shockScale, shockScale, shockScale);
-      this.shockwaveMesh.material.color.setHex(0xffffff);
-      this.shockwaveMesh.material.opacity = (1.0 - flashP) * 1.0;
-
       this.celebrationLight.color.setHex(0xffffff);
-      this.celebrationLight.intensity = (1.0 - flashP) * 12.0;
+      this.celebrationLight.intensity = (1.0 - flashP) * 16.0;
+      this.confettiMat.opacity = flashP * 0.85;
+
+      if (pos1 && pos2) {
+        this._updateConfettiPhysics(pos1, pos2, deltaSec);
+      }
 
       return 0; // Lightning dims during explosion
     }
 
-    // Phase 3: Supernova / Spring-bounce Text Reveal + Confetti Burst (0.5 - 1.0)
+    // Phase 3: Supernova / Spring-bounce Text Reveal + Confetti Drift (0.5 - 1.0)
     const supernovaP = (progress - 0.5) / 0.5;
 
-    this.shockwaveMesh.material.opacity = 0;
     this.celebrationLight.color.setHex(0xF4E0AE);
 
     if (this._textReady) {
@@ -378,7 +381,6 @@ export class BirthdayFX extends BaseFX {
   // ─── CELEBRATION ─────────────────────────────────────────────────────
 
   _updateCelebration(deltaSec, markersActive, pos1, pos2) {
-    this.shockwaveMesh.material.opacity = 0;
 
     // When markers are lost, hide celebration visuals without resetting CELEBRATION state
     if (!markersActive || !pos1 || !pos2) {
@@ -388,6 +390,8 @@ export class BirthdayFX extends BaseFX {
       this.celebrationLight.intensity = 0;
       return 0;
     }
+
+    this.celebrationTime += deltaSec;
 
     // Markers detected: show celebration text and confetti at midpoint
     this.group.visible = true;
@@ -403,11 +407,11 @@ export class BirthdayFX extends BaseFX {
       this.textGroup.rotation.y = 0;
 
       const baseHeightOffset = 0.85;
-      const bobbingY = Math.sin(performance.now() * 0.003) * 0.09;
+      const bobbingY = Math.sin(this.celebrationTime * 3.0) * 0.09;
       this.textGroup.position.y += baseHeightOffset + bobbingY;
 
       const baseEmissive = 2.4;
-      const emPulse = (1.0 + Math.sin(performance.now() * 0.003) * 0.3) * baseEmissive;
+      const emPulse = (1.0 + Math.sin(this.celebrationTime * 3.0) * 0.3) * baseEmissive;
       for (const mesh of this._textMeshes) {
         if (mesh.material) {
           if (mesh.material.emissiveIntensity !== undefined) {
@@ -422,7 +426,7 @@ export class BirthdayFX extends BaseFX {
     this.confettiMat.opacity = 0.85;
     this._updateConfettiPhysics(pos1, pos2, deltaSec);
 
-    const lightPulse = 5.5 + Math.sin(performance.now() * 0.004) * 1.5;
+    const lightPulse = 5.5 + Math.sin(this.celebrationTime * 4.0) * 1.5;
     this.celebrationLight.intensity = lightPulse;
 
     return 0;
@@ -436,18 +440,25 @@ export class BirthdayFX extends BaseFX {
     const positions = this.confettiPositions;
 
     for (let i = 0; i < count; i++) {
-      positions[i * 3] = mid.x + (Math.random() - 0.5) * 0.1;
-      positions[i * 3 + 1] = mid.y + (Math.random() - 0.5) * 0.1;
-      positions[i * 3 + 2] = mid.z + (Math.random() - 0.5) * 0.1;
-
+      // Uniform random direction vector on unit sphere
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(Math.random() * 2 - 1);
-      const speed = 0.02 + Math.random() * 0.04;
+      const dirX = Math.sin(phi) * Math.cos(theta);
+      const dirY = Math.sin(phi) * Math.sin(theta);
+      const dirZ = Math.cos(phi);
 
+      // Distribute initial particles outward on a 0.05m ~ 0.20m shell around midpoint
+      const initialRadius = 0.05 + Math.random() * 0.15;
+      positions[i * 3] = mid.x + dirX * initialRadius;
+      positions[i * 3 + 1] = mid.y + dirY * initialRadius;
+      positions[i * 3 + 2] = mid.z + dirZ * initialRadius;
+
+      // High explosive outward velocity burst
+      const speed = 0.04 + Math.random() * 0.05;
       this.confettiVelocities[i].set(
-        Math.sin(phi) * Math.cos(theta) * speed,
-        Math.sin(phi) * Math.sin(theta) * speed + 0.015,
-        Math.cos(phi) * speed
+        dirX * speed,
+        dirY * speed + 0.02, // Upward bias for arc distribution
+        dirZ * speed
       );
 
       this.confettiPhases[i] = Math.random() * Math.PI * 2;
@@ -476,9 +487,9 @@ export class BirthdayFX extends BaseFX {
       positions[i * 3] += Math.sin(now * 0.002 + phase) * 0.001;
       positions[i * 3 + 2] += Math.cos(now * 0.0015 + phase) * 0.001;
 
-      vel.x *= 0.995;
-      vel.y *= 0.997;
-      vel.z *= 0.995;
+      vel.x *= 0.992;
+      vel.y *= 0.994;
+      vel.z *= 0.992;
 
       const dx = positions[i * 3] - mid.x;
       const dy = positions[i * 3 + 1] - mid.y;
@@ -500,7 +511,7 @@ export class BirthdayFX extends BaseFX {
       }
     }
 
-    this.confettiMat.size = 0.08 + Math.sin(now * 0.003) * 0.02;
+    this.confettiMat.size = 0.065 + Math.sin(now * 0.003) * 0.015;
     this.confettiGeo.attributes.position.needsUpdate = true;
   }
 
@@ -508,18 +519,16 @@ export class BirthdayFX extends BaseFX {
     this.chargeAccumulated = 0;
     this.transitionElapsed = 0;
     this.celebrationFadeTimer = 0;
+    this.celebrationTime = 0;
     this.group.visible = false;
     this.textGroup.visible = false;
     this.confettiMat.opacity = 0;
-    this.shockwaveMesh.material.opacity = 0;
     this.celebrationLight.intensity = 0;
     this._setState(BirthdayState.STANDBY);
   }
 
   dispose() {
     super.dispose();
-    this.shockwaveMesh?.geometry?.dispose();
-    this.shockwaveMesh?.material?.dispose();
     this.confettiGeo?.dispose();
     this.confettiMat?.dispose();
     this.confettiTexture?.dispose();
