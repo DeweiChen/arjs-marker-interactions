@@ -5,6 +5,7 @@
  */
 
 import { LightningFX } from './lightning-fx.js';
+import { BirthdayFX } from './birthday-fx.js';
 
 if (typeof AFRAME !== 'undefined') {
   AFRAME.registerComponent('proximity-lightning', {
@@ -37,6 +38,18 @@ if (typeof AFRAME !== 'undefined') {
       this.lightningFX = new LightningFX(sceneEl.object3D, {
         maxDistance: this.data.maxDistance,
         minDistance: this.data.minDistance
+      });
+
+      // Initialize Birthday FX attached to the root Three.js scene
+      this.birthdayFX = new BirthdayFX(sceneEl.object3D, {
+        chargeThreshold: 1.6
+      });
+
+      // Event listener for manual birthday state reset
+      sceneEl.addEventListener('reset-birthday', () => {
+        if (this.birthdayFX) {
+          this.birthdayFX.reset();
+        }
       });
 
       // Bind marker visibility events
@@ -123,24 +136,43 @@ if (typeof AFRAME !== 'undefined') {
           this.smoothedPos2.lerp(this.pos2, alpha);
         }
 
-        // Update procedural lightning FX
-        this.lightningFX.update(this.smoothedPos1, this.smoothedPos2, timeDelta);
+        // Update Birthday FX state machine
+        const dist = this.pos1.distanceTo(this.pos2);
+        const prox = this.lightningFX.smoothedProximity;
+        const bdayResult = this.birthdayFX
+          ? this.birthdayFX.update(this.smoothedPos1, this.smoothedPos2, dist, prox, timeDelta)
+          : { state: 'STANDBY', chargePercent: 0, chargeProgress: 0, lightningIntensity: 1.0 };
+
+        // Update procedural lightning FX with birthday intensity modifier & charge progress color shift
+        this.lightningFX.update(
+          this.smoothedPos1,
+          this.smoothedPos2,
+          timeDelta,
+          bdayResult.lightningIntensity,
+          bdayResult.chargeProgress || 0
+        );
 
         // Dispatch status event for HUD updates
-        const dist = this.lightningFX.currentDistance;
-        const prox = this.lightningFX.smoothedProximity;
         this.el.emit('proximity-update', {
           distance: dist,
           proximity: prox,
-          active: prox > 0.02
+          active: prox > 0.02,
+          birthdayState: bdayResult.state,
+          chargePercent: bdayResult.chargePercent
         });
       } else {
-        // One or both markers are lost; fade out FX
-        this.lightningFX.update(null, null, timeDelta);
+        // One or both markers are lost
+        const bdayResult = this.birthdayFX
+          ? this.birthdayFX.update(null, null, 999, 0, timeDelta)
+          : { state: 'STANDBY', chargePercent: 0, lightningIntensity: 0 };
+
+        this.lightningFX.update(null, null, timeDelta, 0);
         this.el.emit('proximity-update', {
           distance: null,
           proximity: 0,
-          active: false
+          active: false,
+          birthdayState: bdayResult.state,
+          chargePercent: bdayResult.chargePercent
         });
       }
     },
@@ -148,6 +180,9 @@ if (typeof AFRAME !== 'undefined') {
     remove: function () {
       if (this.lightningFX) {
         this.lightningFX.dispose();
+      }
+      if (this.birthdayFX) {
+        this.birthdayFX.dispose();
       }
     }
   });

@@ -27,6 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCloseModal = document.getElementById('btn-close-modal');
   const modalBackdrop = document.getElementById('markers-modal');
 
+  // Birthday Reset Element
+  const btnResetBday = document.getElementById('btn-reset-bday');
+
   // Fullscreen & Immersive Mode Elements
   const btnToggleFullscreen = document.getElementById('btn-toggle-fullscreen');
   const iconFsEnter = document.getElementById('icon-fs-enter');
@@ -545,6 +548,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ------------------------------------------------------------------------
+  // Setup Manual Birthday FX Reset Button Listener
+  // ------------------------------------------------------------------------
+  if (btnResetBday) {
+    btnResetBday.addEventListener('click', () => {
+      if (sceneEl) {
+        sceneEl.emit('reset-birthday');
+      }
+      showToast('🎂 生日快樂狀態已重設為 Standby', 2000);
+    });
+  }
+
   ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach((eventName) => {
     document.addEventListener(eventName, () => {
       const inNative = isNativeFullscreen();
@@ -998,17 +1013,51 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // 2. Proximity and Distance calculations (Discharge Status & Energy Power Gauge)
+    // 2. Proximity, Distance & Birthday State calculations
     sceneEl.addEventListener('proximity-update', (e) => {
-      const { distance, proximity, active } = e.detail;
+      const { distance, proximity, active, birthdayState, chargePercent } = e.detail;
       stateStore.proximityActive = active;
       stateStore.distance = distance;
       stateStore.proximityPercent = Math.round(proximity * 100);
 
-      if (active && distance !== null) {
+      if (distanceVal) {
+        distanceVal.textContent = (distance !== null) ? `${distance.toFixed(2)}m` : '--';
+      }
+
+      // Handle Birthday State Overrides
+      if (birthdayState === 'CHARGING') {
+        if (energyBar) {
+          energyBar.style.width = `${chargePercent}%`;
+          energyBar.className = 'energy-progress-bar energy-charging';
+        }
+        if (energyStatusText) {
+          energyStatusText.textContent = `⚡ CHARGING ${chargePercent}%`;
+          energyStatusText.style.color = '#fbbf24';
+        }
+      } else if (birthdayState === 'TRANSITION') {
+        if (energyBar) {
+          energyBar.style.width = '100%';
+          energyBar.className = 'energy-progress-bar energy-charging';
+        }
+        if (energyStatusText) {
+          energyStatusText.textContent = '💥 SUPERNOVA!';
+          energyStatusText.style.color = '#fef3c7';
+        }
+      } else if (birthdayState === 'CELEBRATION') {
+        if (energyBar) {
+          energyBar.style.width = '100%';
+          energyBar.className = 'energy-progress-bar energy-celebration';
+        }
+        if (energyStatusText) {
+          energyStatusText.textContent = '🎂 HAPPY BIRTHDAY! 🎉';
+          energyStatusText.style.color = '#00CBA9';
+        }
+      } else if (active && distance !== null) {
         const percent = stateStore.proximityPercent;
-        if (distanceVal) distanceVal.textContent = `${distance.toFixed(2)}m`;
-        if (energyBar) energyBar.style.width = `${percent}%`;
+        if (energyBar) {
+          energyBar.style.width = `${percent}%`;
+          energyBar.className = 'energy-progress-bar';
+        }
 
         if (energyStatusText) {
           if (percent > 80) {
@@ -1023,8 +1072,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       } else {
-        if (distanceVal) distanceVal.textContent = '--';
-        if (energyBar) energyBar.style.width = '0%';
+        if (energyBar) {
+          energyBar.style.width = '0%';
+          energyBar.className = 'energy-progress-bar';
+        }
         if (energyStatusText) {
           energyStatusText.textContent = 'STANDBY';
           energyStatusText.style.color = 'var(--text-secondary)';

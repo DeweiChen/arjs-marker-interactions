@@ -294,18 +294,23 @@ export class LightningFX {
 
   /**
    * Update visual effects on every animation frame tick.
+   * @param {THREE.Vector3|null} startPos
+   * @param {THREE.Vector3|null} endPos
+   * @param {number} delta
+   * @param {number} intensityMultiplier - Scale factor from BirthdayFX (0 to 1.6x)
+   * @param {number} chargeProgress - Charging progress (0.0 to 1.0)
    */
-  update(startPos, endPos, delta = 16) {
+  update(startPos, endPos, delta = 16, intensityMultiplier = 1.0, chargeProgress = 0) {
     const THREE = this.THREE;
 
-    if (!startPos || !endPos) {
+    if (!startPos || !endPos || intensityMultiplier <= 0) {
       this.smoothedProximity = THREE.MathUtils.lerp(this.smoothedProximity, 0, 0.18);
-      if (this.smoothedProximity < 0.01) {
+      if (this.smoothedProximity < 0.01 || intensityMultiplier <= 0) {
         this.group.visible = false;
         this.currentDistance = 999;
         this.proximity = 0;
       } else {
-        this._applyProximityEffects(this.smoothedProximity);
+        this._applyProximityEffects(this.smoothedProximity * intensityMultiplier, null, null, null, delta, chargeProgress);
       }
       return;
     }
@@ -324,7 +329,9 @@ export class LightningFX {
 
     this.smoothedProximity = THREE.MathUtils.lerp(this.smoothedProximity, this.proximity, 0.25);
 
-    if (this.smoothedProximity <= 0.01) {
+    const effectiveProximity = THREE.MathUtils.clamp(this.smoothedProximity * intensityMultiplier, 0, 1.5);
+
+    if (effectiveProximity <= 0.01) {
       this.group.visible = false;
       return;
     }
@@ -336,13 +343,13 @@ export class LightningFX {
     this.coreGroup.position.copy(midPoint);
     this.pointLight.position.copy(midPoint);
 
-    this._applyProximityEffects(this.smoothedProximity, startPos, endPos, midPoint, delta);
+    this._applyProximityEffects(effectiveProximity, startPos, endPos, midPoint, delta, chargeProgress);
   }
 
   /**
    * Apply dynamic scaling, sharp lightning mesh generation, and particle bursts.
    */
-  _applyProximityEffects(p, startPos, endPos, midPoint, delta) {
+  _applyProximityEffects(p, startPos, endPos, midPoint, delta, chargeProgress = 0) {
     const THREE = this.THREE;
     const now = performance.now();
 
@@ -370,7 +377,7 @@ export class LightningFX {
     // 3. Crisp Lightning Mesh
     if (startPos && endPos && now - this.lastBoltUpdateTime > (this.boltUpdateInterval / (1 + p * 1.5))) {
       this.lastBoltUpdateTime = now;
-      this._updateSleekBolts(startPos, endPos, p, midPoint);
+      this._updateSleekBolts(startPos, endPos, p, midPoint, chargeProgress);
     }
 
     // 4. Large-Radius Particle Sparks Explosion
@@ -380,9 +387,9 @@ export class LightningFX {
   }
 
   /**
-   * Rebuild crisp, sleek lightning ribbon quads.
+   * Rebuild crisp, sleek lightning ribbon quads with dynamic charging color shift.
    */
-  _updateSleekBolts(startPos, endPos, p, midPoint) {
+  _updateSleekBolts(startPos, endPos, p, midPoint, chargeProgress = 0) {
     const THREE = this.THREE;
     const { maxBolts, segmentsPerBolt } = this.options;
     const positions = this.boltPositions;
@@ -403,6 +410,24 @@ export class LightningFX {
     const colBlue = new THREE.Color(0x3b82f6);          // Neon Cobalt Blue
     const colPurple = new THREE.Color(0xa855f7);        // Ultraviolet Purple
     const colViolet = new THREE.Color(0xc084fc);        // Radiant Violet
+
+    // Dynamic charging color shift: Electric Blue -> Golden Amber -> White-Hot Overload
+    if (chargeProgress > 0) {
+      const chargeT = THREE.MathUtils.clamp(chargeProgress, 0, 1);
+      const colGold = new THREE.Color(0xfbbf24);
+      const colPureWhite = new THREE.Color(0xffffff);
+
+      colSky.lerp(colGold, Math.min(1, chargeT * 1.2));
+      colBlue.lerp(colGold, chargeT);
+      colLavenderWhite.lerp(colPureWhite, chargeT);
+
+      if (chargeT > 0.7) {
+        const whiteT = (chargeT - 0.7) / 0.3;
+        colSky.lerp(colPureWhite, whiteT);
+        colPurple.lerp(colPureWhite, whiteT);
+        colViolet.lerp(colPureWhite, whiteT);
+      }
+    }
 
     const mainDir = endPos.clone().sub(startPos).normalize();
     const upVector = new THREE.Vector3(0, 1, 0);
