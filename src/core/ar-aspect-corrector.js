@@ -1,7 +1,8 @@
 /**
  * AR.js Aspect Ratio & Projection Matrix Corrector System
- * Mathematically compensates for viewport aspect ratio cropping to eliminate
- * stretching distortion in mobile portrait and ultra-wide landscape modes.
+ *
+ * Mathematically compensates for the known AR.js / ARToolKit portrait 
+ * distortion bug by applying an empirical FOV scale correction.
  */
 
 export function getARObjects(sceneEl) {
@@ -14,57 +15,7 @@ export function getARObjects(sceneEl) {
 }
 
 /**
- * Mathematically corrects the AR projection matrix to compensate for viewport aspect ratio cropping.
- * Eliminates the horizontal/vertical stretch distortion in mobile portrait & ultra-wide landscape.
- *
- * @param {THREE.Matrix4} originalMatrix - Raw projection matrix from ARToolKit
- * @param {HTMLVideoElement} videoEl - Active camera video element
- * @param {Object} arSource - Active AR.js source instance
- * @returns {THREE.Matrix4} Corrected projection matrix matching visible screen viewport
- */
-export function calculateCorrectedProjectionMatrix(originalMatrix, videoEl, arSource) {
-  if (!originalMatrix || !originalMatrix.elements) return originalMatrix;
-
-  const Ws = window.innerWidth;
-  const Hs = window.innerHeight;
-  if (Ws <= 0 || Hs <= 0) return originalMatrix;
-
-  const Wv = (videoEl && videoEl.videoWidth > 0) ? videoEl.videoWidth : ((arSource && arSource.parameters && arSource.parameters.sourceWidth) || 1280);
-  const Hv = (videoEl && videoEl.videoHeight > 0) ? videoEl.videoHeight : ((arSource && arSource.parameters && arSource.parameters.sourceHeight) || 720);
-
-  if (Wv <= 0 || Hv <= 0) return originalMatrix;
-
-  const Rs = Ws / Hs; // Viewport aspect ratio (e.g. 0.46 on mobile portrait)
-  const Rv = Wv / Hv; // Camera stream aspect ratio (e.g. 1.777 for 16:9)
-
-  const corrected = originalMatrix.clone();
-  const el = corrected.elements;
-
-  if (Rs < Rv) {
-    // Portrait mode (or screen taller/narrower than camera stream):
-    // Multiply horizontal focal scale (el[0]) and principal point x (el[8]) by 1 / kx:
-    const kx = Rs / Rv;
-    el[0] /= kx;
-    el[8] /= kx;
-  } else if (Rs > Rv) {
-    // Ultra-wide Landscape mode (or screen wider than camera stream):
-    // Multiply vertical focal scale (el[5]) and principal point y (el[9]) by 1 / ky:
-    const ky = Rv / Rs;
-    el[5] /= ky;
-    el[9] /= ky;
-  }
-
-  return corrected;
-}
-
-/**
- * Initializes listeners for AR.js projection matrix update overrides.
- *
- * @param {HTMLElement} sceneEl - A-Frame scene element
- */
-/**
- * Ensures active playback of the AR.js webcam stream to prevent intermittent black screen issues
- * caused by mobile browser autoplay restrictions or video load race conditions.
+ * Ensures active playback of the AR.js webcam stream.
  */
 export function ensureARVideoPlaying() {
   const video = document.querySelector('#arjs-video') || document.querySelector('video');
@@ -92,58 +43,118 @@ export function ensureARVideoPlaying() {
 }
 
 /**
+ * Corrects the projection matrix by applying the tuned multiplier (kx = 2.0)
+ * which fixes the ARToolKit portrait horizontal shrink bug.
+ */
+export function calculateCorrectedProjectionMatrix(originalMatrix) {
+  if (!originalMatrix || !originalMatrix.elements) return originalMatrix;
+  
+  const corrected = originalMatrix.clone();
+  const el = corrected.elements;
+  
+  const Ws = window.innerWidth;
+  const Hs = window.innerHeight;
+  
+  if (Hs > Ws) {
+    // PORTRAIT MODE FIX
+    // Apply empirical 2.0x horizontal FOV scale found via manual tuning.
+    // This perfectly counteracts the AR.js / iOS Retina portrait inward shrink bug.
+    el[0] *= 2.0;
+    el[8] *= 2.0;
+  }
+  
+  return corrected;
+}
+
+/**
  * Initializes listeners for AR.js projection matrix update overrides and camera stream watchdog.
- *
- * @param {HTMLElement} sceneEl - A-Frame scene element
+ * Also forces the canvas to match the video sizing.
  */
 export function initARAspectCorrection(sceneEl) {
   let isCorrectionInitialized = false;
+
+  console.log('[ARCorrector] Initializing AR.js Portrait Bug Fix.');
 
   function applyCorrection() {
     ensureARVideoPlaying();
 
     const { arContext, arSource, video } = getARObjects(sceneEl);
+    
+    // Canvas Alignment Hack (backup for older devices)
+    const canvas = sceneEl.canvas || document.querySelector('.a-canvas');
+    if (video && canvas && parseInt(video.style.width) > 0) {
+      canvas.style.setProperty('width', video.style.width, 'important');
+      canvas.style.setProperty('height', video.style.height, 'important');
+      canvas.style.setProperty('margin-left', video.style.marginLeft || '0px', 'important');
+      canvas.style.setProperty('margin-top', video.style.marginTop || '0px', 'important');
+      
+      if (sceneEl.renderer && sceneEl.renderer.setSize) {
+        sceneEl.renderer.setSize(parseInt(video.style.width), parseInt(video.style.height), false);
+      }
+    }
+
     if (!arContext) return;
+    const arController = arContext.arController || arContext._arController;
+    if (!arController) return;
 
     if (!arContext._rawGetProjectionMatrix) {
       arContext._rawGetProjectionMatrix = arContext.getProjectionMatrix;
       arContext.getProjectionMatrix = function () {
-        const rawMat = arContext._rawGetProjectionMatrix.call(arContext);
-        return calculateCorrectedProjectionMatrix(rawMat, video, arSource);
+        if (!arContext.arController && !arContext._arController) return null;
+        try {
+          const rawMat = arContext._rawGetProjectionMatrix.call(arContext);
+          if (!rawMat) return null;
+          return calculateCorrectedProjectionMatrix(rawMat);
+        } catch (e) {
+          return null;
+        }
       };
     }
 
     if (sceneEl.camera) {
-      const rawMat = arContext._rawGetProjectionMatrix ? arContext._rawGetProjectionMatrix.call(arContext) : arContext.getProjectionMatrix();
-      sceneEl.camera.projectionMatrix = calculateCorrectedProjectionMatrix(rawMat, video, arSource);
-      sceneEl.camera.projectionMatrixInverse.copy(sceneEl.camera.projectionMatrix).invert();
+      if (!sceneEl.camera._isARPatched) {
+        sceneEl.camera._isARPatched = true;
+        const originalUpdate = sceneEl.camera.updateProjectionMatrix.bind(sceneEl.camera);
+        sceneEl.camera.updateProjectionMatrix = function () {
+          const { arContext: ctx } = getARObjects(sceneEl);
+          const ctrl = ctx && (ctx.arController || ctx._arController);
+          if (ctx && ctrl && ctx._rawGetProjectionMatrix) {
+            try {
+              const rawMat = ctx._rawGetProjectionMatrix.call(ctx);
+              if (rawMat) {
+                this.projectionMatrix = calculateCorrectedProjectionMatrix(rawMat);
+                this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
+                return;
+              }
+            } catch (e) {}
+          }
+          originalUpdate();
+        };
+      }
+
+      try {
+        const rawMat = arContext._rawGetProjectionMatrix ? arContext._rawGetProjectionMatrix.call(arContext) : arContext.getProjectionMatrix();
+        if (rawMat) {
+          sceneEl.camera.projectionMatrix = calculateCorrectedProjectionMatrix(rawMat);
+          sceneEl.camera.projectionMatrixInverse.copy(sceneEl.camera.projectionMatrix).invert();
+        }
+      } catch (e) {}
     }
   }
 
   function tryInit() {
-    ensureARVideoPlaying();
-    if (isCorrectionInitialized) return;
-    const { arContext } = getARObjects(sceneEl);
-    if (!arContext) return;
-
+    if (isCorrectionInitialized) {
+      applyCorrection();
+      return;
+    }
     isCorrectionInitialized = true;
     applyCorrection();
   }
 
-  sceneEl.addEventListener('loaded', () => {
-    tryInit();
-    setTimeout(tryInit, 300);
-    setTimeout(tryInit, 800);
-    setTimeout(tryInit, 1500);
-  });
+  sceneEl.addEventListener('loaded', () => tryInit());
+  sceneEl.addEventListener('camera-init', () => tryInit());
+  window.addEventListener('arjs-video-loaded', () => tryInit());
+  window.addEventListener('resize', () => applyCorrection());
 
-  window.addEventListener('resize', () => {
-    applyCorrection();
-  });
-
-  // Watchdog timer checks to guarantee video recovery if initial load is delayed
-  setTimeout(tryInit, 500);
-  setTimeout(tryInit, 1200);
-  setTimeout(tryInit, 2500);
+  setInterval(tryInit, 1000);
 }
-

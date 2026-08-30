@@ -39,6 +39,8 @@ export class BloomPanelController {
     this.currentDprSetting = localStorage.getItem('ar_custom_dpr') || 'native';
 
     this._bindEvents();
+    // Always start resolution telemetry so panel shows live data whenever it's opened
+    this._startResolutionTelemetry();
     this.setDebugMode(this.isDebug);
   }
 
@@ -52,17 +54,6 @@ export class BloomPanelController {
       this.bloomPanel.classList.add('hidden');
       if (this.btnToggleBloom) {
         this.btnToggleBloom.setAttribute('aria-expanded', 'false');
-      }
-    }
-
-    if (this.isDebug) {
-      if (!this.telemetryInterval) {
-        this._startResolutionTelemetry();
-      }
-    } else {
-      if (this.telemetryInterval) {
-        clearInterval(this.telemetryInterval);
-        this.telemetryInterval = null;
       }
     }
   }
@@ -176,19 +167,24 @@ export class BloomPanelController {
       clearInterval(this.telemetryInterval);
     }
     this.telemetryInterval = setInterval(() => {
-      if (!this.isDebug) return;
-
-      const renderer = this.sceneEl.renderer;
+      const renderer = this.sceneEl && this.sceneEl.renderer;
       if (renderer) {
-        const size = new THREE.Vector2();
-        renderer.getSize(size);
-        const dpr = renderer.getPixelRatio();
-        const rw = Math.round(size.width * dpr);
-        const rh = Math.round(size.height * dpr);
+        // Use domElement dimensions + pixelRatio instead of THREE.Vector2 to avoid global THREE dependency
+        const dpr = renderer.getPixelRatio() || 1;
+        const rw = Math.round(renderer.domElement.width);
+        const rh = Math.round(renderer.domElement.height);
         const mp = ((rw * rh) / 1000000).toFixed(2);
 
         if (this.resRenderPx) this.resRenderPx.textContent = `${rw} × ${rh} px`;
         if (this.resRenderMp) this.resRenderMp.textContent = `${mp} MP`;
+
+        // Update DPR display badge
+        if (this.valDpr) {
+          const setting = this.currentDprSetting;
+          this.valDpr.textContent = setting === 'native'
+            ? `Native (${dpr.toFixed(1)}x)`
+            : `${dpr.toFixed(1)}x`;
+        }
       }
 
       const video = document.querySelector('#arjs-video') || document.querySelector('video');
@@ -198,6 +194,18 @@ export class BloomPanelController {
         const vmp = ((vw * vh) / 1000000).toFixed(2);
         if (this.resCameraPx) this.resCameraPx.textContent = `${vw} × ${vh} px`;
         if (this.resCameraMp) this.resCameraMp.textContent = `${vmp} MP`;
+      }
+
+      // Update viewport aspect badge
+      const resViewportAspect = document.getElementById('res-viewport-aspect');
+      const resViewportBadge = document.getElementById('res-viewport-badge');
+      if (resViewportAspect) {
+        const Rs = (window.innerWidth / window.innerHeight).toFixed(3);
+        resViewportAspect.textContent = `${window.innerWidth} × ${window.innerHeight} (${Rs})`;
+      }
+      if (resViewportBadge) {
+        const isPortrait = window.innerHeight > window.innerWidth;
+        resViewportBadge.textContent = isPortrait ? 'Portrait Cover' : 'Landscape Cover';
       }
     }, 1000);
   }
