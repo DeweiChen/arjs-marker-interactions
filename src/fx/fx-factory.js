@@ -4,13 +4,16 @@
  */
 
 import { LightningFX } from './lightning-fx.js';
+import { ChainConductionFX } from './chain-conduction-fx.js';
 import { BirthdayFX } from './birthday-fx.js';
 
 export class FXFactory {
   constructor() {
     this.registry = new Map();
     // Register default built-in FX strategies
-    this.register('lightning', LightningFX);
+    this.register('lightning', ChainConductionFX);
+    this.register('chain-conduction', ChainConductionFX);
+    this.register('dual-lightning', LightningFX);
     this.register('birthday', BirthdayFX);
   }
 

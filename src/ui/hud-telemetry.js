@@ -154,7 +154,8 @@ export class HUDTelemetryController {
         this.energyStatusText.textContent = `CHARGING (${chargePercent}%)`;
         this.energyStatusText.style.color = '#fbbf24';
       } else if (active) {
-        this.energyStatusText.textContent = pColor > 0.5 ? 'CRIMSON HIGH VOLTAGE OVERLOAD' : 'HIGH VOLTAGE LINK';
+        const pathStr = data.chainPathStr ? ` [${data.chainPathStr}]` : '';
+        this.energyStatusText.textContent = pColor > 0.5 ? `OVERLOAD LINK${pathStr}` : `CONDUCTION${pathStr}`;
         this.energyStatusText.style.color = dynamicHex;
       } else {
         this.energyStatusText.textContent = 'STANDBY';

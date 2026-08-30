@@ -325,8 +325,8 @@ export class BirthdayFX extends BaseFX {
   /**
    * Main update loop called each frame.
    *
-   * @param {THREE.Vector3|null} pos1 - Marker 1 smoothed world position
-   * @param {THREE.Vector3|null} pos2 - Marker 2 smoothed world position
+   * @param {THREE.Vector3|null} pos1 - Terminal 1 (DW) smoothed world position
+   * @param {THREE.Vector3|null} pos2 - Terminal 2 (Fu) smoothed world position
    * @param {number} distance - Current distance between markers
    * @param {number} proximity - Normalized proximity (0 to 1)
    * @param {number} deltaMs - Frame delta milliseconds
@@ -335,7 +335,8 @@ export class BirthdayFX extends BaseFX {
   update(pos1, pos2, distance, proximity, deltaMs) {
     const deltaSec = deltaMs / 1000;
     const markersActive = pos1 !== null && pos2 !== null && distance < 900;
-    const withinChargeRange = markersActive && distance <= this.options.chargeThreshold;
+    // Trigger charging when terminals are connected in active chain
+    const withinChargeRange = markersActive && (distance <= this.options.chargeThreshold || (proximity !== undefined && proximity > 0.05));
 
     let lightningIntensity = 1.0;
 
@@ -419,6 +420,7 @@ export class BirthdayFX extends BaseFX {
     const duration = this.options.transitionDuration;
     const progress = Math.min(1.0, t / duration);
 
+    // Midpoint strictly between DW and Fu
     if (pos1 && pos2) {
       if (!this.lastMidpoint) {
         this.lastMidpoint = new this.THREE.Vector3();
@@ -497,7 +499,7 @@ export class BirthdayFX extends BaseFX {
   _updateCelebration(deltaSec, markersActive, pos1, pos2) {
     this.celebrationTime += deltaSec;
 
-    // Cache latest midpoint while markers are actively tracked
+    // Cache latest midpoint strictly between DW and Fu while actively tracked
     if (pos1 && pos2) {
       if (!this.lastMidpoint) {
         this.lastMidpoint = new this.THREE.Vector3();

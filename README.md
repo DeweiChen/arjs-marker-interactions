@@ -12,10 +12,13 @@ A WebAR dual-marker proximity interaction system built on **AR.js**, **A-Frame (
 ## 🌟 Key Features
 
 - 🎯 **8 Barcode Marker Support (3x3 Hamming 6,3)**: Real-time simultaneous multi-marker tracking (values 0–7) for testing AR.js stability.
-- 🔤 **Custom 3D Emissive Text**: Marker 0 renders `"Fu"`, Marker 1 renders `"DW"`, and Markers 2–7 render their respective index numbers (`"2"` to `"7"`).
-- ⚡ **Dedicated Proximity Electric Arcs**: High-voltage electric arcs and energy core expansion triggered exclusively when Marker 0 ("Fu") and Marker 1 ("DW") are brought close together.
-- 🔮 **Proximity-Scaled Plasma Core**: Midpoint energy core and orbital rings that scale in size and rotate faster as Fu and DW approach.
-- 🎛️ **Live Marker Tracking Bar**: Top HUD telemetry features real-time active detection dots for all 8 markers (0–7) to evaluate multi-marker tracking performance.
+- 🔤 **Custom 3D Emissive Text**: Marker 0 and Marker 1 render primary terminal endpoints, and Markers 2–7 render their respective index numbers (`"2"` to `"7"`).
+- ⚡ **Multi-Marker Chain Conduction Interaction**: High-voltage electric arcs continuously chain across visible markers via physical distance (Nearest-Neighbor) routing:
+  - **Full Chain**: Connects terminal markers through intermediate number markers (`Marker 0 ➔ [numbers...] ➔ Marker 1`) with dynamic segment gradient colors and traveling plasma sparks.
+  - **Direct Arcs**: When no intermediate numbers are present, maintains direct high-voltage electric arcs between the terminal markers.
+  - **Half-Chain & Idle Nodes**: Single terminals form partial chains with nearby numbers, while unlinked markers exhibit soft breathing idle pulse auras.
+- 🔮 **Proximity-Scaled Plasma & Relay Cores**: Active relay energy crystals at each marker node and midpoint arcs that expand, rotate, and pulse with high-frequency jitter.
+- 🎛️ **Live Marker Tracking Bar**: Top HUD telemetry features real-time active detection dots and live chain conduction telemetry (e.g. `[0 ➔ 2 ➔ 4 ➔ 1]`).
 - 🖼️ **Standardized Marker Assets**: 8 normalized 600x600 PNG marker patterns with white quiet borders ready for printing or screen display.
 - 📱 **Mobile HTTPS Ready**: Includes `@vitejs/plugin-basic-ssl` for local development HTTPS certificates and automated GitHub Pages CI/CD deployment.
 
@@ -46,9 +49,9 @@ arjs-marker-interactions/
 │   │   └── fredoka_light_regular.json  # 3D Typeface font
 │   └── markers/
 │       └── images/             # 8 Barcode marker PNGs (0 to 7)
-│           ├── barcode-0.png   # "Fu"
-│           ├── barcode-1.png   # "DW"
-│           └── barcode-[2-7].png # "2" - "7"
+│           ├── barcode-0.png   # Terminal Marker 0
+│           ├── barcode-1.png   # Terminal Marker 1
+│           └── barcode-[2-7].png # Number Markers 2–7
 ├── scripts/
 │   └── generate-barcode-markers.py # Barcode marker generator
 ├── src/
