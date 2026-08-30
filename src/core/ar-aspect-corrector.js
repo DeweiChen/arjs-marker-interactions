@@ -67,48 +67,105 @@ export function calculateCorrectedProjectionMatrix(originalMatrix) {
 }
 
 /**
- * Initializes listeners for AR.js projection matrix update overrides and camera stream watchdog.
- * Also forces the canvas to match the video sizing.
+ * Robustly handles device orientation changes.
+ */
+function handleOrientationChange() {
+  let lastOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+  
+  window.addEventListener('resize', () => {
+    const currentOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+    if (currentOrientation !== lastOrientation) {
+      lastOrientation = currentOrientation;
+      
+      // Immediately hide AR elements to prevent visual glitches (offset/scaling) during re-initialization
+      const video = document.querySelector('#arjs-video') || document.querySelector('video');
+      const canvas = document.querySelector('.a-canvas');
+      if (video) video.style.display = 'none';
+      if (canvas) canvas.style.display = 'none';
+      
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100vw';
+      overlay.style.height = '100vh';
+      overlay.style.backgroundColor = '#000';
+      overlay.style.zIndex = '999999';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.color = '#fff';
+      overlay.style.fontFamily = 'monospace';
+      overlay.style.fontSize = '14px';
+      overlay.innerHTML = `
+        <div style="text-align: center;">
+          <div style="margin-bottom: 12px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l5.25 5.25"/>
+            </svg>
+          </div>
+          <div>Calibrating AR Sensors...</div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 300); // Reduced delay to make it feel faster
+    }
+  });
+}
+
+/**
+ * Initializes listeners for AR.js projection matrix update overrides.
  */
 export function initARAspectCorrection(sceneEl) {
-  let isCorrectionInitialized = false;
+  console.log('[ARCorrector] Initializing Seamless AR.js Portrait Bug Fix.');
 
-  console.log('[ARCorrector] Initializing AR.js Portrait Bug Fix.');
+  handleOrientationChange();
 
   function applyCorrection() {
     ensureARVideoPlaying();
 
-    const { arContext, arSource, video } = getARObjects(sceneEl);
+    const { arContext, video } = getARObjects(sceneEl);
     
-    // Canvas Alignment Hack (backup for older devices)
+    // Canvas Alignment Hack
     const canvas = sceneEl.canvas || document.querySelector('.a-canvas');
     if (video && canvas && parseInt(video.style.width) > 0) {
+      const vWidth = parseInt(video.style.width);
+      const vHeight = parseInt(video.style.height);
+      
       canvas.style.setProperty('width', video.style.width, 'important');
       canvas.style.setProperty('height', video.style.height, 'important');
       canvas.style.setProperty('margin-left', video.style.marginLeft || '0px', 'important');
       canvas.style.setProperty('margin-top', video.style.marginTop || '0px', 'important');
       
       if (sceneEl.renderer && sceneEl.renderer.setSize) {
-        sceneEl.renderer.setSize(parseInt(video.style.width), parseInt(video.style.height), false);
+        // Only call setSize if the size actually changed to avoid unnecessary re-allocations
+        const currentSize = new THREE.Vector2();
+        sceneEl.renderer.getSize(currentSize);
+        if (currentSize.x !== vWidth || currentSize.y !== vHeight) {
+          sceneEl.renderer.setSize(vWidth, vHeight, false);
+        }
       }
     }
 
-    if (!arContext) return;
-    const arController = arContext.arController || arContext._arController;
-    if (!arController) return;
-
-    if (!arContext._rawGetProjectionMatrix) {
+    // EARLY PATCH INJECTION
+    if (arContext && !arContext._rawGetProjectionMatrix) {
       arContext._rawGetProjectionMatrix = arContext.getProjectionMatrix;
       arContext.getProjectionMatrix = function () {
-        if (!arContext.arController && !arContext._arController) return null;
         try {
           const rawMat = arContext._rawGetProjectionMatrix.call(arContext);
-          if (!rawMat) return null;
+          // Safety check: Don't scale if the matrix isn't valid yet
+          if (!rawMat || !rawMat.elements || isNaN(rawMat.elements[0]) || rawMat.elements[0] === 1) {
+            return rawMat;
+          }
           return calculateCorrectedProjectionMatrix(rawMat);
         } catch (e) {
           return null;
         }
       };
+      console.log('[ARCorrector] arContext.getProjectionMatrix successfully proxied.');
     }
 
     if (sceneEl.camera) {
@@ -117,11 +174,10 @@ export function initARAspectCorrection(sceneEl) {
         const originalUpdate = sceneEl.camera.updateProjectionMatrix.bind(sceneEl.camera);
         sceneEl.camera.updateProjectionMatrix = function () {
           const { arContext: ctx } = getARObjects(sceneEl);
-          const ctrl = ctx && (ctx.arController || ctx._arController);
-          if (ctx && ctrl && ctx._rawGetProjectionMatrix) {
+          if (ctx && ctx._rawGetProjectionMatrix) {
             try {
               const rawMat = ctx._rawGetProjectionMatrix.call(ctx);
-              if (rawMat) {
+              if (rawMat && rawMat.elements && !isNaN(rawMat.elements[0])) {
                 this.projectionMatrix = calculateCorrectedProjectionMatrix(rawMat);
                 this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
                 return;
@@ -130,31 +186,62 @@ export function initARAspectCorrection(sceneEl) {
           }
           originalUpdate();
         };
+        console.log('[ARCorrector] A-Frame camera.updateProjectionMatrix successfully proxied.');
       }
-
-      try {
-        const rawMat = arContext._rawGetProjectionMatrix ? arContext._rawGetProjectionMatrix.call(arContext) : arContext.getProjectionMatrix();
-        if (rawMat) {
-          sceneEl.camera.projectionMatrix = calculateCorrectedProjectionMatrix(rawMat);
-          sceneEl.camera.projectionMatrixInverse.copy(sceneEl.camera.projectionMatrix).invert();
-        }
-      } catch (e) {}
+      
+      // Force immediate re-evaluation if matrix is ready
+      if (arContext && arContext._rawGetProjectionMatrix) {
+          try {
+            const rawMat = arContext._rawGetProjectionMatrix.call(arContext);
+            if (rawMat && rawMat.elements && !isNaN(rawMat.elements[0]) && rawMat.elements[0] !== 1) {
+              sceneEl.camera.projectionMatrix = calculateCorrectedProjectionMatrix(rawMat);
+              sceneEl.camera.projectionMatrixInverse.copy(sceneEl.camera.projectionMatrix).invert();
+            }
+          } catch(e) {}
+      }
     }
   }
 
-  function tryInit() {
-    if (isCorrectionInitialized) {
-      applyCorrection();
-      return;
-    }
-    isCorrectionInitialized = true;
+  // Setup ResizeObserver to continuously lock canvas size to video size
+  // This completely eliminates any scaling deviation (time gaps) caused by A-Frame/AR.js fighting
+  const observer = new ResizeObserver(() => {
     applyCorrection();
+  });
+
+  const attachObserver = () => {
+    const { video } = getARObjects(sceneEl);
+    if (video && !video._isObservedByARCorrector) {
+      video._isObservedByARCorrector = true;
+      observer.observe(video);
+    }
+  };
+
+  sceneEl.addEventListener('loaded', () => {
+    applyCorrection();
+    attachObserver();
+  });
+  sceneEl.addEventListener('camera-init', () => {
+    applyCorrection();
+    attachObserver();
+  });
+  window.addEventListener('arjs-video-loaded', () => {
+    applyCorrection();
+    attachObserver();
+  });
+  
+  // Fallback initial poll just in case events are missed
+  let attempts = 0;
+  function initialPoll() {
+    applyCorrection();
+    attachObserver();
+    attempts++;
+    if (attempts < 60) {
+      requestAnimationFrame(initialPoll);
+    }
   }
+  initialPoll();
 
-  sceneEl.addEventListener('loaded', () => tryInit());
-  sceneEl.addEventListener('camera-init', () => tryInit());
-  window.addEventListener('arjs-video-loaded', () => tryInit());
-  window.addEventListener('resize', () => applyCorrection());
-
-  setInterval(tryInit, 1000);
+  window.addEventListener('resize', () => {
+    setTimeout(applyCorrection, 50);
+  });
 }
