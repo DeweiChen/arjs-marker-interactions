@@ -38,6 +38,7 @@ if (typeof AFRAME !== 'undefined') {
       this._camWorldPos = null;
       this._localCam = null;
       this._currentPitch = null;
+      this._currentBuildId = 0;
 
       const parentEl = this.el.parentEl;
       if (parentEl) {
@@ -145,14 +146,29 @@ if (typeof AFRAME !== 'undefined') {
 
     _buildMesh: function () {
       const data = this.data;
+      const text = data.text;
+      const fontUrl = data.fontUrl;
+      const size = data.size;
+      const depth = data.depth;
+      const curveSegments = data.curveSegments;
+      const bevelEnabled = data.bevelEnabled;
+      const bevelThickness = data.bevelThickness;
+      const bevelSize = data.bevelSize;
+      const bevelSegments = data.bevelSegments;
+      const emissive = data.emissive;
+      const color = data.color;
       const THREE = window.THREE || AFRAME.THREE;
-      if (!data.text) return;
 
-      const cacheKey = `${data.fontUrl}_${data.text}_${data.size}_${data.depth}_${data.curveSegments}_${data.bevelEnabled}_${data.bevelThickness}_${data.bevelSize}_${data.bevelSegments}`;
+      if (!text) return;
+
+      const cacheKey = `${fontUrl}_${text}_${size}_${depth}_${curveSegments}_${bevelEnabled}_${bevelThickness}_${bevelSize}_${bevelSegments}`;
+      const buildId = ++this._currentBuildId;
 
       const applyGeometry = (geometry) => {
+        if (this._currentBuildId !== buildId) return;
+
         const material = new THREE.MeshBasicMaterial({
-          color: new THREE.Color(data.emissive || data.color),
+          color: new THREE.Color(emissive || color),
           transparent: true,
           opacity: 1.0
         });
@@ -174,22 +190,24 @@ if (typeof AFRAME !== 'undefined') {
         return;
       }
 
-      fetchFont(data.fontUrl)
+      fetchFont(fontUrl)
         .then((fontData) => {
-          const paths = createPaths(data.text, data.size, fontData, THREE);
+          if (this._currentBuildId !== buildId) return;
+
+          const paths = createPaths(text, size, fontData, THREE);
           const shapes = [];
           for (let p = 0; p < paths.length; p++) {
             shapes.push(...paths[p].toShapes());
           }
 
           const geometry = new THREE.ExtrudeGeometry(shapes, {
-            depth: data.depth,
-            curveSegments: data.curveSegments,
-            bevelEnabled: data.bevelEnabled,
-            bevelThickness: data.bevelThickness,
-            bevelSize: data.bevelSize,
+            depth: depth,
+            curveSegments: curveSegments,
+            bevelEnabled: bevelEnabled,
+            bevelThickness: bevelThickness,
+            bevelSize: bevelSize,
             bevelOffset: 0,
-            bevelSegments: data.bevelSegments
+            bevelSegments: bevelSegments
           });
 
           geometry.computeBoundingBox();

@@ -124,33 +124,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // HUD button text remains 'Profile' as intended
 
-    // Apply Marker Overrides if specified in profile
-    if (profile.markers && sceneEl) {
-      Object.keys(profile.markers).forEach(markerId => {
-        const markerEl = document.getElementById(`marker-${markerId}`);
-        if (markerEl) {
-          const textEl = markerEl.querySelector('[three-text-3d]');
-          if (textEl) {
-            const mData = profile.markers[markerId];
-            textEl.setAttribute('three-text-3d', {
-              text: mData.text,
-              color: mData.color,
-              emissive: mData.emissive
-            });
-          }
+    // 1. Compute and apply final marker configurations in a single pass
+    const defaultMarkers = profiles['default']?.markers || {};
+    const markerNamesMap = {};
+
+    for (let i = 0; i <= 7; i++) {
+      const markerId = String(i);
+      const targetData = (profile.markers && profile.markers[markerId]) ||
+                         (defaultMarkers && defaultMarkers[markerId]) ||
+                         { text: markerId, color: '#ffffff', emissive: '#ffffff' };
+
+      markerNamesMap[markerId] = targetData.text;
+
+      const markerEl = document.getElementById(`marker-${markerId}`);
+      if (markerEl) {
+        const textEl = markerEl.querySelector('[three-text-3d]');
+        if (textEl) {
+          textEl.setAttribute('three-text-3d', {
+            text: targetData.text,
+            color: targetData.color,
+            emissive: targetData.emissive
+          });
         }
-      });
+      }
     }
 
-    // Apply Interaction / FX properties in a single batch
+    // 2. Apply Interaction / FX properties in a single batch
     if (sceneEl) {
       const hasCelebration = !!(profile.interaction && profile.interaction.celebrationText);
-      const markerNamesMap = {};
-      if (profile.markers) {
-        Object.keys(profile.markers).forEach(k => {
-          markerNamesMap[k] = profile.markers[k].text;
-        });
-      }
       sceneEl.setAttribute('proximity-lightning', {
         enableBirthday: hasCelebration,
         targetNodes: JSON.stringify(profile.interaction?.targetNodes || [0, 7]),
