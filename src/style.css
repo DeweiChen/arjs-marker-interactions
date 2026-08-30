@@ -491,29 +491,6 @@ body.hud-collapsed #bloom-control-panel {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* Lightweight Toast Notification */
-.hud-toast {
-  position: fixed;
-  bottom: max(75px, calc(env(safe-area-inset-bottom) + 75px));
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 250;
-  background: rgba(15, 23, 42, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.3);
-  color: #f8fafc;
-  padding: 10px 16px;
-  border-radius: var(--radius-md);
-  font-size: 12px;
-  line-height: 1.4;
-  text-align: center;
-  max-width: min(88vw, 340px);
-  pointer-events: none;
-  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
 /* Energy Discharge & Proximity Meter */
 .energy-card {
   display: flex;

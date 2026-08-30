@@ -1,6 +1,6 @@
 /**
- * Modal, Audio & Toast Notification Controller
- * Manages marker pattern dialogs, celebration reset, audio toggle controls, and mobile toast feedback.
+ * Modal & Audio Controller
+ * Manages marker pattern dialogs, celebration reset, and audio toggle controls.
  */
 
 export class ModalController {
@@ -17,7 +17,6 @@ export class ModalController {
     this.iconAudioOff = document.getElementById('icon-audio-off');
     this.audioHudDot = document.getElementById('audio-hud-dot');
     this.audioBtnText = document.getElementById('audio-btn-text');
-    this.hudToast = document.getElementById('hud-toast');
 
     this.isAudioPlaying = false;
 
@@ -50,7 +49,6 @@ export class ModalController {
         this.sceneEl.emit('reset-birthday');
         this.setAudioButtonVisible(false);
         this.updateAudioState(false);
-        this.showToast('Birthday FX State Reset to Standby');
       });
     }
 
@@ -65,18 +63,6 @@ export class ModalController {
         this.updateAudioState(e.detail.isPlaying);
       }
     });
-  }
-
-  showToast(message, durationMs = 2500) {
-    if (!this.hudToast) return;
-    this.hudToast.textContent = message;
-    this.hudToast.classList.remove('hidden');
-    this.hudToast.classList.add('visible');
-
-    setTimeout(() => {
-      this.hudToast.classList.remove('visible');
-      setTimeout(() => this.hudToast.classList.add('hidden'), 300);
-    }, durationMs);
   }
 
   setResetButtonVisible(visible) {

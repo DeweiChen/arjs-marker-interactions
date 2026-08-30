@@ -55,13 +55,11 @@ if (typeof AFRAME !== 'undefined') {
       radius: { type: 'number', default: 0.3 },
       threshold: { type: 'number', default: 0.0 },
       downscale: { type: 'number', default: 0.25 },
-      pulseRange: { type: 'number', default: 0.4 },
-      dynamicIntensity: { type: 'boolean', default: true }
+      pulseRange: { type: 'number', default: 0.4 }
     },
 
     init: function () {
       this.sceneEl = this.el.sceneEl || this.el;
-      this.currentProximity = 0;
       this.isInitialized = false;
       this.enabled = this.data.enabled !== undefined ? this.data.enabled : true;
 
@@ -78,19 +76,28 @@ if (typeof AFRAME !== 'undefined') {
         this.sceneEl.addEventListener('loaded', setup, { once: true });
       }
 
-      this.sceneEl.addEventListener('proximity-update', (e) => {
-        const { proximity, active } = e.detail;
-        this.currentProximity = active ? proximity : 0;
+      this.sceneEl.addEventListener('set-bloom-enabled', (e) => {
+        const { enabled } = e.detail || {};
+        if (enabled !== undefined) this.setEnabled(enabled);
+      });
+
+      this.sceneEl.addEventListener('set-bloom-strength', (e) => {
+        const { strength } = e.detail || {};
+        if (strength !== undefined) this.setStrength(strength);
+      });
+
+      this.sceneEl.addEventListener('set-bloom-pulse-range', (e) => {
+        const { pulseRange } = e.detail || {};
+        if (pulseRange !== undefined) this.setPulseRange(pulseRange);
       });
 
       this.sceneEl.addEventListener('set-bloom-params', (e) => {
-        const { enabled, strength, radius, threshold, pulseRange, dynamicIntensity } = e.detail || {};
+        const { enabled, strength, radius, threshold, pulseRange } = e.detail || {};
         if (enabled !== undefined) this.setEnabled(enabled);
         if (strength !== undefined) this.setStrength(strength);
         if (radius !== undefined) this.setRadius(radius);
         if (threshold !== undefined) this.setThreshold(threshold);
         if (pulseRange !== undefined) this.setPulseRange(pulseRange);
-        if (dynamicIntensity !== undefined) this.setDynamicIntensity(dynamicIntensity);
       });
 
       this.sceneEl.addEventListener('set-dpr', (e) => {
@@ -113,7 +120,7 @@ if (typeof AFRAME !== 'undefined') {
         if (this.data.threshold !== undefined) {
           this.bloomPass.threshold = this.data.threshold;
         }
-        if (this.data.strength !== undefined && !this.data.dynamicIntensity) {
+        if (this.data.strength !== undefined) {
           this.bloomPass.strength = this.data.strength;
         }
       }
@@ -143,7 +150,7 @@ if (typeof AFRAME !== 'undefined') {
 
     setStrength: function (val) {
       this.data.strength = Math.max(0, parseFloat(val) || 0);
-      if (this.bloomPass && !this.data.dynamicIntensity) {
+      if (this.bloomPass) {
         this.bloomPass.strength = this.data.strength;
       }
     },
@@ -164,10 +171,6 @@ if (typeof AFRAME !== 'undefined') {
 
     setPulseRange: function (val) {
       this.data.pulseRange = Math.max(0, parseFloat(val) || 0);
-    },
-
-    setDynamicIntensity: function (val) {
-      this.data.dynamicIntensity = !!val;
     },
 
     _setupPostProcessing: function () {
@@ -297,16 +300,7 @@ if (typeof AFRAME !== 'undefined') {
             : 0;
           const baseStrength = Math.max(0, self.data.strength + breathOffset);
 
-          if (self.data.dynamicIntensity) {
-            const prox = self.currentProximity;
-            let dynamicMult = 1.0 + Math.pow(prox, 1.2) * 0.75;
-            if (prox > 0.8) {
-              dynamicMult += Math.sin(now * 0.02) * 0.15;
-            }
-            self.bloomPass.strength = baseStrength * dynamicMult;
-          } else {
-            self.bloomPass.strength = baseStrength;
-          }
+          self.bloomPass.strength = baseStrength;
 
           activeCamera.layers.set(1);
           self.bloomComposer.render();

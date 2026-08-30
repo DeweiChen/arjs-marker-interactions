@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'default';
   };
 
-  const applyProfile = (profileId, triggerToast = false) => {
+  const applyProfile = (profileId) => {
     if (!profiles[profileId]) return;
     currentProfileId = profileId;
     const profile = profiles[profileId];
@@ -182,10 +182,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.profile-option').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.id === profileId);
     });
-
-    if (triggerToast) {
-      modalController.showToast(`Profile: ${profile.name || profileId} Activated`);
-    }
   };
 
   const initProfileUI = () => {
@@ -202,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.dataset.id = id;
       btn.innerHTML = `<span>${p.name || id}</span>`;
       btn.addEventListener('click', () => {
-        applyProfile(id, true);
+        applyProfile(id);
         dropdown.classList.add('hidden');
       });
       dropdown.appendChild(btn);

@@ -26,7 +26,6 @@ export class BloomPanelController {
     this.valPulseRange = document.getElementById('val-pulse-range');
     this.pulsePresetBtns = document.querySelectorAll('.pulse-preset-btn');
 
-    this.chkDynamicIntensity = document.getElementById('chk-dynamic-intensity');
     this.chkPitchFacing = document.getElementById('chk-pitch-facing');
 
     this.valDpr = document.getElementById('val-dpr');
@@ -70,6 +69,52 @@ export class BloomPanelController {
       this.btnCloseBloom.addEventListener('click', () => {
         this.bloomPanel.classList.add('hidden');
         if (this.btnToggleBloom) this.btnToggleBloom.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    if (this.btnResetBloom) {
+      this.btnResetBloom.addEventListener('click', () => {
+        // Reset Master Switch
+        if (this.chkMasterBloom) {
+          this.chkMasterBloom.checked = true;
+        }
+        if (this.valBloomStatus) {
+          this.valBloomStatus.textContent = 'ON';
+          this.valBloomStatus.className = 'bloom-status-badge status-active';
+        }
+
+        // Reset Strength
+        const defStrength = 1.3;
+        if (this.sliderBloomStrength) this.sliderBloomStrength.value = defStrength;
+        if (this.valBloomStrength) this.valBloomStrength.textContent = `${defStrength.toFixed(2)}x`;
+        this.presetBtns.forEach((b) => b.classList.toggle('active', parseFloat(b.dataset.strength) === defStrength));
+
+        // Reset Pulse Range
+        const defPulse = 0.4;
+        if (this.sliderPulseRange) this.sliderPulseRange.value = defPulse;
+        if (this.valPulseRange) this.valPulseRange.textContent = `±${defPulse.toFixed(2)}x`;
+        this.pulsePresetBtns.forEach((b) => b.classList.toggle('active', parseFloat(b.dataset.pulse) === defPulse));
+
+        // Reset Pitch Facing
+        if (this.chkPitchFacing) {
+          this.chkPitchFacing.checked = true;
+          this.sceneEl.emit('set-text-pitch-facing', { enabled: true });
+        }
+
+        // Reset DPR
+        this.currentDprSetting = 'native';
+        localStorage.setItem('ar_custom_dpr', 'native');
+        this.dprBtns.forEach((b) => b.classList.toggle('active', b.dataset.dpr === 'native'));
+        this.applyDprSetting('native');
+
+        // Emit reset params to bloom component
+        this.sceneEl.emit('set-bloom-params', {
+          enabled: true,
+          strength: defStrength,
+          radius: 0.3,
+          threshold: 0.0,
+          pulseRange: defPulse
+        });
       });
     }
 
@@ -122,12 +167,6 @@ export class BloomPanelController {
       });
     });
 
-    if (this.chkDynamicIntensity) {
-      this.chkDynamicIntensity.addEventListener('change', (e) => {
-        this.sceneEl.emit('set-bloom-dynamic-intensity', { enabled: e.target.checked });
-      });
-    }
-
     if (this.chkPitchFacing) {
       this.chkPitchFacing.addEventListener('change', (e) => {
         this.sceneEl.emit('set-text-pitch-facing', { enabled: e.target.checked });
@@ -160,6 +199,7 @@ export class BloomPanelController {
     if (this.valDpr) {
       this.valDpr.textContent = setting === 'native' ? `Native (${(window.devicePixelRatio || 1).toFixed(1)}x)` : `${targetDpr.toFixed(1)}x`;
     }
+    this.sceneEl.emit('set-dpr', { dpr: targetDpr });
   }
 
   _startResolutionTelemetry() {
