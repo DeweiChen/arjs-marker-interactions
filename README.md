@@ -1,5 +1,10 @@
 # AR.js + A-Frame Dual Marker Dynamic Lightning Interaction
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![AR.js](https://img.shields.io/badge/AR.js-3.4.8-green.svg)](https://ar-js-org.github.io/AR.js-Docs/)
+[![A-Frame](https://img.shields.io/badge/A--Frame-1.6.0-pink.svg)](https://aframe.io/)
+[![Three.js](https://img.shields.io/badge/Three.js-r164-orange.svg)](https://threejs.org/)
+
 A WebAR dual-marker proximity interaction system built on **AR.js**, **A-Frame (v1.6.0)**, and **Three.js**.
 
 ---
@@ -93,23 +98,6 @@ pnpm run preview
 
 ---
 
-## 🎯 Marker Testing & Patterns
-
-Click the **"Markers"** button in the top HUD to view or download all 8 marker patterns:
-
-| Marker ID | 3D Text / Number | Color | Interaction |
-|:---:|:---:|:---:|:---:|
-| **Barcode 0** | `"Fu"` | Morandi Green (`#00cba9`) | Electric arc with Barcode 1 |
-| **Barcode 1** | `"DW"` | Deep Cobalt Blue (`#0077ff`) | Electric arc with Barcode 0 |
-| **Barcode 2** | `"2"` | Orchid Purple (`#e879f9`) | Standalone 3D Text |
-| **Barcode 3** | `"3"` | Amber Gold (`#f59e0b`) | Standalone 3D Text |
-| **Barcode 4** | `"4"` | Rose Pink (`#f43f5e`) | Standalone 3D Text |
-| **Barcode 5** | `"5"` | Lime Green (`#84cc16`) | Standalone 3D Text |
-| **Barcode 6** | `"6"` | Cyan Teal (`#06b6d4`) | Standalone 3D Text |
-| **Barcode 7** | `"7"` | Coral Orange (`#fb923c`) | Standalone 3D Text |
-
----
-
 ## 🔮 Customization & Extension Guide
 
 ### 1. Replacing 3D Objects with Photo Textures or Custom Meshes
@@ -163,10 +151,30 @@ This project includes a pre-configured GitHub Actions workflow (`.github/workflo
 
 ---
 
-## 📜 Git Commit History
+## 📄 License
 
-- `ba3aa3a` - `feat: init project with three.js r164 + ar.js 3.4.8`
-- `9018f5c` - `feat: add vite config and github pages deployment`
-- `9e2b4ee` - `feat: setup AR.js + Three.js core scene`
-- `9d6ad58` - `feat: add dual marker detection with 3D objects`
-- `aea45c6` - `docs: add development and deployment guide`
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for the full license text.
+
+```text
+MIT License
+
+Copyright (c) 2026 DW
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
