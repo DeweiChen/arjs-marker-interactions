@@ -11,8 +11,8 @@ import { BirthdayFX } from '../fx/birthday-fx.js';
 if (typeof AFRAME !== 'undefined') {
   AFRAME.registerComponent('proximity-lightning', {
     schema: {
-      marker1: { type: 'selector', default: '#marker-hiro' },
-      marker2: { type: 'selector', default: '#marker-kanji' },
+      marker1: { type: 'selector', default: '#marker-0' },
+      marker2: { type: 'selector', default: '#marker-1' },
       maxDistance: { type: 'number', default: 4.5 },
       minDistance: { type: 'number', default: 1.5 },
       terminalOffsetY: { type: 'number', default: 0.25 },

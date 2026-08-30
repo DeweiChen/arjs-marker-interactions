@@ -313,21 +313,50 @@
   <div id="markers-modal" class="modal-backdrop hidden">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>AR Marker Patterns</h2>
+        <h2>AR Marker Patterns (3x3 Hamming 6,3)</h2>
         <button id="btn-close-modal" class="modal-close-btn" aria-label="Close modal">&times;</button>
       </div>
-      <p class="modal-desc">Scan both markers simultaneously with your camera. Bring them closer together to trigger
-        dynamic electric arcs and energy core expansion!</p>
+      <p class="modal-desc">Supports all 8 barcode markers simultaneously (0–7). Bring Barcode 0 ("DW") and Barcode 1 ("Fu") close together to trigger high-voltage electric arcs!</p>
       <div class="markers-grid">
         <div class="marker-item">
-          <h3>Hiro Marker ("Fu" - Morandi Green Node)</h3>
-          <img src="./markers/images/hiro.png" alt="Hiro Marker Pattern" />
-          <a href="./markers/images/hiro.png" download="pattern-hiro.png" class="download-link">Download Pattern</a>
+          <h3>Barcode 0 ("DW" - Deep Blue)</h3>
+          <img src="./markers/images/barcode-0.png" alt="Barcode 0" />
+          <a href="./markers/images/barcode-0.png" download="barcode-0.png" class="download-link">Download 0</a>
         </div>
         <div class="marker-item">
-          <h3>Kanji Marker ("DW" - Misty Blue Node)</h3>
-          <img src="./markers/images/kanji.png" alt="Kanji Marker Pattern" />
-          <a href="./markers/images/kanji.png" download="pattern-kanji.png" class="download-link">Download Pattern</a>
+          <h3>Barcode 1 ("Fu" - Morandi Green)</h3>
+          <img src="./markers/images/barcode-1.png" alt="Barcode 1" />
+          <a href="./markers/images/barcode-1.png" download="barcode-1.png" class="download-link">Download 1</a>
+        </div>
+        <div class="marker-item">
+          <h3>Barcode 2 ("2" - Flame Red)</h3>
+          <img src="./markers/images/barcode-2.png" alt="Barcode 2" />
+          <a href="./markers/images/barcode-2.png" download="barcode-2.png" class="download-link">Download 2</a>
+        </div>
+        <div class="marker-item">
+          <h3>Barcode 3 ("3" - Sunset Orange)</h3>
+          <img src="./markers/images/barcode-3.png" alt="Barcode 3" />
+          <a href="./markers/images/barcode-3.png" download="barcode-3.png" class="download-link">Download 3</a>
+        </div>
+        <div class="marker-item">
+          <h3>Barcode 4 ("4" - Electric Yellow)</h3>
+          <img src="./markers/images/barcode-4.png" alt="Barcode 4" />
+          <a href="./markers/images/barcode-4.png" download="barcode-4.png" class="download-link">Download 4</a>
+        </div>
+        <div class="marker-item">
+          <h3>Barcode 5 ("5" - Herb Green)</h3>
+          <img src="./markers/images/barcode-5.png" alt="Barcode 5" />
+          <a href="./markers/images/barcode-5.png" download="barcode-5.png" class="download-link">Download 5</a>
+        </div>
+        <div class="marker-item">
+          <h3>Barcode 6 ("6" - Cyber Violet)</h3>
+          <img src="./markers/images/barcode-6.png" alt="Barcode 6" />
+          <a href="./markers/images/barcode-6.png" download="barcode-6.png" class="download-link">Download 6</a>
+        </div>
+        <div class="marker-item">
+          <h3>Barcode 7 ("7" - Pure White)</h3>
+          <img src="./markers/images/barcode-7.png" alt="Barcode 7" />
+          <a href="./markers/images/barcode-7.png" download="barcode-7.png" class="download-link">Download 7</a>
         </div>
       </div>
     </div>
@@ -350,9 +379,9 @@
 
   <!-- Embedded AR.js + A-Frame Scene with Proximity Lightning & Selective Bloom Components -->
   <a-scene embedded loading-screen="dotsColor: #38bdf8; backgroundColor: #000000;"
-    arjs="sourceType: webcam; sourceWidth: 1920; sourceHeight: 1080; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    arjs="sourceType: webcam; sourceWidth: 1920; sourceHeight: 1080; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3_HAMMING63;"
     renderer="precision: mediump; antialias: false; powerPreference: high-performance;"
-    proximity-lightning="marker1: #marker-hiro; marker2: #marker-kanji; maxDistance: 4.0; minDistance: 0.25; terminalOffsetY: 0.25; smoothingFactor: 0.3; enableBirthday: false; fxType: lightning"
+    proximity-lightning="marker1: #marker-0; marker2: #marker-1; maxDistance: 4.0; minDistance: 0.25; terminalOffsetY: 0.25; smoothingFactor: 0.3; enableBirthday: false; fxType: lightning"
     bloom-effect="strength: 1.3; radius: 0.3; threshold: 0.0; downscale: 0.25; pulseRange: 0.4; dynamicIntensity: true"
     device-orientation-permission-ui="enabled: true; deviceMotionMessage: 此 AR 互動需要存取您的裝置動作與方向感應器 (陀螺儀)。<br><span style='font-size:12px;opacity:0.85;display:block;margin-top:4px;'>This AR experience requires access to your device motion sensors.</span>; allowButtonText: 允許 Allow; denyButtonText: 拒絕 Deny;">
 
@@ -365,33 +394,97 @@
     <a-entity light="type: ambient; color: #ffffff; intensity: 0.8"></a-entity>
     <a-entity light="type: directional; color: #ffffff; intensity: 1.2; position: 1 4 2"></a-entity>
 
-    <!-- Marker 1: Hiro Marker Configuration (Displays "Fu" in 3D Morandi Green Emissive Text) -->
-    <a-marker preset="hiro" id="marker-hiro" emitevents="true" marker-stabilizer="warmupFrames: 4">
-      <!-- Deep Obsidian Circular Base Stage to Catch Bloom Glow -->
+    <!-- Marker 0: Barcode 0 ("DW" - Deep Blue Emissive Text) -->
+    <a-marker type="barcode" value="0" id="marker-0" emitevents="true" marker-stabilizer="warmupFrames: 4">
       <a-entity position="0 0.01 0" rotation="-90 0 0">
         <a-circle radius="0.65" color="#050508"
           material="shader: standard; roughness: 0.9; metalness: 0.1; opacity: 0.98; transparent: true">
         </a-circle>
       </a-entity>
+      <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
+        three-text-3d="text: DW; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.55; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.012; bevelSize: 0.012; bevelSegments: 5; color: #1d4ed8; emissive: #0077ff; emissiveIntensity: 1.5; pitchFacing: true">
+      </a-entity>
+    </a-marker>
 
-      <!-- 3D Text: "Fu" standing perpendicular to marker with dynamic pitch facing towards camera, centered, rounded Fredoka font, with Morandi green glow -->
+    <!-- Marker 1: Barcode 1 ("Fu" - Morandi Green Emissive Text) -->
+    <a-marker type="barcode" value="1" id="marker-1" emitevents="true" marker-stabilizer="warmupFrames: 4">
+      <a-entity position="0 0.01 0" rotation="-90 0 0">
+        <a-circle radius="0.65" color="#050508"
+          material="shader: standard; roughness: 0.9; metalness: 0.1; opacity: 0.98; transparent: true">
+        </a-circle>
+      </a-entity>
       <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
         three-text-3d="text: Fu; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #00cba9; emissive: #00cba9; emissiveIntensity: 1.5; pitchFacing: true">
       </a-entity>
     </a-marker>
 
-    <!-- Marker 2: Kanji Marker Configuration (Displays "DW" in 3D Misty Blue Emissive Text) -->
-    <a-marker preset="kanji" id="marker-kanji" emitevents="true" marker-stabilizer="warmupFrames: 4">
-      <!-- Deep Obsidian Circular Base Stage to Catch Bloom Glow -->
+    <!-- Marker 2: Barcode 2 ("2" - Pure Flame Red Emissive Text) -->
+    <a-marker type="barcode" value="2" id="marker-2" emitevents="true" marker-stabilizer="warmupFrames: 4">
       <a-entity position="0 0.01 0" rotation="-90 0 0">
         <a-circle radius="0.65" color="#050508"
           material="shader: standard; roughness: 0.9; metalness: 0.1; opacity: 0.98; transparent: true">
         </a-circle>
       </a-entity>
-
-      <!-- 3D Text: "DW" standing perpendicular to marker with dynamic pitch facing towards camera, centered, rounded Fredoka font, with deep cobalt blue glow -->
       <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
-        three-text-3d="text: DW; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.55; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.012; bevelSize: 0.012; bevelSegments: 5; color: #1d4ed8; emissive: #0077ff; emissiveIntensity: 1.5; pitchFacing: true">
+        three-text-3d="text: 2; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.6; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.01; bevelSize: 0.01; bevelSegments: 5; color: #dc2626; emissive: #ff1a1a; emissiveIntensity: 1.5; pitchFacing: true">
+      </a-entity>
+    </a-marker>
+
+    <!-- Marker 3: Barcode 3 ("3" - Sunset Orange Emissive Text) -->
+    <a-marker type="barcode" value="3" id="marker-3" emitevents="true" marker-stabilizer="warmupFrames: 4">
+      <a-entity position="0 0.01 0" rotation="-90 0 0">
+        <a-circle radius="0.65" color="#050508"
+          material="shader: standard; roughness: 0.9; metalness: 0.1; opacity: 0.98; transparent: true">
+        </a-circle>
+      </a-entity>
+      <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
+        three-text-3d="text: 3; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.6; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.01; bevelSize: 0.01; bevelSegments: 5; color: #ea580c; emissive: #ff7a00; emissiveIntensity: 1.5; pitchFacing: true">
+      </a-entity>
+    </a-marker>
+
+    <!-- Marker 4: Barcode 4 ("4" - Electric Pure Yellow Emissive Text) -->
+    <a-marker type="barcode" value="4" id="marker-4" emitevents="true" marker-stabilizer="warmupFrames: 4">
+      <a-entity position="0 0.01 0" rotation="-90 0 0">
+        <a-circle radius="0.65" color="#050508"
+          material="shader: standard; roughness: 0.9; metalness: 0.1; opacity: 0.98; transparent: true">
+        </a-circle>
+      </a-entity>
+      <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
+        three-text-3d="text: 4; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.6; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.01; bevelSize: 0.01; bevelSegments: 5; color: #ca8a04; emissive: #ffe600; emissiveIntensity: 1.5; pitchFacing: true">
+      </a-entity>
+    </a-marker>
+
+    <!-- Marker 5: Barcode 5 ("5" - Herb Lime Green Emissive Text) -->
+    <a-marker type="barcode" value="5" id="marker-5" emitevents="true" marker-stabilizer="warmupFrames: 4">
+      <a-entity position="0 0.01 0" rotation="-90 0 0">
+        <a-circle radius="0.65" color="#050508"
+          material="shader: standard; roughness: 0.9; metalness: 0.1; opacity: 0.98; transparent: true">
+        </a-circle>
+      </a-entity>
+      <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
+        three-text-3d="text: 5; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.6; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.01; bevelSize: 0.01; bevelSegments: 5; color: #16a34a; emissive: #22c55e; emissiveIntensity: 1.5; pitchFacing: true">
+      </a-entity>
+    </a-marker>
+
+    <!-- Marker 6: Barcode 6 ("6" - Cyber Violet Emissive Text) -->
+    <a-marker type="barcode" value="6" id="marker-6" emitevents="true" marker-stabilizer="warmupFrames: 4">
+      <a-entity position="0 0.01 0" rotation="-90 0 0">
+        <a-circle radius="0.65" color="#050508" material="shader: standard; roughness: 0.9; metalness: 0.1; opacity: 0.98; transparent: true"></a-circle>
+      </a-entity>
+      <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
+        three-text-3d="text: 6; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.6; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.01; bevelSize: 0.01; bevelSegments: 5; color: #7c3aed; emissive: #a855f7; emissiveIntensity: 1.5; pitchFacing: true">
+      </a-entity>
+    </a-marker>
+
+    <!-- Marker 7: Barcode 7 ("7" - Pure White Emissive Text) -->
+    <a-marker type="barcode" value="7" id="marker-7" emitevents="true" marker-stabilizer="warmupFrames: 4">
+      <a-entity position="0 0.01 0" rotation="-90 0 0">
+        <a-circle radius="0.65" color="#050508"
+          material="shader: standard; roughness: 0.9; metalness: 0.1; opacity: 0.98; transparent: true">
+        </a-circle>
+      </a-entity>
+      <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
+        three-text-3d="text: 7; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.6; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.01; bevelSize: 0.01; bevelSegments: 5; color: #e2e8f0; emissive: #ffffff; emissiveIntensity: 1.5; pitchFacing: true">
       </a-entity>
     </a-marker>
 

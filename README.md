@@ -6,11 +6,12 @@ A WebAR dual-marker proximity interaction system built on **AR.js**, **A-Frame (
 
 ## 🌟 Key Features
 
-- 🎯 **Simultaneous Dual Marker Detection**: Real-time independent 6-DoF tracking for both Hiro and Kanji markers.
-- ⚡ **Procedural Lightning Arcs**: Dynamic multi-branch electric arcs generated between markers via the Midpoint Displacement algorithm.
-- 🔮 **Proximity-Scaled Plasma Core**: Midpoint energy core and orbital rings that scale in size and rotate faster as markers approach.
-- 💥 **Dynamic Intensity Curves**: Lightning bolt count (1 to 4 bolts), spark particle emissions, light intensity, and visual scale ramp up non-linearly as distance decreases ($D < 3.0\text{m}$ to $D = 0.35\text{m}$), and disappear completely beyond threshold distance.
-- 🎛️ **Modern Glassmorphism HUD**: Real-time tracking status indicators, live distance readout, dynamic discharge progress bar, and built-in marker preview modal.
+- 🎯 **8 Barcode Marker Support (3x3 Hamming 6,3)**: Real-time simultaneous multi-marker tracking (values 0–7) for testing AR.js stability.
+- 🔤 **Custom 3D Emissive Text**: Marker 0 renders `"Fu"`, Marker 1 renders `"DW"`, and Markers 2–7 render their respective index numbers (`"2"` to `"7"`).
+- ⚡ **Dedicated Proximity Electric Arcs**: High-voltage electric arcs and energy core expansion triggered exclusively when Marker 0 ("Fu") and Marker 1 ("DW") are brought close together.
+- 🔮 **Proximity-Scaled Plasma Core**: Midpoint energy core and orbital rings that scale in size and rotate faster as Fu and DW approach.
+- 🎛️ **Live Marker Tracking Bar**: Top HUD telemetry features real-time active detection dots for all 8 markers (0–7) to evaluate multi-marker tracking performance.
+- 🖼️ **Standardized Marker Assets**: 8 normalized 600x600 PNG marker patterns with white quiet borders ready for printing or screen display.
 - 📱 **Mobile HTTPS Ready**: Includes `@vitejs/plugin-basic-ssl` for local development HTTPS certificates and automated GitHub Pages CI/CD deployment.
 
 ---
@@ -36,20 +37,22 @@ arjs-marker-interactions/
 │   └── workflows/
 │       └── deploy.yml          # GitHub Pages automated CI/CD deployment
 ├── public/
-│   ├── data/
-│   │   └── camera_para.dat     # Local camera calibration file
-│   ├── markers/
-│   │   ├── pattern-hiro.patt   # Hiro marker pattern file
-│   │   ├── pattern-kanji.patt  # Kanji marker pattern file
-│   │   └── images/             # Printable / screen-displayable marker images
-│   │       ├── hiro.png
-│   │       └── kanji.png
-│   └── assets/
+│   ├── fonts/
+│   │   └── fredoka_light_regular.json  # 3D Typeface font
+│   └── markers/
+│       └── images/             # 8 Barcode marker PNGs (0 to 7)
+│           ├── barcode-0.png   # "Fu"
+│           ├── barcode-1.png   # "DW"
+│           └── barcode-[2-7].png # "2" - "7"
+├── scripts/
+│   └── generate-barcode-markers.py # Barcode marker generator
 ├── src/
-│   ├── lightning-fx.js         # Procedural lightning, plasma core & sparks FX generator
-│   ├── proximity-component.js  # A-Frame component tracking distance & driving FX
-│   ├── style.css               # Glassmorphism HUD overlay & responsive styles
-│   └── main.js                 # Application bootstrap & UI event handlers
+│   ├── components/             # Custom A-Frame components
+│   ├── core/                   # Font loader, aspect ratio corrector
+│   ├── fx/                     # Lightning FX, Birthday FX strategies
+│   ├── pages/                  # Application bootstrap
+│   ├── ui/                     # HUD telemetry, modal, bloom panel
+│   └── style.css               # Glassmorphism HUD overlay & responsive styles
 ├── index.html                  # Main HTML entry, AR scene & HUD markup
 ├── vite.config.js              # Vite configuration (base path & HTTPS setup)
 ├── package.json
@@ -92,12 +95,18 @@ pnpm run preview
 
 ## 🎯 Marker Testing & Patterns
 
-Click the **"Marker 圖案" (Marker Patterns)** button in the top-right corner of the app to view or download marker patterns, or use the files directly:
+Click the **"Markers"** button in the top HUD to view or download all 8 marker patterns:
 
-- **Marker 1 (Hiro)**: `public/markers/images/hiro.png` (displays glowing rose cube)
-- **Marker 2 (Kanji)**: `public/markers/images/kanji.png` (displays glowing cyan octahedron)
-
-When the camera detects a marker, the status card at the bottom will light up and switch to `已鎖定 (Tracking)`.
+| Marker ID | 3D Text / Number | Color | Interaction |
+|:---:|:---:|:---:|:---:|
+| **Barcode 0** | `"Fu"` | Morandi Green (`#00cba9`) | Electric arc with Barcode 1 |
+| **Barcode 1** | `"DW"` | Deep Cobalt Blue (`#0077ff`) | Electric arc with Barcode 0 |
+| **Barcode 2** | `"2"` | Orchid Purple (`#e879f9`) | Standalone 3D Text |
+| **Barcode 3** | `"3"` | Amber Gold (`#f59e0b`) | Standalone 3D Text |
+| **Barcode 4** | `"4"` | Rose Pink (`#f43f5e`) | Standalone 3D Text |
+| **Barcode 5** | `"5"` | Lime Green (`#84cc16`) | Standalone 3D Text |
+| **Barcode 6** | `"6"` | Cyan Teal (`#06b6d4`) | Standalone 3D Text |
+| **Barcode 7** | `"7"` | Coral Orange (`#fb923c`) | Standalone 3D Text |
 
 ---
 
