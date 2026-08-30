@@ -30,8 +30,8 @@ export class ChainConductionFX extends BaseFX {
     this.options = Object.assign(
       {
         maxSegments: 7,            // Up to 7 segments for 8 markers
-        maxBoltsPerSeg: 7,         // 1 main crisp bolt + 6 energetic branch forks
-        segmentsPerBolt: 32,       // High subdivision for sharp zigzag arcs
+        maxBoltsPerSeg: 3,         // 1 main crisp bolt + 2 branch forks (optimized for performance)
+        segmentsPerBolt: 20,       // Subdivision for zigzag arcs (optimized from 32)
         maxExplosionSparks: 180,   // Balanced particle count for clean explosion visuals
         streamSparksPerSeg: 24,    // Subtle flowing spark count per segment
         primaryColor: 0x0ea5e9,    // Vivid Sky Blue (Saturated & cybernetic)
@@ -469,7 +469,7 @@ export class ChainConductionFX extends BaseFX {
         this._updateIdleNodes(idleNodes, now, deltaMs);
         return;
       }
-      
+
       // Update opacity/scale during fade out based on smoothedProximity
       const fadeP = this.smoothedProximity;
       this.segments.forEach(seg => {
@@ -584,7 +584,7 @@ export class ChainConductionFX extends BaseFX {
 
     const defaultChain = [
       { id: 0, name: '0', position: startPos, color: MARKER_COLORS[0] },
-      { id: 1, name: '1', position: endPos,   color: MARKER_COLORS[1] }
+      { id: 1, name: '1', position: endPos, color: MARKER_COLORS[1] }
     ];
 
     this.updateChain(defaultChain, delta, intensityMultiplier, chargeProgress, []);

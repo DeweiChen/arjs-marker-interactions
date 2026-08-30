@@ -69,8 +69,10 @@ export class BirthdayFX extends BaseFX {
   _initCelebrationText() {
     const THREE = this.THREE;
     this.textGroup = new THREE.Group();
-    this.textGroup.visible = false;
-    this.textGroup.scale.set(0, 0, 0);
+    // Keep visible with tiny scale & off-screen so WebGL pre-compiles shaders & uploads VBO ahead of time
+    this.textGroup.visible = true;
+    this.textGroup.scale.set(0.0001, 0.0001, 0.0001);
+    this.textGroup.position.set(0, -9999, 0);
 
     this._textMeshes = [];
     this._textReady = false;
@@ -96,6 +98,7 @@ export class BirthdayFX extends BaseFX {
       });
       mesh.position.y = 0.15;
       mesh.layers.enable(1);
+      mesh.frustumCulled = false; // Prevent culling when moving from pre-warm position
       this.textGroup.add(mesh);
       this._textMeshes.push(mesh);
       this._textReady = true;
@@ -161,6 +164,7 @@ export class BirthdayFX extends BaseFX {
 
     this.confettiPoints = new THREE.Points(this.confettiGeo, this.confettiMat);
     this.confettiPoints.layers.enable(1);
+    this.confettiPoints.frustumCulled = false; // Prevent culling of dynamic particles
     this.group.add(this.confettiPoints);
   }
 
@@ -218,6 +222,8 @@ export class BirthdayFX extends BaseFX {
   _initAudio() {
     if (this.options.audioUrl) {
       this.audio = new Audio(this.options.audioUrl);
+      this.audio.preload = 'auto'; // Force browser to pre-buffer audio data
+      this.audio.load();
       this.audio.loop = false;
       this.audioPlayed = false;
       this.audioUnlocked = false;
@@ -377,8 +383,10 @@ export class BirthdayFX extends BaseFX {
   // ─── STANDBY ─────────────────────────────────────────────────────────
 
   _updateStandby(withinChargeRange) {
-    this.group.visible = false;
-    this.textGroup.visible = false;
+    this.group.visible = true;
+    this.textGroup.visible = true;
+    this.textGroup.scale.set(0.0001, 0.0001, 0.0001);
+    this.textGroup.position.set(0, -9999, 0);
     this.confettiMat.opacity = 0;
     this.celebrationLight.intensity = 0;
     this.transitionElapsed = 0;
@@ -446,12 +454,16 @@ export class BirthdayFX extends BaseFX {
 
     // Phase 1: Implosion / Overload (0 - 0.3)
     if (progress < 0.3) {
+      this.textGroup.scale.set(0.0001, 0.0001, 0.0001);
+      this.textGroup.position.set(0, -9999, 0);
       const implosionP = progress / 0.3;
       return Math.max(0, 1.8 - implosionP * 1.8);
     }
 
     // Phase 2: Intense Pure White Flash Burst & Particle Ejection (0.3 - 0.5)
     if (progress < 0.5) {
+      this.textGroup.scale.set(0.0001, 0.0001, 0.0001);
+      this.textGroup.position.set(0, -9999, 0);
       const flashP = (progress - 0.3) / 0.2;
 
       this.celebrationLight.color.setHex(0xffffff);
@@ -470,8 +482,10 @@ export class BirthdayFX extends BaseFX {
 
     this.celebrationLight.color.setHex(0xF4E0AE);
 
-    if (this._textReady) {
-      this.textGroup.visible = true;
+    if (this._textReady && mid) {
+      this.textGroup.position.copy(mid);
+      this.textGroup.position.y += 0.85;
+      this.textGroup.rotation.y = 0;
       const springT = this._springEase(supernovaP);
       const textScale = springT * 0.85;
       this.textGroup.scale.set(textScale, textScale, textScale);
@@ -649,8 +663,10 @@ export class BirthdayFX extends BaseFX {
     this.celebrationFadeTimer = 0;
     this.celebrationTime = 0;
     this.lastMidpoint = null;
-    this.group.visible = false;
-    this.textGroup.visible = false;
+    this.group.visible = true;
+    this.textGroup.visible = true;
+    this.textGroup.scale.set(0.0001, 0.0001, 0.0001);
+    this.textGroup.position.set(0, -9999, 0);
     this.confettiMat.opacity = 0;
     this.celebrationLight.intensity = 0;
     this._stopAudio();
