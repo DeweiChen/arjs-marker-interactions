@@ -90,23 +90,20 @@
         <span>Markers</span>
       </button>
 
-      <!-- HYBD Birthday Celebration Mode Toggle Button -->
-      <button id="btn-toggle-hybd" class="hud-btn" title="Toggle HYBD Birthday Celebration Mode"
-        aria-label="Toggle HYBD Mode">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 12v10H4V12"></path>
-          <path d="M2 7h20v5H2z"></path>
-          <path d="M12 22V7"></path>
-          <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
-          <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
-        </svg>
-        <span>HYBD</span>
-      </button>
+      <!-- Profile Switcher Button (Debug Mode Only) -->
+      <div id="profile-switcher-wrapper" class="hud-btn-wrapper debug-only hidden">
+        <button id="btn-toggle-profile" class="hud-btn" title="Switch Profile" aria-label="Switch Profile">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span id="profile-name">Profile</span>
+        </button>
+        <div id="profile-dropdown" class="profile-dropdown hidden">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
 
-      <!-- Reset Birthday FX Button (Visible in HYBD mode) -->
-      <button id="btn-reset-bday" class="hud-btn hidden" title="Reset Birthday FX (重設生日狀態)"
-        aria-label="Reset Birthday FX">
+      <!-- Reset Celebration FX Button -->
+      <button id="btn-reset-bday" class="hud-btn hidden" title="Reset Celebration FX (重設特效)"
+        aria-label="Reset Celebration FX">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
@@ -316,15 +313,15 @@
         <h2>AR Marker Patterns (3x3 Hamming 6,3)</h2>
         <button id="btn-close-modal" class="modal-close-btn" aria-label="Close modal">&times;</button>
       </div>
-      <p class="modal-desc">Supports all 8 barcode markers simultaneously (0–7: DW, Fu, 2, 3, 4, 5, 6, 7). Place intermediate number markers between DW and Fu to create a multi-node lightning conduction chain!</p>
+      <p class="modal-desc">Supports all 8 barcode markers simultaneously (0–7). Place intermediate number markers between terminal markers to create a multi-node lightning conduction chain!</p>
       <div class="markers-grid">
         <div class="marker-item">
-          <h3>Barcode 0 ("DW" - Deep Blue)</h3>
+          <h3>Barcode 0 ("0" - Deep Blue)</h3>
           <img src="./markers/images/barcode-0.png" alt="Barcode 0" />
           <a href="./markers/images/barcode-0.png" download="barcode-0.png" class="download-link">Download 0</a>
         </div>
         <div class="marker-item">
-          <h3>Barcode 1 ("Fu" - Morandi Green)</h3>
+          <h3>Barcode 1 ("1" - Morandi Green)</h3>
           <img src="./markers/images/barcode-1.png" alt="Barcode 1" />
           <a href="./markers/images/barcode-1.png" download="barcode-1.png" class="download-link">Download 1</a>
         </div>
@@ -378,7 +375,7 @@
   <div id="hud-toast" class="hud-toast hidden" role="status" aria-live="polite"></div>
 
   <!-- Embedded AR.js + A-Frame Scene with Proximity Lightning & Selective Bloom Components -->
-  <a-scene embedded loading-screen="dotsColor: #38bdf8; backgroundColor: #000000;"
+    <a-scene embedded loading-screen="dotsColor: #38bdf8; backgroundColor: #000000;"
     arjs="sourceType: webcam; sourceWidth: 1280; sourceHeight: 960; displayWidth: 1280; displayHeight: 960; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3_HAMMING63;"
     renderer="precision: mediump; antialias: false; powerPreference: high-performance;"
     proximity-lightning="maxDistance: 4.5; minDistance: 0.25; terminalOffsetY: 0.25; smoothingFactor: 0.3; enableBirthday: false; fxType: lightning"
@@ -394,7 +391,7 @@
     <a-entity light="type: ambient; color: #ffffff; intensity: 0.8"></a-entity>
     <a-entity light="type: directional; color: #ffffff; intensity: 1.2; position: 1 4 2"></a-entity>
 
-    <!-- Marker 0: Barcode 0 ("DW" - Deep Blue Emissive Text) -->
+    <!-- Marker 0: Barcode 0 ("0" - Deep Blue Emissive Text) -->
     <a-marker type="barcode" value="0" id="marker-0" emitevents="true" marker-stabilizer="warmupFrames: 4">
       <a-entity position="0 0.01 0" rotation="-90 0 0">
         <a-circle radius="0.65" color="#050508"
@@ -402,11 +399,11 @@
         </a-circle>
       </a-entity>
       <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
-        three-text-3d="text: DW; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.55; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.012; bevelSize: 0.012; bevelSegments: 5; color: #1d4ed8; emissive: #0077ff; emissiveIntensity: 1.5; pitchFacing: true">
+        three-text-3d="text: 0; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.6; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.012; bevelSize: 0.012; bevelSegments: 5; color: #1d4ed8; emissive: #0077ff; emissiveIntensity: 1.5; pitchFacing: true">
       </a-entity>
     </a-marker>
 
-    <!-- Marker 1: Barcode 1 ("Fu" - Morandi Green Emissive Text) -->
+    <!-- Marker 1: Barcode 1 ("1" - Morandi Green Emissive Text) -->
     <a-marker type="barcode" value="1" id="marker-1" emitevents="true" marker-stabilizer="warmupFrames: 4">
       <a-entity position="0 0.01 0" rotation="-90 0 0">
         <a-circle radius="0.65" color="#050508"
@@ -414,7 +411,7 @@
         </a-circle>
       </a-entity>
       <a-entity position="0 0.25 0" rotation="0 0 0" class="bloom-fx"
-        three-text-3d="text: Fu; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.5; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #00cba9; emissive: #00cba9; emissiveIntensity: 1.5; pitchFacing: true">
+        three-text-3d="text: 1; fontUrl: ./fonts/fredoka_light_regular.json; size: 0.6; depth: 0.08; curveSegments: 12; bevelEnabled: true; bevelThickness: 0.008; bevelSize: 0.008; bevelSegments: 5; color: #00cba9; emissive: #00cba9; emissiveIntensity: 1.5; pitchFacing: true">
       </a-entity>
     </a-marker>
 

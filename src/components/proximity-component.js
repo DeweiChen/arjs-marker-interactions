@@ -19,7 +19,11 @@ if (typeof AFRAME !== 'undefined') {
       smoothingFactor: { type: 'number', default: 0.35 },
       fxType: { type: 'string', default: 'lightning' },
       enableBirthday: { type: 'boolean', default: false },
-      dynamicColorShift: { type: 'boolean', default: true }
+      dynamicColorShift: { type: 'boolean', default: true },
+      targetNodes: { type: 'string', default: '[0,1]' },
+      celebrationText: { type: 'string', default: '' },
+      audioUrl: { type: 'string', default: '' },
+      markerNames: { type: 'string', default: '{}' }
     },
 
     init: function () {
@@ -52,7 +56,9 @@ if (typeof AFRAME !== 'undefined') {
       // Optionally initialize Birthday FX attached to root scene
       if (this.data.enableBirthday) {
         this.birthdayFX = new BirthdayFX(sceneEl.object3D, {
-          chargeThreshold: 2.2
+          chargeThreshold: 2.2,
+          textLine1: this.data.celebrationText,
+          audioUrl: this.data.audioUrl
         });
       }
 
@@ -69,19 +75,39 @@ if (typeof AFRAME !== 'undefined') {
 
     update: function (oldData) {
       const sceneEl = this.el.sceneEl;
-      if (oldData && oldData.enableBirthday !== this.data.enableBirthday) {
-        if (this.data.enableBirthday) {
-          if (!this.birthdayFX) {
-            this.birthdayFX = new BirthdayFX(sceneEl.object3D, {
-              chargeThreshold: 2.2
-            });
-          }
-        } else {
-          if (this.birthdayFX) {
-            this.birthdayFX.dispose();
-            this.birthdayFX = null;
-          }
+      let shouldReinit = false;
+
+      if (oldData) {
+        if (oldData.enableBirthday !== this.data.enableBirthday) shouldReinit = true;
+        if (oldData.celebrationText !== this.data.celebrationText) shouldReinit = true;
+        if (oldData.audioUrl !== this.data.audioUrl) shouldReinit = true;
+      }
+
+      if (shouldReinit || !oldData) {
+        if (this.birthdayFX) {
+          this.birthdayFX.dispose();
+          this.birthdayFX = null;
         }
+        if (this.data.enableBirthday) {
+          this.birthdayFX = new BirthdayFX(sceneEl.object3D, {
+            chargeThreshold: 2.2,
+            textLine1: this.data.celebrationText,
+            audioUrl: this.data.audioUrl
+          });
+        }
+      }
+
+      if (this.data.markerNames && (!oldData || oldData.markerNames !== this.data.markerNames)) {
+        try {
+          const names = JSON.parse(this.data.markerNames);
+          this.markerNodes.forEach((node) => {
+            if (names[node.id] !== undefined) {
+              node.name = String(names[node.id]);
+            } else {
+              node.name = `${node.id}`;
+            }
+          });
+        } catch (e) {}
       }
     },
 
@@ -118,22 +144,28 @@ if (typeof AFRAME !== 'undefined') {
       }
 
       const nodeMap = new Map(activeNodes.map(n => [n.id, n]));
-      const hasDW = nodeMap.has(0);
-      const hasFu = nodeMap.has(1);
+      
+      let tNodes = [0, 1];
+      try {
+        tNodes = JSON.parse(this.data.targetNodes);
+      } catch (e) {}
 
-      // Intermediate number candidates (IDs 2-7)
-      const numberNodes = activeNodes.filter(n => n.id >= 2);
+      const hasTerminalA = nodeMap.has(tNodes[0]);
+      const hasTerminalB = nodeMap.has(tNodes[1]);
+
+      // Intermediate number candidates
+      const numberNodes = activeNodes.filter(n => n.id !== tNodes[0] && n.id !== tNodes[1]);
 
       let chain = [];
 
-      if (hasDW && hasFu) {
-        // Full terminal-to-terminal chain: DW -> (nearest numbers...) -> Fu
-        const dwNode = nodeMap.get(0);
-        const fuNode = nodeMap.get(1);
-        chain.push(dwNode);
+      if (hasTerminalA && hasTerminalB) {
+        // Full terminal-to-terminal chain
+        const nodeA = nodeMap.get(tNodes[0]);
+        const nodeB = nodeMap.get(tNodes[1]);
+        chain.push(nodeA);
 
         const unvisited = [...numberNodes];
-        let current = dwNode;
+        let current = nodeA;
 
         while (unvisited.length > 0) {
           let closestIdx = -1;
@@ -156,14 +188,14 @@ if (typeof AFRAME !== 'undefined') {
           }
         }
 
-        chain.push(fuNode);
-      } else if (hasDW && numberNodes.length > 0) {
-        // Partial half-chain from DW: DW -> (nearest numbers...)
-        const dwNode = nodeMap.get(0);
-        chain.push(dwNode);
+        chain.push(nodeB);
+      } else if (hasTerminalA && numberNodes.length > 0) {
+        // Partial half-chain from Terminal A
+        const nodeA = nodeMap.get(tNodes[0]);
+        chain.push(nodeA);
 
         const unvisited = [...numberNodes];
-        let current = dwNode;
+        let current = nodeA;
 
         while (unvisited.length > 0) {
           let closestIdx = -1;
@@ -185,13 +217,13 @@ if (typeof AFRAME !== 'undefined') {
             break;
           }
         }
-      } else if (hasFu && numberNodes.length > 0) {
-        // Partial half-chain from Fu: Fu -> (nearest numbers...)
-        const fuNode = nodeMap.get(1);
-        chain.push(fuNode);
+      } else if (hasTerminalB && numberNodes.length > 0) {
+        // Partial half-chain from Terminal B
+        const nodeB = nodeMap.get(tNodes[1]);
+        chain.push(nodeB);
 
         const unvisited = [...numberNodes];
-        let current = fuNode;
+        let current = nodeB;
 
         while (unvisited.length > 0) {
           let closestIdx = -1;
@@ -307,16 +339,20 @@ if (typeof AFRAME !== 'undefined') {
 
         const prox = this.lightningFX.smoothedProximity || 0;
 
-        // Birthday FX update (triggers if DW and Fu are connected in active chain)
+        // Celebration FX update (triggers if Target Nodes are connected in active chain)
         let bdayResult = { state: 'STANDBY', chargePercent: 0, chargeProgress: 0, lightningIntensity: 1.0 };
-        const hasDW = chain.some(n => n.id === 0);
-        const hasFu = chain.some(n => n.id === 1);
+        
+        let tNodes = [0, 1];
+        try { tNodes = JSON.parse(this.data.targetNodes); } catch(e) {}
+        
+        const hasA = chain.some(n => n.id === tNodes[0]);
+        const hasB = chain.some(n => n.id === tNodes[1]);
 
         if (this.birthdayFX) {
-          if (hasDW && hasFu) {
-            const dwNode = chain.find(n => n.id === 0);
-            const fuNode = chain.find(n => n.id === 1);
-            bdayResult = this.birthdayFX.update(dwNode.position, fuNode.position, totalDist, prox, timeDelta);
+          if (hasA && hasB) {
+            const nodeA = chain.find(n => n.id === tNodes[0]);
+            const nodeB = chain.find(n => n.id === tNodes[1]);
+            bdayResult = this.birthdayFX.update(nodeA.position, nodeB.position, totalDist, prox, timeDelta);
           } else {
             bdayResult = this.birthdayFX.update(null, null, 999, 0, timeDelta);
           }

@@ -79,65 +79,137 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Detect HYBD mode request from URL query or hash
-  const isHybdModeRequested = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const modeParam = urlParams.get('mode');
-    const hybdParam = urlParams.get('hybd');
-    const hash = window.location.hash.toLowerCase();
+  // Profile System
+  let profiles = {};
+  let currentProfileId = 'default';
 
-    return (
-      modeParam === 'hybd' ||
-      hybdParam === 'true' ||
-      hybdParam === '1' ||
-      hash === '#hybd'
-    );
+  const loadProfiles = async () => {
+    try {
+      const response = await fetch('./config/profiles.json');
+      if (response.ok) {
+        profiles = await response.json();
+      } else {
+        console.warn('Profiles config not found');
+      }
+    } catch (e) {
+      console.error('Error loading profiles:', e);
+    }
   };
 
-  const btnToggleHybd = document.getElementById('btn-toggle-hybd');
-  let isHybdActive = isHybdModeRequested();
+  const getProfileFromUrl = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pParam = urlParams.get('p') || urlParams.get('mode');
+    const hash = window.location.hash.toLowerCase().replace('#', '');
+    
+    if (pParam && profiles[pParam]) return pParam;
+    if (profiles[hash]) return hash;
+    
+    return 'default';
+  };
 
-  const applyHybdMode = (active, triggerToast = false) => {
-    isHybdActive = active;
+  const applyProfile = (profileId, triggerToast = false) => {
+    if (!profiles[profileId]) return;
+    currentProfileId = profileId;
+    const profile = profiles[profileId];
 
-    if (btnToggleHybd) {
-      btnToggleHybd.classList.toggle('active', isHybdActive);
-    }
-
-    if (sceneEl) {
-      sceneEl.setAttribute('proximity-lightning', 'enableBirthday', isHybdActive);
-    }
-
-    modalController.setResetButtonVisible(isHybdActive);
-
-    // Update URL parameters without reloading
+    // Update URL without reload
     const url = new URL(window.location.href);
-    if (isHybdActive) {
-      url.searchParams.set('mode', 'hybd');
+    if (profileId !== 'default') {
+      url.searchParams.set('p', profileId);
     } else {
+      url.searchParams.delete('p');
       url.searchParams.delete('mode');
-      url.searchParams.delete('hybd');
-      if (url.hash === '#hybd') {
-        url.hash = '';
-      }
     }
     window.history.replaceState({}, '', url.toString());
 
+    // HUD button text remains 'Profile' as intended
+
+    // Apply Marker Overrides if specified in profile
+    if (profile.markers && sceneEl) {
+      Object.keys(profile.markers).forEach(markerId => {
+        const markerEl = document.getElementById(`marker-${markerId}`);
+        if (markerEl) {
+          const textEl = markerEl.querySelector('[three-text-3d]');
+          if (textEl) {
+            const mData = profile.markers[markerId];
+            textEl.setAttribute('three-text-3d', {
+              text: mData.text,
+              color: mData.color,
+              emissive: mData.emissive
+            });
+          }
+        }
+      });
+    }
+
+    // Apply Interaction / FX properties in a single batch
+    if (sceneEl) {
+      const hasCelebration = !!(profile.interaction && profile.interaction.celebrationText);
+      const markerNamesMap = {};
+      if (profile.markers) {
+        Object.keys(profile.markers).forEach(k => {
+          markerNamesMap[k] = profile.markers[k].text;
+        });
+      }
+      sceneEl.setAttribute('proximity-lightning', {
+        enableBirthday: hasCelebration,
+        targetNodes: JSON.stringify(profile.interaction?.targetNodes || [0, 7]),
+        celebrationText: profile.interaction?.celebrationText || '',
+        audioUrl: profile.interaction?.audioUrl || '',
+        markerNames: JSON.stringify(markerNamesMap)
+      });
+    }
+
+    modalController.setResetButtonVisible(!!(profile.interaction && profile.interaction.celebrationText));
+
+    // Update Dropdown Active State
+    document.querySelectorAll('.profile-option').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.id === profileId);
+    });
+
     if (triggerToast) {
-      modalController.showToast(
-        isHybdActive ? 'HYBD Birthday Mode Enabled 🎉' : 'Standard Lightning Mode Enabled ⚡'
-      );
+      modalController.showToast(`Profile: ${profile.name || profileId} Activated`);
     }
   };
 
-  // Apply initial mode on startup
-  applyHybdMode(isHybdActive, false);
+  const initProfileUI = () => {
+    const dropdown = document.getElementById('profile-dropdown');
+    const toggleBtn = document.getElementById('btn-toggle-profile');
+    
+    if (!dropdown || !toggleBtn) return;
 
-  // Bind HYBD mode toggle button event
-  if (btnToggleHybd) {
-    btnToggleHybd.addEventListener('click', () => {
-      applyHybdMode(!isHybdActive, true);
+    dropdown.innerHTML = '';
+    Object.keys(profiles).forEach(id => {
+      const p = profiles[id];
+      const btn = document.createElement('button');
+      btn.className = 'profile-option';
+      btn.dataset.id = id;
+      btn.innerHTML = `<span>${p.name || id}</span>`;
+      btn.addEventListener('click', () => {
+        applyProfile(id, true);
+        dropdown.classList.add('hidden');
+      });
+      dropdown.appendChild(btn);
     });
-  }
+
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!toggleBtn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+  };
+
+  // Initialize System
+  loadProfiles().then(() => {
+    if (Object.keys(profiles).length > 0) {
+      initProfileUI();
+      applyProfile(getProfileFromUrl(), false);
+    }
+  });
 });
 

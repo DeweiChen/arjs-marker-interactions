@@ -12,14 +12,13 @@ A WebAR dual-marker proximity interaction system built on **AR.js**, **A-Frame (
 ## 🌟 Key Features
 
 - 🎯 **8 Barcode Marker Support (3x3 Hamming 6,3)**: Real-time simultaneous multi-marker tracking (values 0–7) for testing AR.js stability.
-- 🔤 **Custom 3D Emissive Text**: Marker 0 and Marker 1 render primary terminal endpoints, and Markers 2–7 render their respective index numbers (`"2"` to `"7"`).
+- 🔤 **Custom 3D Emissive Text**: Markers 0–7 render 3D emissive extruded numbers by default (`"0"` to `"7"`), dynamically customizable via profile configurations.
 - ⚡ **Multi-Marker Chain Conduction Interaction**: High-voltage electric arcs continuously chain across visible markers via physical distance (Nearest-Neighbor) routing:
   - **Full Chain**: Connects terminal markers through intermediate number markers (`Marker 0 ➔ [numbers...] ➔ Marker 1`) with dynamic segment gradient colors and traveling plasma sparks.
   - **Direct Arcs**: When no intermediate numbers are present, maintains direct high-voltage electric arcs between the terminal markers.
   - **Half-Chain & Idle Nodes**: Single terminals form partial chains with nearby numbers, while unlinked markers exhibit soft breathing idle pulse auras.
 - 🔮 **Proximity-Scaled Plasma & Relay Cores**: Active relay energy crystals at each marker node and midpoint arcs that expand, rotate, and pulse with high-frequency jitter.
-- 🎛️ **Live Marker Tracking Bar**: Top HUD telemetry features real-time active detection dots and live chain conduction telemetry (e.g. `[0 ➔ 2 ➔ 4 ➔ 1]`).
-- 🖼️ **Standardized Marker Assets**: 8 normalized 600x600 PNG marker patterns with white quiet borders ready for printing or screen display.
+- 🎛️ **Profile System (`profiles.json`)**: Configurable interaction profiles (`default` pure numbers version vs. `fu` celebration version) with custom target explosion nodes, celebration text, and audio.
 - 📱 **Mobile HTTPS Ready**: Includes `@vitejs/plugin-basic-ssl` for local development HTTPS certificates and automated GitHub Pages CI/CD deployment.
 
 ---
@@ -45,6 +44,8 @@ arjs-marker-interactions/
 │   └── workflows/
 │       └── deploy.yml          # GitHub Pages automated CI/CD deployment
 ├── public/
+│   ├── config/
+│   │   └── profiles.json       # Profile configuration (default, fu)
 │   ├── fonts/
 │   │   └── fredoka_light_regular.json  # 3D Typeface font
 │   └── markers/
@@ -55,10 +56,10 @@ arjs-marker-interactions/
 ├── scripts/
 │   └── generate-barcode-markers.py # Barcode marker generator
 ├── src/
-│   ├── components/             # Custom A-Frame components
+│   ├── components/             # Custom A-Frame components (three-text-3d, proximity, bloom)
 │   ├── core/                   # Font loader, aspect ratio corrector
 │   ├── fx/                     # Lightning FX, Birthday FX strategies
-│   ├── pages/                  # Application bootstrap
+│   ├── pages/                  # Application bootstrap (main.js)
 │   ├── ui/                     # HUD telemetry, modal, bloom panel
 │   └── style.css               # Glassmorphism HUD overlay & responsive styles
 ├── index.html                  # Main HTML entry, AR scene & HUD markup
@@ -101,16 +102,16 @@ pnpm run preview
 
 ---
 
-## ⚙️ URL Query Parameters & Modes
+## ⚙️ URL Query Parameters & Profiles
 
-The application supports multiple URL parameters to toggle modes and developer diagnostics:
+The application supports multiple URL parameters to toggle profiles and developer diagnostics:
 
 | Parameter | Example | Description |
 |---|---|---|
-| `d` / `debug` | `?d=1` or `?debug=1` | **Debug Diagnostics HUD**: Displays the top-left FPS/frametime telemetry badge, bottom proximity & energy status bar, and top-right **FX / DPR** bloom & resolution setting panel. By default, debug elements remain hidden for a clean experience unless `?d=1` or `?debug=1` is provided. |
-| `mode` / `hybd` | `?mode=hybd` or `?hybd=1` | **HYBD Birthday Mode**: Automatically activates the HYBD birthday celebration sequence upon marker proximity charge. |
+| `p` / `profile` | `?p=default` or `?p=fu` | **Profile Selection**: Loads profile from `public/config/profiles.json`. `default` loads standard pure numbers (`0`–`7`), while `fu` loads the DW/Fu celebration profile. |
+| `d` / `debug` | `?d=1` or `?debug=1` | **Debug Diagnostics HUD**: Displays the top-left FPS/frametime telemetry badge, bottom proximity & energy status bar, top-right **Profile** switcher dropdown, and **FX / DPR** bloom & resolution setting panel. By default, debug elements remain hidden for a clean experience unless `?d=1` or `?debug=1` is provided. |
 
-> **Tip**: You can combine parameters (e.g. `?d=1&mode=hybd`) or use URL hash (e.g. `#debug`, `#hybd`).
+> **Tip**: You can combine parameters (e.g. `?d=1&p=fu`) or use URL hash (e.g. `#debug`, `#fu`).
 
 ---
 

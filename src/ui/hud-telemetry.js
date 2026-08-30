@@ -38,12 +38,9 @@ export class HUDTelemetryController {
   setDebugMode(enabled) {
     this.isDebug = !!enabled;
 
-    if (this.badgeFps) {
-      this.badgeFps.classList.toggle('hidden', !this.isDebug);
-    }
-    if (this.statusPanel) {
-      this.statusPanel.classList.toggle('hidden', !this.isDebug);
-    }
+    document.querySelectorAll('.debug-only').forEach(el => {
+      el.classList.toggle('hidden', !this.isDebug);
+    });
 
     if (this.isDebug) {
       if (!this.rafId) {

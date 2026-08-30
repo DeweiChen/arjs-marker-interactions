@@ -75,6 +75,11 @@ export class BirthdayFX extends BaseFX {
     this._textMeshes = [];
     this._textReady = false;
 
+    if (!this.options.textLine1) {
+      this.group.add(this.textGroup);
+      return;
+    }
+
     fetchFont('./fonts/fredoka_light_regular.json').then((fontData) => {
       const mesh = buildTextMesh(THREE, fontData, {
         text: this.options.textLine1,

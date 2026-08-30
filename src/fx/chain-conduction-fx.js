@@ -9,14 +9,14 @@ import { BaseFX } from './base-fx.js';
 
 // Predefined marker color definitions matching 3D text styling
 export const MARKER_COLORS = {
-  0: { name: 'DW', primary: 0x1d4ed8, secondary: 0x38bdf8, emissive: 0x0077ff, core: 0xdbeafe }, // Deep Blue
-  1: { name: 'Fu', primary: 0x00cba9, secondary: 0x5eead4, emissive: 0x00cba9, core: 0xccfbf1 }, // Morandi Teal
-  2: { name: '2',  primary: 0xdc2626, secondary: 0xf87171, emissive: 0xff1a1a, core: 0xfee2e2 }, // Flame Red
-  3: { name: '3',  primary: 0xea580c, secondary: 0xfb923c, emissive: 0xff7a00, core: 0xffedd5 }, // Sunset Orange
-  4: { name: '4',  primary: 0xca8a04, secondary: 0xfacc15, emissive: 0xffe600, core: 0xfef9c3 }, // Electric Yellow
-  5: { name: '5',  primary: 0x16a34a, secondary: 0x4ade80, emissive: 0x22c55e, core: 0xdcfce7 }, // Herb Lime Green
-  6: { name: '6',  primary: 0x7c3aed, secondary: 0xa855f7, emissive: 0xa855f7, core: 0xf3e8ff }, // Cyber Violet
-  7: { name: '7',  primary: 0xe2e8f0, secondary: 0x94a3b8, emissive: 0xffffff, core: 0xffffff }  // Pure White
+  0: { name: '0', primary: 0x1d4ed8, secondary: 0x38bdf8, emissive: 0x0077ff, core: 0xdbeafe }, // Deep Blue
+  1: { name: '1', primary: 0x00cba9, secondary: 0x5eead4, emissive: 0x00cba9, core: 0xccfbf1 }, // Morandi Teal
+  2: { name: '2', primary: 0xdc2626, secondary: 0xf87171, emissive: 0xff1a1a, core: 0xfee2e2 }, // Flame Red
+  3: { name: '3', primary: 0xea580c, secondary: 0xfb923c, emissive: 0xff7a00, core: 0xffedd5 }, // Sunset Orange
+  4: { name: '4', primary: 0xca8a04, secondary: 0xfacc15, emissive: 0xffe600, core: 0xfef9c3 }, // Electric Yellow
+  5: { name: '5', primary: 0x16a34a, secondary: 0x4ade80, emissive: 0x22c55e, core: 0xdcfce7 }, // Herb Lime Green
+  6: { name: '6', primary: 0x7c3aed, secondary: 0xa855f7, emissive: 0xa855f7, core: 0xf3e8ff }, // Cyber Violet
+  7: { name: '7', primary: 0xe2e8f0, secondary: 0x94a3b8, emissive: 0xffffff, core: 0xffffff }  // Pure White
 };
 
 export class ChainConductionFX extends BaseFX {
@@ -583,8 +583,8 @@ export class ChainConductionFX extends BaseFX {
     }
 
     const defaultChain = [
-      { id: 0, name: 'DW', position: startPos, color: MARKER_COLORS[0] },
-      { id: 1, name: 'Fu', position: endPos,   color: MARKER_COLORS[1] }
+      { id: 0, name: '0', position: startPos, color: MARKER_COLORS[0] },
+      { id: 1, name: '1', position: endPos,   color: MARKER_COLORS[1] }
     ];
 
     this.updateChain(defaultChain, delta, intensityMultiplier, chargeProgress, []);

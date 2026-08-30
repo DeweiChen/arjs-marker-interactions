@@ -6,6 +6,8 @@
 
 import { fetchFont, createPaths } from '../core/font-loader.js';
 
+const geometryCache = new Map();
+
 if (typeof AFRAME !== 'undefined') {
   AFRAME.registerComponent('three-text-3d', {
     schema: {
@@ -146,6 +148,32 @@ if (typeof AFRAME !== 'undefined') {
       const THREE = window.THREE || AFRAME.THREE;
       if (!data.text) return;
 
+      const cacheKey = `${data.fontUrl}_${data.text}_${data.size}_${data.depth}_${data.curveSegments}_${data.bevelEnabled}_${data.bevelThickness}_${data.bevelSize}_${data.bevelSegments}`;
+
+      const applyGeometry = (geometry) => {
+        const material = new THREE.MeshBasicMaterial({
+          color: new THREE.Color(data.emissive || data.color),
+          transparent: true,
+          opacity: 1.0
+        });
+
+        if (this.mesh) {
+          if (this.mesh.geometry) this.mesh.geometry.dispose();
+          if (this.mesh.material) this.mesh.material.dispose();
+          this.el.removeObject3D('mesh');
+        }
+
+        this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh.layers.enable(1);
+        this.el.setObject3D('mesh', this.mesh);
+        this.el.emit('three-text-loaded', { mesh: this.mesh });
+      };
+
+      if (geometryCache.has(cacheKey)) {
+        applyGeometry(geometryCache.get(cacheKey).clone());
+        return;
+      }
+
       fetchFont(data.fontUrl)
         .then((fontData) => {
           const paths = createPaths(data.text, data.size, fontData, THREE);
@@ -167,22 +195,8 @@ if (typeof AFRAME !== 'undefined') {
           geometry.computeBoundingBox();
           geometry.center();
 
-          const material = new THREE.MeshBasicMaterial({
-            color: new THREE.Color(data.emissive || data.color),
-            transparent: true,
-            opacity: 1.0
-          });
-
-          if (this.mesh) {
-            if (this.mesh.geometry) this.mesh.geometry.dispose();
-            if (this.mesh.material) this.mesh.material.dispose();
-            this.el.removeObject3D('mesh');
-          }
-
-          this.mesh = new THREE.Mesh(geometry, material);
-          this.mesh.layers.enable(1);
-          this.el.setObject3D('mesh', this.mesh);
-          this.el.emit('three-text-loaded', { mesh: this.mesh });
+          geometryCache.set(cacheKey, geometry.clone());
+          applyGeometry(geometry);
         })
         .catch((err) => {
           console.error('[three-text-3d] Failed to build 3D text:', err);

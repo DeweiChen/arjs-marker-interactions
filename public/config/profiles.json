@@ -1,0 +1,48 @@
+{
+  "default": {
+    "name": "Default",
+    "markers": {
+      "0": {
+        "text": "0",
+        "color": "#1d4ed8",
+        "emissive": "#0077ff"
+      },
+      "1": {
+        "text": "1",
+        "color": "#00cba9",
+        "emissive": "#00cba9"
+      }
+    },
+    "interaction": {
+      "targetNodes": [
+        0,
+        7
+      ],
+      "celebrationText": "Happy Birthday",
+      "audioUrl": "./assets/HBD.mp3"
+    }
+  },
+  "fu": {
+    "name": "Fu",
+    "markers": {
+      "0": {
+        "text": "DW",
+        "color": "#1d4ed8",
+        "emissive": "#0077ff"
+      },
+      "1": {
+        "text": "Fu",
+        "color": "#00cba9",
+        "emissive": "#00cba9"
+      }
+    },
+    "interaction": {
+      "targetNodes": [
+        0,
+        1
+      ],
+      "celebrationText": "Happy Birthday 30",
+      "audioUrl": "./assets/HBD.mp3"
+    }
+  }
+}
