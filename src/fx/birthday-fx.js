@@ -40,6 +40,15 @@ export class BirthdayFX extends BaseFX {
     this.celebrationFadeTimer = 0;
     this.celebrationTime = 0;
 
+    // Load persisted user audio preference
+    let persistedMute = false;
+    if (typeof localStorage !== 'undefined') {
+      try {
+        persistedMute = localStorage.getItem('ar_audio_muted') === 'true';
+      } catch (e) {}
+    }
+    this.isUserMuted = persistedMute;
+
     // Sub-groups
     this._initCelebrationText();
     this._initConfetti();
@@ -217,7 +226,7 @@ export class BirthdayFX extends BaseFX {
   }
 
   /**
-   * Initializes audio element and unlocks autoplay policy on first user interaction
+   * Initializes audio element
    */
   _initAudio() {
     if (this.options.audioUrl) {
@@ -228,36 +237,18 @@ export class BirthdayFX extends BaseFX {
       this.audioPlayed = false;
       this.audioUnlocked = false;
 
-      const unlockAudio = () => {
-        if (this.audioUnlocked) return;
-        if (this.audio) {
-          const promise = this.audio.play();
-          if (promise !== undefined) {
-            promise.then(() => {
-              this.audioUnlocked = true;
-              if (!this.audioPlayed && this.state !== BirthdayState.CELEBRATION && this.state !== BirthdayState.TRANSITION) {
-                this.audio.pause();
-                this.audio.currentTime = 0;
-              }
-            }).catch(() => { });
-          }
-        }
-        window.removeEventListener('pointerdown', unlockAudio);
-        window.removeEventListener('touchstart', unlockAudio);
-        window.removeEventListener('click', unlockAudio);
-        window.removeEventListener('keydown', unlockAudio);
-      };
-
-      window.addEventListener('pointerdown', unlockAudio, { passive: true });
-      window.addEventListener('touchstart', unlockAudio, { passive: true });
-      window.addEventListener('click', unlockAudio, { passive: true });
-      window.addEventListener('keydown', unlockAudio, { passive: true });
+      this.audio.addEventListener('play', () => this._notifyAudioState());
+      this.audio.addEventListener('pause', () => this._notifyAudioState());
+      this.audio.addEventListener('ended', () => {
+        this.audioPlayed = false;
+        this._notifyAudioState();
+      });
 
       // Automatically pause music when tab/window is minimized or hidden
       this._onVisibilityChange = () => {
         if (document.hidden || document.visibilityState === 'hidden') {
           this._pauseAudio();
-        } else if (this.audioUnlocked && (this.state === BirthdayState.CELEBRATION || this.state === BirthdayState.TRANSITION)) {
+        } else if (!this.isUserMuted && this.audioUnlocked && (this.state === BirthdayState.CELEBRATION || this.state === BirthdayState.TRANSITION)) {
           this._playAudio();
         }
       };
@@ -267,46 +258,45 @@ export class BirthdayFX extends BaseFX {
     }
   }
 
+  _notifyAudioState() {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('birthday-audio-state', {
+        detail: {
+          isPlaying: this.isAudioPlaying(),
+          hasAudio: this.hasAudio(),
+          state: this.state
+        }
+      }));
+    }
+  }
+
   /**
-   * Starts or resumes music playback when celebration occurs, with autoplay fallback retry
+   * Starts or resumes music playback when celebration occurs
    */
   _playAudio() {
-    if (!this.audio) return;
+    if (!this.audio || this.isUserMuted) return;
     if (!this.audioPlayed || (this.audio.paused && !this.audio.ended)) {
       this.audioPlayed = true;
       const playPromise = this.audio.play();
       if (playPromise !== undefined) {
         playPromise.then(() => {
           this.audioUnlocked = true;
+          this._notifyAudioState();
         }).catch((err) => {
           console.warn('[BirthdayFX] Audio playback prevented by browser autoplay policy:', err);
-
-          // Retry playback immediately on the next user interaction
-          const retryOnInteraction = () => {
-            if (this.audio && (this.state === BirthdayState.CELEBRATION || this.state === BirthdayState.TRANSITION)) {
-              this.audio.play().then(() => {
-                this.audioUnlocked = true;
-              }).catch(() => { });
-            }
-            window.removeEventListener('pointerdown', retryOnInteraction);
-            window.removeEventListener('touchstart', retryOnInteraction);
-            window.removeEventListener('click', retryOnInteraction);
-          };
-
-          window.addEventListener('pointerdown', retryOnInteraction, { once: true, passive: true });
-          window.addEventListener('touchstart', retryOnInteraction, { once: true, passive: true });
-          window.addEventListener('click', retryOnInteraction, { once: true, passive: true });
+          this._notifyAudioState();
         });
       }
     }
   }
 
   /**
-   * Pauses music playback (e.g. when markers are lost)
+   * Pauses music playback (e.g. when markers are lost or user toggles off)
    */
   _pauseAudio() {
     if (this.audio && !this.audio.paused) {
       this.audio.pause();
+      this._notifyAudioState();
     }
   }
 
@@ -318,7 +308,60 @@ export class BirthdayFX extends BaseFX {
       this.audio.pause();
       this.audio.currentTime = 0;
       this.audioPlayed = false;
+      this._notifyAudioState();
     }
+  }
+
+  /**
+   * Public toggle audio playback method for GUI toggle button
+   * @returns {boolean} New playing state
+   */
+  toggleAudio() {
+    if (!this.audio) return false;
+    if (this.isAudioPlaying()) {
+      this.isUserMuted = true;
+      if (typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem('ar_audio_muted', 'true');
+        } catch (e) {}
+      }
+      this._pauseAudio();
+      return false;
+    } else {
+      this.isUserMuted = false;
+      if (typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem('ar_audio_muted', 'false');
+        } catch (e) {}
+      }
+      if (this.audio.ended) {
+        this.audio.currentTime = 0;
+      }
+      this.audioPlayed = true;
+      this.audio.play().then(() => {
+        this.audioUnlocked = true;
+        this._notifyAudioState();
+      }).catch((err) => {
+        console.warn('[BirthdayFX] Direct audio play error:', err);
+      });
+      return true;
+    }
+  }
+
+  /**
+   * Returns whether audio is actively playing
+   * @returns {boolean}
+   */
+  isAudioPlaying() {
+    return !!(this.audio && !this.audio.paused && !this.audio.ended);
+  }
+
+  /**
+   * Returns whether audio source is configured
+   * @returns {boolean}
+   */
+  hasAudio() {
+    return !!(this.options.audioUrl && this.audio);
   }
 
   // ─── State Machine ───────────────────────────────────────────────────

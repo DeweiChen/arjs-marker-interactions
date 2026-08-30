@@ -72,10 +72,21 @@ document.addEventListener('DOMContentLoaded', () => {
     applyDebugMode(isDebugModeRequested());
   });
 
-  // Synchronize proximity telemetry with HUD controller
+  // Synchronize proximity telemetry with HUD controller and Audio GUI
   if (sceneEl) {
     sceneEl.addEventListener('proximity-update', (e) => {
       hudController.updateProximityStatus(e.detail);
+
+      const profile = profiles[currentProfileId];
+      const hasAudioUrl = !!(profile?.interaction?.audioUrl);
+      const isCelebrationState = e.detail.birthdayState === 'TRANSITION' || e.detail.birthdayState === 'CELEBRATION';
+
+      // Toggle Audio button visibility based on condition (celebration reached & audio configured)
+      modalController.setAudioButtonVisible(hasAudioUrl && isCelebrationState);
+
+      if (typeof e.detail.isAudioPlaying === 'boolean') {
+        modalController.updateAudioState(e.detail.isAudioPlaying);
+      }
     });
   }
 
@@ -162,6 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     modalController.setResetButtonVisible(!!(profile.interaction && profile.interaction.celebrationText));
+    if (!profile.interaction?.audioUrl) {
+      modalController.setAudioButtonVisible(false);
+      modalController.updateAudioState(false);
+    }
 
     // Update Dropdown Active State
     document.querySelectorAll('.profile-option').forEach(btn => {

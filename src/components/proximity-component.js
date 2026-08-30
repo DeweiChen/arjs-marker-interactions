@@ -69,6 +69,13 @@ if (typeof AFRAME !== 'undefined') {
       };
       sceneEl.addEventListener('reset-birthday', this._resetBirthdayHandler);
 
+      this._toggleAudioHandler = () => {
+        if (this.birthdayFX) {
+          this.birthdayFX.toggleAudio();
+        }
+      };
+      sceneEl.addEventListener('toggle-audio', this._toggleAudioHandler);
+
       // Bind visibility events for all markers
       this._bindAllMarkerEvents();
     },
@@ -387,7 +394,9 @@ if (typeof AFRAME !== 'undefined') {
           chainPathStr,
           activeCount: activeNodes.length,
           birthdayState: bdayResult.state,
-          chargePercent: bdayResult.chargePercent
+          chargePercent: bdayResult.chargePercent,
+          isAudioPlaying: this.birthdayFX ? this.birthdayFX.isAudioPlaying() : false,
+          hasAudio: this.birthdayFX ? this.birthdayFX.hasAudio() : false
         });
       } else {
         // No connected chain (0 or 1 active marker)
@@ -410,14 +419,21 @@ if (typeof AFRAME !== 'undefined') {
           chainPathStr: '',
           activeCount: activeNodes.length,
           birthdayState: bdayResult.state,
-          chargePercent: bdayResult.chargePercent
+          chargePercent: bdayResult.chargePercent,
+          isAudioPlaying: this.birthdayFX ? this.birthdayFX.isAudioPlaying() : false,
+          hasAudio: this.birthdayFX ? this.birthdayFX.hasAudio() : false
         });
       }
     },
 
     remove: function () {
-      if (this._resetBirthdayHandler && this.el.sceneEl) {
-        this.el.sceneEl.removeEventListener('reset-birthday', this._resetBirthdayHandler);
+      if (this.el.sceneEl) {
+        if (this._resetBirthdayHandler) {
+          this.el.sceneEl.removeEventListener('reset-birthday', this._resetBirthdayHandler);
+        }
+        if (this._toggleAudioHandler) {
+          this.el.sceneEl.removeEventListener('toggle-audio', this._toggleAudioHandler);
+        }
       }
       if (this.lightningFX) {
         this.lightningFX.dispose();

@@ -101,6 +101,29 @@
         </div>
       </div>
 
+      <!-- Audio / Music Toggle Button (Celebration Audio) -->
+      <button id="btn-toggle-audio" class="hud-btn audio-btn hidden" title="Toggle Music (音樂開關)"
+        aria-label="Toggle Music">
+        <span class="btn-icon-wrapper">
+          <!-- Playing icon (Sound Wave / Volume High) -->
+          <svg id="icon-audio-on" class="audio-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <!-- Muted / Paused icon (Volume X / Mute) -->
+          <svg id="icon-audio-off" class="audio-icon hidden" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+          <span id="audio-hud-dot" class="hud-status-dot"></span>
+        </span>
+        <span id="audio-btn-text">Music</span>
+      </button>
+
       <!-- Reset Celebration FX Button -->
       <button id="btn-reset-bday" class="hud-btn hidden" title="Reset Celebration FX (重設特效)"
         aria-label="Reset Celebration FX">
