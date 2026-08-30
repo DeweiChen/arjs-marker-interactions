@@ -53,8 +53,8 @@
   <!-- Top Telemetry & Control HUD -->
   <header class="hud-header">
     <div class="hud-telemetry">
-      <!-- FPS & Frame Timing -->
-      <div id="badge-fps" class="telemetry-chip fps-chip">
+      <!-- FPS & Frame Timing (Debug Mode Only) -->
+      <div id="badge-fps" class="telemetry-chip fps-chip debug-only hidden">
         <span class="pulse-dot"></span>
         <span class="chip-label">FPS</span>
         <span id="fps-val" class="chip-val">--</span>
@@ -115,8 +115,8 @@
         <span>Reset</span>
       </button>
 
-      <!-- Bloom FX Control Toggle Button -->
-      <button id="btn-toggle-bloom" class="hud-btn" title="Adjust Bloom Effect Settings" aria-expanded="false"
+      <!-- Bloom FX & DPR Control Toggle Button (Debug Mode Only) -->
+      <button id="btn-toggle-bloom" class="hud-btn debug-only hidden" title="Adjust Bloom & DPR Settings" aria-expanded="false"
         aria-controls="bloom-control-panel">
         <span class="btn-icon-wrapper">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -295,8 +295,8 @@
     </div>
   </aside>
 
-  <!-- Bottom Interaction & Proximity Status Panel -->
-  <footer class="hud-status-panel">
+  <!-- Bottom Interaction & Proximity Status Panel (Debug Mode Only) -->
+  <footer class="hud-status-panel debug-only hidden">
     <!-- Proximity & Energy Power Gauge (Discharge Status & Proximity Meter) -->
     <div class="energy-card">
       <div class="energy-header">

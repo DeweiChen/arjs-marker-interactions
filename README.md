@@ -101,6 +101,19 @@ pnpm run preview
 
 ---
 
+## ⚙️ URL Query Parameters & Modes
+
+The application supports multiple URL parameters to toggle modes and developer diagnostics:
+
+| Parameter | Example | Description |
+|---|---|---|
+| `d` / `debug` | `?d=1` or `?debug=1` | **Debug Diagnostics HUD**: Displays the top-left FPS/frametime telemetry badge, bottom proximity & energy status bar, and top-right **FX / DPR** bloom & resolution setting panel. By default, debug elements remain hidden for a clean experience unless `?d=1` or `?debug=1` is provided. |
+| `mode` / `hybd` | `?mode=hybd` or `?hybd=1` | **HYBD Birthday Mode**: Automatically activates the HYBD birthday celebration sequence upon marker proximity charge. |
+
+> **Tip**: You can combine parameters (e.g. `?d=1&mode=hybd`) or use URL hash (e.g. `#debug`, `#hybd`).
+
+---
+
 ## 🔮 Customization & Extension Guide
 
 ### 1. Replacing 3D Objects with Photo Textures or Custom Meshes

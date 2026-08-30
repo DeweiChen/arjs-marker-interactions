@@ -266,6 +266,7 @@ button,
   gap: 8px;
   flex-shrink: 0;
   pointer-events: auto;
+  margin-left: auto;
 }
 
 .hud-btn {

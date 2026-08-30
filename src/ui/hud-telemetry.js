@@ -5,13 +5,15 @@
  */
 
 export class HUDTelemetryController {
-  constructor(sceneEl) {
+  constructor(sceneEl, isDebug = false) {
     this.sceneEl = sceneEl;
+    this.isDebug = isDebug;
 
     // DOM Elements
     this.badgeFps = document.getElementById('badge-fps');
     this.fpsVal = document.getElementById('fps-val');
     this.frametimeVal = document.getElementById('frametime-val');
+    this.statusPanel = document.querySelector('.hud-status-panel');
 
     this.distanceVal = document.getElementById('distance-val');
     this.energyBar = document.getElementById('energy-bar');
@@ -27,9 +29,34 @@ export class HUDTelemetryController {
     this.frameCount = 0;
     this.lastTime = performance.now();
     this.fpsUpdateInterval = 500; // ms
+    this.rafId = null;
 
     this._initFullscreenEvents();
-    this._startLoop();
+    this.setDebugMode(this.isDebug);
+  }
+
+  setDebugMode(enabled) {
+    this.isDebug = !!enabled;
+
+    if (this.badgeFps) {
+      this.badgeFps.classList.toggle('hidden', !this.isDebug);
+    }
+    if (this.statusPanel) {
+      this.statusPanel.classList.toggle('hidden', !this.isDebug);
+    }
+
+    if (this.isDebug) {
+      if (!this.rafId) {
+        this.frameCount = 0;
+        this.lastTime = performance.now();
+        this._startLoop();
+      }
+    } else {
+      if (this.rafId) {
+        cancelAnimationFrame(this.rafId);
+        this.rafId = null;
+      }
+    }
   }
 
   _initFullscreenEvents() {
@@ -74,6 +101,11 @@ export class HUDTelemetryController {
 
   _startLoop() {
     const updateStats = () => {
+      if (!this.isDebug) {
+        this.rafId = null;
+        return;
+      }
+
       const now = performance.now();
       const delta = now - this.lastTime;
       this.frameCount++;
@@ -88,9 +120,9 @@ export class HUDTelemetryController {
         this.frameCount = 0;
         this.lastTime = now;
       }
-      requestAnimationFrame(updateStats);
+      this.rafId = requestAnimationFrame(updateStats);
     };
-    requestAnimationFrame(updateStats);
+    this.rafId = requestAnimationFrame(updateStats);
   }
 
   /**

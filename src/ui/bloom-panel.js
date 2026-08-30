@@ -5,8 +5,10 @@
  */
 
 export class BloomPanelController {
-  constructor(sceneEl) {
+  constructor(sceneEl, isDebug = false) {
     this.sceneEl = sceneEl;
+    this.isDebug = isDebug;
+    this.telemetryInterval = null;
 
     // DOM Elements
     this.btnToggleBloom = document.getElementById('btn-toggle-bloom');
@@ -37,7 +39,32 @@ export class BloomPanelController {
     this.currentDprSetting = localStorage.getItem('ar_custom_dpr') || 'native';
 
     this._bindEvents();
-    this._startResolutionTelemetry();
+    this.setDebugMode(this.isDebug);
+  }
+
+  setDebugMode(enabled) {
+    this.isDebug = !!enabled;
+
+    if (this.btnToggleBloom) {
+      this.btnToggleBloom.classList.toggle('hidden', !this.isDebug);
+    }
+    if (!this.isDebug && this.bloomPanel) {
+      this.bloomPanel.classList.add('hidden');
+      if (this.btnToggleBloom) {
+        this.btnToggleBloom.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    if (this.isDebug) {
+      if (!this.telemetryInterval) {
+        this._startResolutionTelemetry();
+      }
+    } else {
+      if (this.telemetryInterval) {
+        clearInterval(this.telemetryInterval);
+        this.telemetryInterval = null;
+      }
+    }
   }
 
   _bindEvents() {
@@ -145,7 +172,12 @@ export class BloomPanelController {
   }
 
   _startResolutionTelemetry() {
-    setInterval(() => {
+    if (this.telemetryInterval) {
+      clearInterval(this.telemetryInterval);
+    }
+    this.telemetryInterval = setInterval(() => {
+      if (!this.isDebug) return;
+
       const renderer = this.sceneEl.renderer;
       if (renderer) {
         const size = new THREE.Vector2();

@@ -26,10 +26,51 @@ document.addEventListener('DOMContentLoaded', () => {
     initARAspectCorrection(sceneEl);
   }
 
+  // Detect Debug mode request strictly from URL query or hash (?d=1, ?debug=1, ?d=true, ?debug=true, ?d, ?debug, #debug, #d)
+  const isDebugModeRequested = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const dParam = urlParams.get('d');
+    const debugParam = urlParams.get('debug');
+    const hash = window.location.hash.toLowerCase();
+
+    // Check explicit disable flags (e.g. ?d=0, ?d=false, ?debug=0, ?debug=false)
+    if (dParam === '0' || dParam === 'false' || debugParam === '0' || debugParam === 'false') {
+      return false;
+    }
+
+    return (
+      dParam === '1' ||
+      dParam === 'true' ||
+      dParam === '' ||
+      debugParam === '1' ||
+      debugParam === 'true' ||
+      debugParam === '' ||
+      urlParams.has('d') ||
+      urlParams.has('debug') ||
+      hash === '#debug' ||
+      hash === '#d'
+    );
+  };
+
+  const isDebugActive = isDebugModeRequested();
+
   // Initialize UI Controllers
-  const hudController = new HUDTelemetryController(sceneEl);
-  const bloomPanelController = new BloomPanelController(sceneEl);
+  const hudController = new HUDTelemetryController(sceneEl, isDebugActive);
+  const bloomPanelController = new BloomPanelController(sceneEl, isDebugActive);
   const modalController = new ModalController(sceneEl);
+
+  const applyDebugMode = (active) => {
+    hudController.setDebugMode(active);
+    bloomPanelController.setDebugMode(active);
+  };
+
+  // Apply initial debug mode state
+  applyDebugMode(isDebugActive);
+
+  // Listen to hash changes for dynamic debug toggling
+  window.addEventListener('hashchange', () => {
+    applyDebugMode(isDebugModeRequested());
+  });
 
   // Synchronize proximity telemetry with HUD controller
   if (sceneEl) {
