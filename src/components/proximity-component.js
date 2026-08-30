@@ -263,7 +263,8 @@ if (typeof AFRAME !== 'undefined') {
         if (!markerEl || !markerEl.object3D) continue;
 
         const stab = markerEl.components['marker-stabilizer'];
-        const isStable = stab ? stab.isStable : ((markerEl.object3D.visible) || node.isVisible);
+        // Ensure marker is actually visible (AR.js sets visible=false when lost)
+        let isStable = markerEl.object3D.visible && (stab ? stab.isStable : node.isVisible);
 
         if (isStable) {
           markerEl.object3D.updateMatrixWorld(true);
@@ -274,16 +275,23 @@ if (typeof AFRAME !== 'undefined') {
             node.smoothedPos.copy(node.rawPos);
             node.hasInitPos = true;
           } else {
-            node.smoothedPos.lerp(node.rawPos, alpha);
+            // Guard against AR.js tracking glitches where marker suddenly jumps > 3m in a single frame
+            if (node.smoothedPos.distanceTo(node.rawPos) > 3) {
+              isStable = false; // Physically impossible jump (glitch), ignore this frame entirely
+            } else {
+              node.smoothedPos.lerp(node.rawPos, alpha);
+            }
           }
 
-          activeNodes.push({
-            id: node.id,
-            name: node.name,
-            position: node.smoothedPos,
-            color: node.color,
-            smoothedPos: node.smoothedPos
-          });
+          if (isStable) {
+            activeNodes.push({
+              id: node.id,
+              name: node.name,
+              position: node.smoothedPos,
+              color: node.color,
+              smoothedPos: node.smoothedPos
+            });
+          }
         }
       }
 

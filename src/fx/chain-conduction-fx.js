@@ -469,7 +469,19 @@ export class ChainConductionFX extends BaseFX {
         this._updateIdleNodes(idleNodes, now, deltaMs);
         return;
       }
+      
+      // Update opacity/scale during fade out based on smoothedProximity
+      const fadeP = this.smoothedProximity;
+      this.segments.forEach(seg => {
+        if (seg.material) seg.material.opacity = 0.88 * fadeP;
+      });
+      return;
     }
+
+    // Reset material opacities if we are back in active state
+    this.segments.forEach(seg => {
+      if (seg.material) seg.material.opacity = 0.88;
+    });
 
     this.group.visible = true;
 
