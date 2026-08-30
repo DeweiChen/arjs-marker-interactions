@@ -205,6 +205,27 @@ button,
   color: #f87171;
 }
 
+/* Dock FPS at bottom-left to completely avoid camera notch / Dynamic Island / cutouts */
+.fps-chip.dock-bottom {
+  position: fixed !important;
+  bottom: max(20px, env(safe-area-inset-bottom)) !important;
+  left: max(16px, env(safe-area-inset-left)) !important;
+  top: auto !important;
+  right: auto !important;
+  z-index: 95 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 12px rgba(16, 185, 129, 0.3) !important;
+  animation: floatBtnIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Fullscreen enhanced safe-area margin to prevent punch-hole / notch occlusion */
+body.is-fullscreen .hud-header,
+:fullscreen .hud-header,
+:-webkit-full-screen .hud-header {
+  top: max(24px, calc(env(safe-area-inset-top) + 12px));
+  left: max(20px, calc(env(safe-area-inset-left) + 12px));
+  right: max(20px, calc(env(safe-area-inset-right) + 12px));
+}
+
 /* Marker Tracker Telemetry Chip */
 .markers-chip {
   display: inline-flex;
@@ -515,7 +536,25 @@ body.hud-collapsed #bloom-control-panel {
   justify-content: space-between;
   align-items: center;
   font-size: 11.5px;
-  gap: 6px;
+  gap: 8px;
+}
+
+.energy-metrics {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.energy-card .telemetry-chip {
+  padding: 2px 7px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .energy-status {
@@ -526,6 +565,8 @@ body.hud-collapsed #bloom-control-panel {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .distance-badge {
@@ -534,6 +575,7 @@ body.hud-collapsed #bloom-control-panel {
   font-family: monospace;
   white-space: nowrap;
   flex-shrink: 0;
+  font-size: 11.5px;
 }
 
 .energy-progress-wrapper {
@@ -811,13 +853,43 @@ body.hud-collapsed #bloom-control-panel {
 .modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 12px;
+  gap: 12px;
+}
+
+.modal-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .modal-header h2 {
   font-size: 18px;
   font-weight: 700;
+  margin: 0;
+}
+
+.modal-profile-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  width: fit-content;
+}
+
+.modal-profile-pill .pill-label {
+  color: var(--text-secondary);
+}
+
+.modal-profile-pill .pill-value {
+  color: #38bdf8;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 
 .modal-close-btn {
@@ -838,6 +910,7 @@ body.hud-collapsed #bloom-control-panel {
   font-size: 13px;
   color: var(--text-secondary);
   margin-bottom: 20px;
+  line-height: 1.45;
 }
 
 .markers-grid {
@@ -861,27 +934,71 @@ body.hud-collapsed #bloom-control-panel {
 
 .marker-item {
   background: #1f2937;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 14px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   text-align: center;
+  position: relative;
+  transition: all 0.2s ease;
 }
 
-.marker-item h3 {
-  font-size: 13px;
+.marker-item.target-terminal {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, #1f2937 100%);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.15);
+}
+
+.marker-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+
+.marker-title {
+  font-size: 12.5px;
   font-weight: 600;
+  margin: 0;
+}
+
+.marker-text-badge {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  padding: 1px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.marker-terminal-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
 }
 
 .marker-item img {
   width: 100%;
-  max-width: 180px;
+  max-width: 170px;
   height: auto;
   border-radius: 8px;
   background: white;
   padding: 8px;
+  box-sizing: border-box;
 }
 
 .download-link {
@@ -890,12 +1007,16 @@ body.hud-collapsed #bloom-control-panel {
   text-decoration: none;
   padding: 6px 12px;
   background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
   border-radius: var(--radius-sm);
   transition: all 0.2s;
+  width: calc(100% - 24px);
+  box-sizing: border-box;
 }
 
 .download-link:hover {
   background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.4);
 }
 
 /* ==========================================================================

@@ -96,4 +96,67 @@ export class ModalController {
 
     this.btnToggleAudio.title = this.isAudioPlaying ? 'Mute Music' : 'Play Music';
   }
+
+  /**
+   * Dynamically update markers modal content and badges to reflect current active profile
+   *
+   * @param {string} profileId - Current active profile identifier
+   * @param {Object} profile - Current active profile configuration object
+   * @param {Object} defaultProfile - Default profile configuration object
+   */
+  updateProfileInfo(profileId, profile = {}, defaultProfile = {}) {
+    if (!profile) return;
+
+    // Update Profile Name badge in modal header
+    const profileNameEl = document.getElementById('modal-profile-name');
+    if (profileNameEl) {
+      profileNameEl.textContent = profile.name || profileId;
+    }
+
+    const defaultMarkers = defaultProfile.markers || {};
+    const targetNodes = profile.interaction?.targetNodes || [];
+
+    const COLOR_NAMES = {
+      0: 'Deep Blue',
+      1: 'Morandi Green',
+      2: 'Flame Red',
+      3: 'Sunset Orange',
+      4: 'Electric Yellow',
+      5: 'Herb Green',
+      6: 'Cyber Violet',
+      7: 'Pure White'
+    };
+
+    for (let i = 0; i <= 7; i++) {
+      const markerId = String(i);
+      const markerData = (profile.markers && profile.markers[markerId]) ||
+                         (defaultMarkers && defaultMarkers[markerId]) ||
+                         { text: markerId, color: '#ffffff', emissive: '#ffffff' };
+
+      const markerItemEl = document.getElementById(`modal-marker-item-${markerId}`);
+      if (markerItemEl) {
+        const titleEl = markerItemEl.querySelector('.marker-title');
+        const badgeEl = markerItemEl.querySelector('.marker-text-badge');
+        const terminalBadge = markerItemEl.querySelector('.marker-terminal-badge');
+        const colorName = COLOR_NAMES[i] || '';
+
+        if (titleEl) {
+          titleEl.textContent = `Barcode ${i} (${colorName})`;
+        }
+        if (badgeEl) {
+          badgeEl.textContent = `"${markerData.text}"`;
+          if (markerData.color) {
+            badgeEl.style.borderColor = markerData.color;
+            badgeEl.style.color = markerData.color;
+          }
+        }
+
+        const isTarget = targetNodes.includes(i);
+        markerItemEl.classList.toggle('target-terminal', isTarget);
+        if (terminalBadge) {
+          terminalBadge.classList.toggle('hidden', !isTarget);
+        }
+      }
+    }
+  }
 }

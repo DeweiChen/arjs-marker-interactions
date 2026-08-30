@@ -395,6 +395,7 @@ if (typeof AFRAME !== 'undefined') {
           activeCount: activeNodes.length,
           birthdayState: bdayResult.state,
           chargePercent: bdayResult.chargePercent,
+          celebrationText: this.data.celebrationText || '',
           isAudioPlaying: this.birthdayFX ? this.birthdayFX.isAudioPlaying() : false,
           hasAudio: this.birthdayFX ? this.birthdayFX.hasAudio() : false
         });
@@ -420,6 +421,7 @@ if (typeof AFRAME !== 'undefined') {
           activeCount: activeNodes.length,
           birthdayState: bdayResult.state,
           chargePercent: bdayResult.chargePercent,
+          celebrationText: this.data.celebrationText || '',
           isAudioPlaying: this.birthdayFX ? this.birthdayFX.isAudioPlaying() : false,
           hasAudio: this.birthdayFX ? this.birthdayFX.hasAudio() : false
         });

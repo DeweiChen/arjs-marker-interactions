@@ -178,6 +178,12 @@ document.addEventListener('DOMContentLoaded', () => {
       modalController.updateAudioState(false);
     }
 
+    // Synchronize celebration text with bottom HUD status bar
+    hudController.setCelebrationText(profile.interaction?.celebrationText || 'Happy Birthday');
+
+    // Synchronize markers modal information with current active profile
+    modalController.updateProfileInfo(profileId, profile, profiles['default'] || {});
+
     // Update Dropdown Active State
     document.querySelectorAll('.profile-option').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.id === profileId);

@@ -31,8 +31,16 @@ export class HUDTelemetryController {
     this.fpsUpdateInterval = 500; // ms
     this.rafId = null;
 
+    this.celebrationText = 'Happy Birthday';
+
     this._initFullscreenEvents();
     this.setDebugMode(this.isDebug);
+  }
+
+  setCelebrationText(text) {
+    if (text) {
+      this.celebrationText = text;
+    }
   }
 
   setDebugMode(enabled) {
@@ -90,6 +98,7 @@ export class HUDTelemetryController {
 
   _onFullscreenChange() {
     const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    document.body.classList.toggle('is-fullscreen', isFS);
     if (this.iconFsEnter) this.iconFsEnter.classList.toggle('hidden', isFS);
     if (this.iconFsExit) this.iconFsExit.classList.toggle('hidden', !isFS);
     if (this.fsBtnText) this.fsBtnText.textContent = isFS ? 'Exit' : 'Full';
@@ -125,11 +134,14 @@ export class HUDTelemetryController {
   /**
    * Update bottom energy card status from proximity event data
    *
-   * @param {Object} data - { distance, proximity, active, birthdayState, chargePercent }
+   * @param {Object} data - { distance, proximity, active, birthdayState, chargePercent, celebrationText }
    */
   updateProximityStatus(data) {
     if (!data) return;
-    const { distance, proximity, active, birthdayState, chargePercent } = data;
+    const { distance, proximity, active, birthdayState, chargePercent, celebrationText } = data;
+    if (celebrationText) {
+      this.celebrationText = celebrationText;
+    }
     const proxClamped = Math.min(1, Math.max(0, proximity || 0));
 
     // Calculate dynamic color ratio: 0.0 when far (p <= 0.15), 1.0 when close (p >= 0.85)
@@ -159,9 +171,17 @@ export class HUDTelemetryController {
       if (birthdayState === 'CHARGING' || birthdayState === 'TRANSITION' || birthdayState === 'CELEBRATION') {
         percent = chargePercent || percent;
       }
-      this.energyBar.style.width = `${percent}%`;
 
-      if (!birthdayState || birthdayState === 'STANDBY') {
+      if (birthdayState === 'CELEBRATION') {
+        this.energyBar.style.width = '100%';
+        this.energyBar.style.background = 'linear-gradient(90deg, #00CBA9, #34d399, #6ee7b7, #fbbf24)';
+        this.energyBar.style.boxShadow = '0 0 16px #00CBA9';
+      } else if (birthdayState === 'CHARGING' || birthdayState === 'TRANSITION') {
+        this.energyBar.style.width = `${percent}%`;
+        this.energyBar.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24, #fef08a)';
+        this.energyBar.style.boxShadow = '0 0 12px #fbbf24';
+      } else if (!birthdayState || birthdayState === 'STANDBY') {
+        this.energyBar.style.width = `${percent}%`;
         if (pColor > 0.05) {
           this.energyBar.style.background = `linear-gradient(90deg, #38bdf8 ${Math.max(0, 100 - percent)}%, #ff2200 ${Math.max(40, 100 - percent / 2)}%, #ff0000 100%)`;
           this.energyBar.style.boxShadow = `0 0 16px ${dynamicHex}`;
@@ -174,7 +194,7 @@ export class HUDTelemetryController {
 
     if (this.energyStatusText) {
       if (birthdayState === 'CELEBRATION') {
-        this.energyStatusText.textContent = 'HAPPY BIRTHDAY!';
+        this.energyStatusText.textContent = this.celebrationText || 'Happy Birthday';
         this.energyStatusText.style.color = '#f4e0ae';
       } else if (birthdayState === 'TRANSITION') {
         this.energyStatusText.textContent = 'SUPERNOVA BURST!';

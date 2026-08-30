@@ -52,16 +52,6 @@
 <body>
   <!-- Top Telemetry & Control HUD -->
   <header class="hud-header">
-    <div class="hud-telemetry">
-      <!-- FPS & Frame Timing (Debug Mode Only) -->
-      <div id="badge-fps" class="telemetry-chip fps-chip debug-only hidden">
-        <span class="pulse-dot"></span>
-        <span class="chip-label">FPS</span>
-        <span id="fps-val" class="chip-val">--</span>
-        <span id="frametime-val" class="chip-sub">(--ms)</span>
-      </div>
-    </div>
-
     <div class="hud-actions">
       <!-- Fullscreen Viewport Mode Toggle Button -->
       <button id="btn-toggle-fullscreen" class="hud-btn" title="Toggle Fullscreen Mode (提高畫面比例)"
@@ -308,7 +298,15 @@
     <div class="energy-card">
       <div class="energy-header">
         <span id="energy-status-text" class="energy-status">STANDBY</span>
-        <span id="distance-val" class="distance-badge">--</span>
+        <div class="energy-metrics">
+          <div id="badge-fps" class="telemetry-chip fps-chip">
+            <span class="pulse-dot"></span>
+            <span class="chip-label">FPS</span>
+            <span id="fps-val" class="chip-val">--</span>
+            <span id="frametime-val" class="chip-sub">(--ms)</span>
+          </div>
+          <span id="distance-val" class="distance-badge">--</span>
+        </div>
       </div>
       <div class="energy-progress-wrapper">
         <div id="energy-bar" class="energy-progress-bar"></div>
@@ -320,48 +318,86 @@
   <div id="markers-modal" class="modal-backdrop hidden">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>AR Marker Patterns (3x3 Hamming 6,3)</h2>
+        <div class="modal-title-group">
+          <h2>AR Marker Patterns (3x3 Hamming 6,3)</h2>
+          <div class="modal-profile-pill">
+            <span class="pill-label">Active Profile:</span>
+            <span id="modal-profile-name" class="pill-value">Default</span>
+          </div>
+        </div>
         <button id="btn-close-modal" class="modal-close-btn" aria-label="Close modal">&times;</button>
       </div>
-      <p class="modal-desc">Supports all 8 barcode markers simultaneously (0–7). Place intermediate number markers between terminal markers to create a multi-node lightning conduction chain!</p>
+      <p class="modal-desc">Supports all 8 barcode markers simultaneously (0–7). Barcodes render the 3D text mapped below according to the active profile.</p>
       <div class="markers-grid">
-        <div class="marker-item">
-          <h3>Barcode 0 ("0" - Deep Blue)</h3>
+        <div class="marker-item" id="modal-marker-item-0" data-marker-id="0">
+          <div class="marker-header-row">
+            <h3 class="marker-title">Barcode 0 (Deep Blue)</h3>
+            <span class="marker-text-badge">"0"</span>
+          </div>
+          <span class="marker-terminal-badge hidden">⚡ Target Node</span>
           <img src="./markers/images/barcode-0.png" alt="Barcode 0" />
           <a href="./markers/images/barcode-0.png" download="barcode-0.png" class="download-link">Download 0</a>
         </div>
-        <div class="marker-item">
-          <h3>Barcode 1 ("1" - Morandi Green)</h3>
+        <div class="marker-item" id="modal-marker-item-1" data-marker-id="1">
+          <div class="marker-header-row">
+            <h3 class="marker-title">Barcode 1 (Morandi Green)</h3>
+            <span class="marker-text-badge">"1"</span>
+          </div>
+          <span class="marker-terminal-badge hidden">⚡ Target Node</span>
           <img src="./markers/images/barcode-1.png" alt="Barcode 1" />
           <a href="./markers/images/barcode-1.png" download="barcode-1.png" class="download-link">Download 1</a>
         </div>
-        <div class="marker-item">
-          <h3>Barcode 2 ("2" - Flame Red)</h3>
+        <div class="marker-item" id="modal-marker-item-2" data-marker-id="2">
+          <div class="marker-header-row">
+            <h3 class="marker-title">Barcode 2 (Flame Red)</h3>
+            <span class="marker-text-badge">"2"</span>
+          </div>
+          <span class="marker-terminal-badge hidden">⚡ Target Node</span>
           <img src="./markers/images/barcode-2.png" alt="Barcode 2" />
           <a href="./markers/images/barcode-2.png" download="barcode-2.png" class="download-link">Download 2</a>
         </div>
-        <div class="marker-item">
-          <h3>Barcode 3 ("3" - Sunset Orange)</h3>
+        <div class="marker-item" id="modal-marker-item-3" data-marker-id="3">
+          <div class="marker-header-row">
+            <h3 class="marker-title">Barcode 3 (Sunset Orange)</h3>
+            <span class="marker-text-badge">"3"</span>
+          </div>
+          <span class="marker-terminal-badge hidden">⚡ Target Node</span>
           <img src="./markers/images/barcode-3.png" alt="Barcode 3" />
           <a href="./markers/images/barcode-3.png" download="barcode-3.png" class="download-link">Download 3</a>
         </div>
-        <div class="marker-item">
-          <h3>Barcode 4 ("4" - Electric Yellow)</h3>
+        <div class="marker-item" id="modal-marker-item-4" data-marker-id="4">
+          <div class="marker-header-row">
+            <h3 class="marker-title">Barcode 4 (Electric Yellow)</h3>
+            <span class="marker-text-badge">"4"</span>
+          </div>
+          <span class="marker-terminal-badge hidden">⚡ Target Node</span>
           <img src="./markers/images/barcode-4.png" alt="Barcode 4" />
           <a href="./markers/images/barcode-4.png" download="barcode-4.png" class="download-link">Download 4</a>
         </div>
-        <div class="marker-item">
-          <h3>Barcode 5 ("5" - Herb Green)</h3>
+        <div class="marker-item" id="modal-marker-item-5" data-marker-id="5">
+          <div class="marker-header-row">
+            <h3 class="marker-title">Barcode 5 (Herb Green)</h3>
+            <span class="marker-text-badge">"5"</span>
+          </div>
+          <span class="marker-terminal-badge hidden">⚡ Target Node</span>
           <img src="./markers/images/barcode-5.png" alt="Barcode 5" />
           <a href="./markers/images/barcode-5.png" download="barcode-5.png" class="download-link">Download 5</a>
         </div>
-        <div class="marker-item">
-          <h3>Barcode 6 ("6" - Cyber Violet)</h3>
+        <div class="marker-item" id="modal-marker-item-6" data-marker-id="6">
+          <div class="marker-header-row">
+            <h3 class="marker-title">Barcode 6 (Cyber Violet)</h3>
+            <span class="marker-text-badge">"6"</span>
+          </div>
+          <span class="marker-terminal-badge hidden">⚡ Target Node</span>
           <img src="./markers/images/barcode-6.png" alt="Barcode 6" />
           <a href="./markers/images/barcode-6.png" download="barcode-6.png" class="download-link">Download 6</a>
         </div>
-        <div class="marker-item">
-          <h3>Barcode 7 ("7" - Pure White)</h3>
+        <div class="marker-item" id="modal-marker-item-7" data-marker-id="7">
+          <div class="marker-header-row">
+            <h3 class="marker-title">Barcode 7 (Pure White)</h3>
+            <span class="marker-text-badge">"7"</span>
+          </div>
+          <span class="marker-terminal-badge hidden">⚡ Target Node</span>
           <img src="./markers/images/barcode-7.png" alt="Barcode 7" />
           <a href="./markers/images/barcode-7.png" download="barcode-7.png" class="download-link">Download 7</a>
         </div>
