@@ -37,11 +37,12 @@ export function fetchFont(url) {
  *
  * @param {string} text - Input text string
  * @param {number} size - Text font size
- * @param {Object} data - Typeface font JSON data
+ * @param {Object} data - Primary typeface font JSON data
  * @param {Object} THREE - Active Three.js library instance
+ * @param {Object} fallbackData - Optional fallback typeface for missing glyphs
  * @returns {Array<THREE.ShapePath>} Array of vector shape paths
  */
-export function createPaths(text, size, data, THREE) {
+export function createPaths(text, size, data, THREE, fallbackData = null) {
   const chars = Array.from(text);
   const scale = size / data.resolution;
   const line_height = (data.boundingBox.yMax - data.boundingBox.yMin + (data.underlineThickness || 0)) * scale;
@@ -56,9 +57,12 @@ export function createPaths(text, size, data, THREE) {
       offsetX = 0;
       offsetY -= line_height;
     } else {
-      const glyph = data.glyphs[char] || data.glyphs['?'];
+      const primaryGlyph = data.glyphs[char];
+      const fallbackGlyph = fallbackData?.glyphs[char];
+      const glyph = primaryGlyph || fallbackGlyph || data.glyphs['?'] || fallbackData?.glyphs['?'];
       if (glyph) {
         const path = new THREE.ShapePath();
+        path._forceCCW = !primaryGlyph && !!fallbackGlyph;
         let x, y, cpx, cpy, cpx1, cpy1, cpx2, cpy2;
 
         if (glyph.o) {
@@ -127,10 +131,10 @@ export function buildTextMesh(THREE, fontData, options = {}) {
     emissiveIntensity = 1.0
   } = options;
 
-  const paths = createPaths(text, size, fontData, THREE);
+  const paths = createPaths(text, size, fontData, THREE, options.fallbackFontData);
   const shapes = [];
   for (const p of paths) {
-    shapes.push(...p.toShapes());
+    shapes.push(...p.toShapes(p._forceCCW));
   }
 
   const geometry = new THREE.ExtrudeGeometry(shapes, {

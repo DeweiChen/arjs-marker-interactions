@@ -91,7 +91,10 @@ export class BirthdayFX extends BaseFX {
       return;
     }
 
-    fetchFont('./fonts/fredoka_light_regular.json').then((fontData) => {
+    Promise.all([
+      fetchFont('./fonts/fredoka_light_regular.json'),
+      fetchFont('./fonts/noto_sans_tc_minimal.typeface.json')
+    ]).then(([fontData, fallbackFontData]) => {
       const mesh = buildTextMesh(THREE, fontData, {
         text: this.options.textLine1,
         size: 0.48,
@@ -103,7 +106,8 @@ export class BirthdayFX extends BaseFX {
         bevelSegments: 5,
         color: 0xF4E0AE,
         emissive: 0xF4E0AE,
-        emissiveIntensity: 1.5
+        emissiveIntensity: 1.5,
+        fallbackFontData
       });
       mesh.position.y = 0.15;
       mesh.layers.enable(1);

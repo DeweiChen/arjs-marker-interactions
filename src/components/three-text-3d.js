@@ -13,6 +13,7 @@ if (typeof AFRAME !== 'undefined') {
     schema: {
       text: { type: 'string', default: 'Hello' },
       fontUrl: { type: 'string', default: './fonts/fredoka_light_regular.json' },
+      fallbackFontUrl: { type: 'string', default: './fonts/noto_sans_tc_minimal.typeface.json' },
       size: { type: 'number', default: 0.5 },
       depth: { type: 'number', default: 0.1 },
       curveSegments: { type: 'int', default: 12 },
@@ -26,7 +27,10 @@ if (typeof AFRAME !== 'undefined') {
       pitchFacing: { type: 'boolean', default: true },
       minPitch: { type: 'number', default: -90 },
       maxPitch: { type: 'number', default: 35 },
-      smoothingFactor: { type: 'number', default: 0.25 }
+      smoothingFactor: { type: 'number', default: 0.25 },
+      autoFit: { type: 'boolean', default: true },
+      fitWidth: { type: 'number', default: 1.22 },
+      fitHeight: { type: 'number', default: 0.9 }
     },
 
     init: function () {
@@ -69,7 +73,7 @@ if (typeof AFRAME !== 'undefined') {
     },
 
     update: function (oldData) {
-      if (oldData && (oldData.text !== this.data.text || oldData.fontUrl !== this.data.fontUrl || oldData.size !== this.data.size || oldData.depth !== this.data.depth)) {
+      if (oldData && (oldData.text !== this.data.text || oldData.fontUrl !== this.data.fontUrl || oldData.fallbackFontUrl !== this.data.fallbackFontUrl || oldData.size !== this.data.size || oldData.depth !== this.data.depth || oldData.autoFit !== this.data.autoFit || oldData.fitWidth !== this.data.fitWidth || oldData.fitHeight !== this.data.fitHeight)) {
         this._buildMesh();
       } else if (this.mesh && this.mesh.material) {
         const THREE = window.THREE || AFRAME.THREE;
@@ -148,6 +152,7 @@ if (typeof AFRAME !== 'undefined') {
       const data = this.data;
       const text = data.text;
       const fontUrl = data.fontUrl;
+      const fallbackFontUrl = data.fallbackFontUrl;
       const size = data.size;
       const depth = data.depth;
       const curveSegments = data.curveSegments;
@@ -157,11 +162,14 @@ if (typeof AFRAME !== 'undefined') {
       const bevelSegments = data.bevelSegments;
       const emissive = data.emissive;
       const color = data.color;
+      const autoFit = data.autoFit;
+      const fitWidth = data.fitWidth;
+      const fitHeight = data.fitHeight;
       const THREE = window.THREE || AFRAME.THREE;
 
       if (!text) return;
 
-      const cacheKey = `${fontUrl}_${text}_${size}_${depth}_${curveSegments}_${bevelEnabled}_${bevelThickness}_${bevelSize}_${bevelSegments}`;
+      const cacheKey = `${fontUrl}_${fallbackFontUrl}_${text}_${size}_${depth}_${curveSegments}_${bevelEnabled}_${bevelThickness}_${bevelSize}_${bevelSegments}`;
       const buildId = ++this._currentBuildId;
 
       const applyGeometry = (geometry) => {
@@ -180,6 +188,15 @@ if (typeof AFRAME !== 'undefined') {
         }
 
         this.mesh = new THREE.Mesh(geometry, material);
+        if (autoFit) {
+          const bounds = new THREE.Vector3();
+          geometry.computeBoundingBox();
+          geometry.boundingBox.getSize(bounds);
+          const widthScale = fitWidth > 0 ? fitWidth / bounds.x : 1;
+          const heightScale = fitHeight > 0 ? fitHeight / bounds.y : 1;
+          const scale = Math.min(1, widthScale, heightScale);
+          this.mesh.scale.setScalar(scale);
+        }
         this.mesh.layers.enable(1);
         this.el.setObject3D('mesh', this.mesh);
         this.el.emit('three-text-loaded', { mesh: this.mesh });
@@ -190,14 +207,14 @@ if (typeof AFRAME !== 'undefined') {
         return;
       }
 
-      fetchFont(fontUrl)
-        .then((fontData) => {
+      Promise.all([fetchFont(fontUrl), fetchFont(fallbackFontUrl)])
+        .then(([fontData, fallbackFontData]) => {
           if (this._currentBuildId !== buildId) return;
 
-          const paths = createPaths(text, size, fontData, THREE);
+          const paths = createPaths(text, size, fontData, THREE, fallbackFontData);
           const shapes = [];
           for (let p = 0; p < paths.length; p++) {
-            shapes.push(...paths[p].toShapes());
+            shapes.push(...paths[p].toShapes(paths[p]._forceCCW));
           }
 
           const geometry = new THREE.ExtrudeGeometry(shapes, {

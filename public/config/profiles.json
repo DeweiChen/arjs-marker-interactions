@@ -104,5 +104,58 @@
       "celebrationText": "Happy Birthday 30",
       "audioUrl": "./assets/HBD.mp3"
     }
+  },
+  "nanaco": {
+    "name": "Nanaco",
+    "markers": {
+      "0": {
+        "text": "DW",
+        "color": "#1d4ed8",
+        "emissive": "#0077ff"
+      },
+      "1": {
+        "text": "77",
+        "color": "#7c3aed",
+        "emissive": "#a855f7"
+      },
+      "2": {
+        "text": "Wu",
+        "color": "#dc2626",
+        "emissive": "#ff1a1a"
+      },
+      "3": {
+        "text": "蕭蕭兒",
+        "color": "#ea580c",
+        "emissive": "#ff7a00"
+      },
+      "4": {
+        "text": "!",
+        "color": "#ea580c",
+        "emissive": "#ffb000"
+      },
+      "5": {
+        "text": "Charlie",
+        "color": "#16a34a",
+        "emissive": "#22c55e"
+      },
+      "6": {
+        "text": "!",
+        "color": "#7c3aed",
+        "emissive": "#ffffff"
+      },
+      "7": {
+        "text": "Nanaco",
+        "color": "#00cba9",
+        "emissive": "#00cba9"
+      }
+    },
+    "interaction": {
+      "targetNodes": [
+        0,
+        7
+      ],
+      "celebrationText": "Happy Birthday 35",
+      "audioUrl": "./assets/HBD.mp3"
+    }
   }
 }
