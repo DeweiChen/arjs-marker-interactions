@@ -3,7 +3,8 @@ import { defineConfig } from 'vite';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 
 export default defineConfig({
-  base: '/arjs-marker-interactions/',
+  // Use repository path in CI/CD, root path for local dev
+  base: process.env.GITHUB_ACTIONS === 'true' ? '/arjs-marker-interactions/' : '/',
   plugins: [
     basicSsl()
   ],
