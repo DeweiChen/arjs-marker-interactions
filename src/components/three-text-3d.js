@@ -192,14 +192,18 @@ if (typeof AFRAME !== 'undefined') {
           const bounds = new THREE.Vector3();
           geometry.computeBoundingBox();
           geometry.boundingBox.getSize(bounds);
-          const widthScale = fitWidth > 0 ? fitWidth / bounds.x : 1;
-          const heightScale = fitHeight > 0 ? fitHeight / bounds.y : 1;
+          const width = (bounds.x > 0 && isFinite(bounds.x)) ? bounds.x : 1;
+          const height = (bounds.y > 0 && isFinite(bounds.y)) ? bounds.y : 1;
+          const widthScale = fitWidth > 0 ? fitWidth / width : 1;
+          const heightScale = fitHeight > 0 ? fitHeight / height : 1;
           const scale = Math.min(1, widthScale, heightScale);
-          this.mesh.scale.setScalar(scale);
+          if (isFinite(scale) && scale > 0) {
+            this.mesh.scale.setScalar(scale);
+          }
         }
         this.mesh.layers.enable(1);
         this.el.setObject3D('mesh', this.mesh);
-        this.el.emit('three-text-loaded', { mesh: this.mesh });
+        this.el.emit('three-text-loaded', { mesh: this.mesh }, true);
       };
 
       if (geometryCache.has(cacheKey)) {
@@ -215,6 +219,11 @@ if (typeof AFRAME !== 'undefined') {
           const shapes = [];
           for (let p = 0; p < paths.length; p++) {
             shapes.push(...paths[p].toShapes());
+          }
+
+          if (!shapes || shapes.length === 0) {
+            console.warn('[three-text-3d] No printable shapes generated for text:', text);
+            return;
           }
 
           const geometry = new THREE.ExtrudeGeometry(shapes, {

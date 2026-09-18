@@ -4,9 +4,25 @@
  */
 
 const fontCache = new Map();
+const inFlightRequests = new Map();
 
 /**
- * Fetch TTF JSON typeface font with caching and CDN fallback.
+ * Fetch with a specified timeout in milliseconds.
+ *
+ * @param {string} url - Target URL
+ * @param {number} timeoutMs - Timeout limit in milliseconds
+ * @returns {Promise<Response>}
+ */
+function fetchWithTimeout(url, timeoutMs = 6000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { signal: controller.signal }).finally(() => {
+    clearTimeout(timer);
+  });
+}
+
+/**
+ * Fetch TTF JSON typeface font with in-flight deduplication, caching, and CDN fallback.
  *
  * @param {string} url - Local or remote font JSON URL
  * @returns {Promise<Object>} Font JSON data
@@ -16,20 +32,43 @@ export function fetchFont(url) {
     return Promise.resolve(fontCache.get(url));
   }
 
-  return fetch(url)
+  if (inFlightRequests.has(url)) {
+    return inFlightRequests.get(url);
+  }
+
+  const filename = url.split('/').pop();
+  const cdnFallbackUrl = `https://cdn.jsdelivr.net/gh/DeweiChen/arjs-marker-interactions@main/public/fonts/${filename}`;
+  const emergencyFallbackUrl = 'https://cdn.jsdelivr.net/npm/three@0.164.0/examples/fonts/helvetiker_regular.typeface.json';
+
+  const requestPromise = fetchWithTimeout(url, 6000)
     .then((res) => {
       if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
       return res.json();
     })
-    .catch(() => {
-      // CDN Fallback if local path fails
-      const fallbackUrl = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/fonts/helvetiker_bold.typeface.json';
-      return fetch(fallbackUrl).then((r) => r.json());
+    .catch((primaryErr) => {
+      console.warn(`[font-loader] Primary fetch failed for ${url}, trying CDN fallback...`, primaryErr);
+      return fetchWithTimeout(cdnFallbackUrl, 6000)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status} for CDN ${cdnFallbackUrl}`);
+          return res.json();
+        })
+        .catch((cdnErr) => {
+          console.warn(`[font-loader] CDN fallback failed for ${cdnFallbackUrl}, using emergency font fallback.`, cdnErr);
+          return fetchWithTimeout(emergencyFallbackUrl, 6000).then((r) => r.json());
+        });
     })
     .then((data) => {
-      fontCache.set(url, data);
+      if (data) {
+        fontCache.set(url, data);
+      }
       return data;
+    })
+    .finally(() => {
+      inFlightRequests.delete(url);
     });
+
+  inFlightRequests.set(url, requestPromise);
+  return requestPromise;
 }
 
 /**
