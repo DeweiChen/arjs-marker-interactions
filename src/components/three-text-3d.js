@@ -214,7 +214,7 @@ if (typeof AFRAME !== 'undefined') {
           const paths = createPaths(text, size, fontData, THREE, fallbackFontData);
           const shapes = [];
           for (let p = 0; p < paths.length; p++) {
-            shapes.push(...paths[p].toShapes(paths[p]._forceCCW));
+            shapes.push(...paths[p].toShapes());
           }
 
           const geometry = new THREE.ExtrudeGeometry(shapes, {

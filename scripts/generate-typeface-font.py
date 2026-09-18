@@ -15,6 +15,7 @@ CHARS = (
     "!?+-.=<>/@^_()[]{}:;,?'\"%&*#"
     "，。！？（）【】「」：；＋－／"
     " 生日快樂你好我你他吳蕭兒珈儀"
+    "東京不甩尾"
 )
 RESOLUTION = 1000
 
@@ -78,11 +79,24 @@ def outline_for_glyph(glyph_set, glyph_name, units_per_em):
 
 
 def main():
-    if len(sys.argv) != 3:
-        raise SystemExit("usage: generate-typeface-font.py SOURCE-FONT OUTPUT-JSON")
+    if len(sys.argv) == 3:
+        source = Path(sys.argv[1])
+        output = Path(sys.argv[2])
+    elif len(sys.argv) == 1:
+        candidates = [
+            Path("/tmp/NotoSansTC-Regular.ttf"),
+            Path(__file__).resolve().parent.parent / "fonts" / "NotoSansTC-Regular.ttf",
+            Path("/System/Library/Fonts/Supplemental/Arial Unicode.ttf"),
+            Path("/System/Library/Fonts/STHeiti Light.ttc"),
+        ]
+        source = next((p for p in candidates if p.exists()), None)
+        if not source:
+            raise SystemExit("Error: No suitable CJK source font found.")
+        output = Path(__file__).resolve().parent.parent / "public" / "fonts" / "noto_sans_tc_minimal.typeface.json"
+    else:
+        raise SystemExit("usage: generate-typeface-font.py [SOURCE-FONT OUTPUT-JSON]")
 
-    source = Path(sys.argv[1])
-    output = Path(sys.argv[2])
+    print(f"Using source font: {source}")
     font = TTFont(str(source), fontNumber=0)
     units_per_em = font["head"].unitsPerEm
     cmap = font.getBestCmap()

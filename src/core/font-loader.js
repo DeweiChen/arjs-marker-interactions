@@ -59,10 +59,12 @@ export function createPaths(text, size, data, THREE, fallbackData = null) {
     } else {
       const primaryGlyph = data.glyphs[char];
       const fallbackGlyph = fallbackData?.glyphs[char];
+      const isFallback = !primaryGlyph && !!fallbackGlyph;
       const glyph = primaryGlyph || fallbackGlyph || data.glyphs['?'] || fallbackData?.glyphs['?'];
       if (glyph) {
         const path = new THREE.ShapePath();
-        path._forceCCW = !primaryGlyph && !!fallbackGlyph;
+        const glyphResolution = (isFallback && fallbackData?.resolution) ? fallbackData.resolution : data.resolution;
+        const glyphScale = size / glyphResolution;
         let x, y, cpx, cpy, cpx1, cpy1, cpx2, cpy2;
 
         if (glyph.o) {
@@ -71,35 +73,35 @@ export function createPaths(text, size, data, THREE, fallbackData = null) {
             const action = outline[j++];
             switch (action) {
               case 'm':
-                x = outline[j++] * scale + offsetX;
-                y = outline[j++] * scale + offsetY;
+                x = outline[j++] * glyphScale + offsetX;
+                y = outline[j++] * glyphScale + offsetY;
                 path.moveTo(x, y);
                 break;
               case 'l':
-                x = outline[j++] * scale + offsetX;
-                y = outline[j++] * scale + offsetY;
+                x = outline[j++] * glyphScale + offsetX;
+                y = outline[j++] * glyphScale + offsetY;
                 path.lineTo(x, y);
                 break;
               case 'q':
-                cpx = outline[j++] * scale + offsetX;
-                cpy = outline[j++] * scale + offsetY;
-                cpx1 = outline[j++] * scale + offsetX;
-                cpy1 = outline[j++] * scale + offsetY;
+                cpx = outline[j++] * glyphScale + offsetX;
+                cpy = outline[j++] * glyphScale + offsetY;
+                cpx1 = outline[j++] * glyphScale + offsetX;
+                cpy1 = outline[j++] * glyphScale + offsetY;
                 path.quadraticCurveTo(cpx1, cpy1, cpx, cpy);
                 break;
               case 'b':
-                cpx = outline[j++] * scale + offsetX;
-                cpy = outline[j++] * scale + offsetY;
-                cpx1 = outline[j++] * scale + offsetX;
-                cpy1 = outline[j++] * scale + offsetY;
-                cpx2 = outline[j++] * scale + offsetX;
-                cpy2 = outline[j++] * scale + offsetY;
+                cpx = outline[j++] * glyphScale + offsetX;
+                cpy = outline[j++] * glyphScale + offsetY;
+                cpx1 = outline[j++] * glyphScale + offsetX;
+                cpy1 = outline[j++] * glyphScale + offsetY;
+                cpx2 = outline[j++] * glyphScale + offsetX;
+                cpy2 = outline[j++] * glyphScale + offsetY;
                 path.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, cpx, cpy);
                 break;
             }
           }
         }
-        offsetX += glyph.ha * scale;
+        offsetX += glyph.ha * glyphScale;
         paths.push(path);
       }
     }
@@ -134,7 +136,7 @@ export function buildTextMesh(THREE, fontData, options = {}) {
   const paths = createPaths(text, size, fontData, THREE, options.fallbackFontData);
   const shapes = [];
   for (const p of paths) {
-    shapes.push(...p.toShapes(p._forceCCW));
+    shapes.push(...p.toShapes());
   }
 
   const geometry = new THREE.ExtrudeGeometry(shapes, {

@@ -124,7 +124,7 @@
         "emissive": "#ff1a1a"
       },
       "3": {
-        "text": "蕭蕭兒",
+        "text": "蕭蕭兒", 
         "color": "#ea580c",
         "emissive": "#ff7a00"
       },
@@ -156,6 +156,59 @@
       ],
       "celebrationText": "Happy Birthday 35",
       "audioUrl": "./assets/HBD.mp3"
+    }
+  },
+  "jeff": {
+    "name": "Jeff",
+    "markers": {
+      "0": {
+        "text": "Jeff",
+        "color": "#1d4ed8",
+        "emissive": "#0077ff"
+      },
+      "1": {
+        "text": "K",
+        "color": "#7c3aed",
+        "emissive": "#a855f7"
+      },
+      "2": {
+        "text": "Codus",
+        "color": "#dc2626",
+        "emissive": "#ffe600"
+      },
+      "3": {
+        "text": "3",
+        "color": "#ea580c",
+        "emissive": "#ff7a00"
+      },
+      "4": {
+        "text": "4",
+        "color": "#ca8a04",
+        "emissive": "#ff1a1a"
+      },
+      "5": {
+        "text": "5",
+        "color": "#16a34a",
+        "emissive": "#22c55e"
+      },
+      "6": {
+        "text": "6",
+        "color": "#7c3aed",
+        "emissive": "#a855f7"
+      },
+      "7": {
+        "text": "DW",
+        "color": "#e2e8f0",
+        "emissive": "#22c55e"
+      }
+    },
+    "interaction": {
+      "targetNodes": [
+        0,
+        7
+      ],
+      "celebrationText": "東京不甩尾",
+      "audioUrl": ""
     }
   }
 }
