@@ -14,6 +14,7 @@ import { initARAspectCorrection } from '../core/ar-aspect-corrector.js';
 import { HUDTelemetryController } from '../ui/hud-telemetry.js';
 import { BloomPanelController } from '../ui/bloom-panel.js';
 import { ModalController } from '../ui/modal-controller.js';
+import profilesData from '../../public/config/profiles.json';
 
 document.addEventListener('DOMContentLoaded', () => {
   const sceneEl = document.querySelector('a-scene');
@@ -91,25 +92,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Profile System
-  let profiles = {};
+  const profiles = profilesData || {};
   let currentProfileId = 'default';
-
-  const loadProfiles = async () => {
-    try {
-      const response = await fetch('./config/profiles.json');
-      if (response.ok) {
-        profiles = await response.json();
-      } else {
-        console.warn('Profiles config not found');
-      }
-    } catch (e) {
-      console.error('Error loading profiles:', e);
-    }
-  };
 
   const getProfileFromUrl = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const pParam = urlParams.get('p') || urlParams.get('mode');
+    const pParam = urlParams.get('p') || urlParams.get('profile') || urlParams.get('mode');
     const hash = window.location.hash.toLowerCase().replace('#', '');
     
     if (pParam && profiles[pParam]) return pParam;
@@ -127,8 +115,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const url = new URL(window.location.href);
     if (profileId !== 'default') {
       url.searchParams.set('p', profileId);
+      url.searchParams.delete('profile');
+      url.searchParams.delete('mode');
     } else {
       url.searchParams.delete('p');
+      url.searchParams.delete('profile');
       url.searchParams.delete('mode');
     }
     window.history.replaceState({}, '', url.toString());
@@ -223,11 +214,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Initialize System
-  loadProfiles().then(() => {
-    if (Object.keys(profiles).length > 0) {
-      initProfileUI();
-      applyProfile(getProfileFromUrl(), false);
-    }
-  });
+  if (Object.keys(profiles).length > 0) {
+    initProfileUI();
+    applyProfile(getProfileFromUrl(), false);
+  }
 });
 
