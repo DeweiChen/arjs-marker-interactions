@@ -230,16 +230,16 @@ export class BirthdayFX extends BaseFX {
   }
 
   /**
-   * Initializes audio element
+   * Initializes audio element with lazy pre-buffering
    */
   _initAudio() {
     if (this.options.audioUrl) {
       this.audio = new Audio(this.options.audioUrl);
-      this.audio.preload = 'auto'; // Force browser to pre-buffer audio data
-      this.audio.load();
+      this.audio.preload = 'none'; // Lazy load audio to avoid blocking critical startup assets
       this.audio.loop = false;
       this.audioPlayed = false;
       this.audioUnlocked = false;
+      this._audioPreloaded = false;
 
       this.audio.addEventListener('play', () => this._notifyAudioState());
       this.audio.addEventListener('pause', () => this._notifyAudioState());
@@ -247,6 +247,15 @@ export class BirthdayFX extends BaseFX {
         this.audioPlayed = false;
         this._notifyAudioState();
       });
+
+      // Preload audio on first user gesture to prepare audio buffer and satisfy browser autoplay requirements
+      this._onFirstUserGesture = () => {
+        this._ensureAudioPreloaded();
+        this._removeFirstUserGestureListeners();
+      };
+
+      window.addEventListener('click', this._onFirstUserGesture, { once: true, passive: true });
+      window.addEventListener('touchstart', this._onFirstUserGesture, { once: true, passive: true });
 
       // Automatically pause music when tab/window is minimized or hidden
       this._onVisibilityChange = () => {
@@ -259,6 +268,22 @@ export class BirthdayFX extends BaseFX {
 
       document.addEventListener('visibilitychange', this._onVisibilityChange);
       window.addEventListener('pagehide', this._onVisibilityChange);
+    }
+  }
+
+  _removeFirstUserGestureListeners() {
+    if (this._onFirstUserGesture) {
+      window.removeEventListener('click', this._onFirstUserGesture);
+      window.removeEventListener('touchstart', this._onFirstUserGesture);
+      this._onFirstUserGesture = null;
+    }
+  }
+
+  _ensureAudioPreloaded() {
+    if (this.audio && !this._audioPreloaded) {
+      this._audioPreloaded = true;
+      this.audio.preload = 'auto';
+      this.audio.load();
     }
   }
 
@@ -279,6 +304,8 @@ export class BirthdayFX extends BaseFX {
    */
   _playAudio() {
     if (!this.audio || this.isUserMuted) return;
+    this._ensureAudioPreloaded();
+    this._removeFirstUserGestureListeners();
     if (!this.audioPlayed || (this.audio.paused && !this.audio.ended)) {
       this.audioPlayed = true;
       const playPromise = this.audio.play();
@@ -333,6 +360,8 @@ export class BirthdayFX extends BaseFX {
       return false;
     } else {
       this.isUserMuted = false;
+      this._ensureAudioPreloaded();
+      this._removeFirstUserGestureListeners();
       if (typeof localStorage !== 'undefined') {
         try {
           localStorage.setItem('ar_audio_muted', 'false');
@@ -498,6 +527,11 @@ export class BirthdayFX extends BaseFX {
     }
 
     this.group.visible = true;
+
+    // Trigger pre-buffering when markers are in proximity range
+    if (this.audio && !this._audioPreloaded && progress > 0.05) {
+      this._ensureAudioPreloaded();
+    }
 
     // Phase 1: Implosion / Overload (0 - 0.3)
     if (progress < 0.3) {
@@ -723,6 +757,7 @@ export class BirthdayFX extends BaseFX {
   dispose() {
     super.dispose();
     this._stopAudio();
+    this._removeFirstUserGestureListeners();
     if (this._onVisibilityChange) {
       document.removeEventListener('visibilitychange', this._onVisibilityChange);
       window.removeEventListener('pagehide', this._onVisibilityChange);
