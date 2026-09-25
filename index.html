@@ -536,6 +536,43 @@
     <!-- AR Camera Entity -->
     <a-entity camera></a-entity>
   </a-scene>
+
+  <!-- Initial Cold-Start Scan Guide Overlay (Positioned after a-scene to guarantee top stacking) -->
+  <div id="scan-guide-overlay" class="scan-guide-overlay" role="region" aria-label="AR Marker Scan Guide">
+    <div class="scan-guide-container">
+      <div class="scan-reticle">
+        <!-- Reticle Corner Brackets -->
+        <span class="reticle-corner corner-tl"></span>
+        <span class="reticle-corner corner-tr"></span>
+        <span class="reticle-corner corner-bl"></span>
+        <span class="reticle-corner corner-br"></span>
+
+        <!-- Dashed Inner Reticle Frame -->
+        <div class="reticle-frame"></div>
+
+        <!-- Laser Scanline Animation -->
+        <div class="scan-laser-line"></div>
+
+        <!-- Center Crosshair Target -->
+        <div class="reticle-center-target">
+          <span class="crosshair-h"></span>
+          <span class="crosshair-v"></span>
+          <span class="crosshair-dot"></span>
+        </div>
+      </div>
+
+      <!-- Scan Guide Text Card (Clean Text Guide) -->
+      <div class="scan-guide-card">
+        <div class="scan-guide-badge">
+          <span class="scan-radar-dot"></span>
+          <span class="scan-badge-text">SCANNING</span>
+        </div>
+        <p class="scan-guide-title">請將鏡頭對準 AR 標記</p>
+        <p class="scan-guide-subtitle">Point camera at an AR marker / Barcode</p>
+        <p class="scan-guide-hint">尚未持有標記？點擊右上角 <span class="hint-badge">Markers</span> 查看與下載</p>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>

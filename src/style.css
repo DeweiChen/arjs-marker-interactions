@@ -114,7 +114,7 @@ button,
   top: max(16px, env(safe-area-inset-top));
   left: max(16px, env(safe-area-inset-left));
   right: max(16px, env(safe-area-inset-right));
-  z-index: 10;
+  z-index: 60;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1788,3 +1788,340 @@ div.a-orientation-modal {
   color: #38bdf8;
   font-weight: 600;
 }
+
+/* ==========================================================================
+   Cold-Start AR Marker Scan Guide Overlay
+   ========================================================================== */
+
+.scan-guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50 !important;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.45s;
+}
+
+.scan-guide-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  margin-top: -30px;
+  pointer-events: none;
+  max-width: 90vw;
+}
+
+/* Central Reticle Box */
+.scan-reticle {
+  position: relative;
+  width: min(65vw, 240px);
+  height: min(65vw, 240px);
+  box-sizing: border-box;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reticle Corner Brackets */
+.reticle-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: #38bdf8;
+  border-style: solid;
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8));
+  transition: border-color 0.3s ease, filter 0.3s ease;
+}
+
+.corner-tl {
+  top: 0;
+  left: 0;
+  border-width: 3px 0 0 3px;
+  border-top-left-radius: 8px;
+}
+
+.corner-tr {
+  top: 0;
+  right: 0;
+  border-width: 3px 3px 0 0;
+  border-top-right-radius: 8px;
+}
+
+.corner-bl {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 3px 3px;
+  border-bottom-left-radius: 8px;
+}
+
+.corner-br {
+  bottom: 0;
+  right: 0;
+  border-width: 0 3px 3px 0;
+  border-bottom-right-radius: 8px;
+}
+
+/* Dashed Inner Frame */
+.reticle-frame {
+  position: absolute;
+  inset: 6px;
+  border: 2px dashed rgba(56, 189, 248, 0.55);
+  border-radius: 12px;
+  box-shadow: inset 0 0 16px rgba(56, 189, 248, 0.08), 0 0 16px rgba(56, 189, 248, 0.08);
+  animation: reticle-dash-pulse 2.2s ease-in-out infinite alternate;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Laser Scanline Beam */
+.scan-laser-line {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #38bdf8 25%, #ffffff 50%, #38bdf8 75%, transparent 100%);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.9), 0 0 4px #ffffff;
+  border-radius: 2px;
+  pointer-events: none;
+  animation: scan-laser-travel 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Center Crosshair Target */
+.reticle-center-target {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.crosshair-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(56, 189, 248, 0.6);
+  transform: translateY(-50%);
+}
+
+.crosshair-v {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(56, 189, 248, 0.6);
+  transform: translateX(-50%);
+}
+
+.crosshair-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #38bdf8;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px #38bdf8;
+}
+
+/* Guidance Text Card (Option 1-B: Clean Text Guide) */
+.scan-guide-card {
+  background: rgba(10, 14, 23, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 16px;
+  padding: 12px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(56, 189, 248, 0.05);
+  max-width: 320px;
+  animation: card-float 3s ease-in-out infinite alternate;
+}
+
+.scan-guide-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 20px;
+  padding: 2px 10px;
+  margin-bottom: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #38bdf8;
+}
+
+.scan-radar-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+  animation: radar-ping 1.4s ease-in-out infinite;
+}
+
+.scan-guide-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f8fafc;
+  letter-spacing: 0.02em;
+}
+
+.scan-guide-subtitle {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.scan-guide-hint {
+  font-size: 11px;
+  color: #cbd5e1;
+  margin-top: 4px;
+  opacity: 0.85;
+  line-height: 1.4;
+}
+
+.hint-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-weight: 600;
+  font-size: 10px;
+  color: #f8fafc;
+  vertical-align: middle;
+}
+
+/* ==========================================================================
+   Locked-On & Dismissal States
+   ========================================================================== */
+
+.scan-guide-overlay.locked-on .reticle-corner {
+  border-color: #10b981;
+  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.9));
+}
+
+.scan-guide-overlay.locked-on .reticle-frame {
+  border-color: rgba(16, 185, 129, 0.85);
+  border-style: solid;
+  box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.25), 0 0 20px rgba(16, 185, 129, 0.35);
+}
+
+.scan-guide-overlay.locked-on .scan-laser-line {
+  background: linear-gradient(90deg, transparent, #10b981 30%, #ffffff 50%, #10b981 70%, transparent);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 1);
+}
+
+.scan-guide-overlay.locked-on .scan-guide-badge {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #10b981;
+}
+
+.scan-guide-overlay.locked-on .scan-radar-dot {
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+}
+
+.scan-guide-overlay.locked-on .scan-reticle {
+  animation: reticle-lockon 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.scan-guide-overlay.dismissed {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.94);
+  pointer-events: none;
+}
+
+.scan-guide-overlay.dismissed * {
+  animation-play-state: paused !important;
+}
+
+/* ==========================================================================
+   Keyframe Animations
+   ========================================================================== */
+
+@keyframes reticle-dash-pulse {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.99);
+  }
+  100% {
+    opacity: 0.95;
+    transform: scale(1.01);
+    box-shadow: inset 0 0 24px rgba(56, 189, 248, 0.18), 0 0 24px rgba(56, 189, 248, 0.18);
+  }
+}
+
+@keyframes scan-laser-travel {
+  0% {
+    top: 8px;
+    opacity: 0.3;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    top: calc(100% - 10px);
+    opacity: 0.3;
+  }
+}
+
+@keyframes radar-ping {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+}
+
+@keyframes card-float {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes reticle-lockon {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(0.98);
+  }
+}
+

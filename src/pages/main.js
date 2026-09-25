@@ -14,6 +14,7 @@ import { initARAspectCorrection } from '../core/ar-aspect-corrector.js';
 import { HUDTelemetryController } from '../ui/hud-telemetry.js';
 import { BloomPanelController } from '../ui/bloom-panel.js';
 import { ModalController } from '../ui/modal-controller.js';
+import { ScanGuideController } from '../ui/scan-guide.js';
 import profilesData from '../config/profiles.json';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -72,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const hudController = new HUDTelemetryController(sceneEl, isDebugActive);
   const bloomPanelController = new BloomPanelController(sceneEl, isDebugActive);
   const modalController = new ModalController(sceneEl);
+  const scanGuideController = new ScanGuideController(sceneEl);
 
   const applyDebugMode = (active) => {
     hudController.setDebugMode(active);
