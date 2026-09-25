@@ -21,7 +21,7 @@ export function ensureARVideoPlaying() {
   const video = document.querySelector('#arjs-video') || document.querySelector('video');
   if (!video) return;
 
-  if (video.paused || video.ended || video.readyState < 2) {
+  if ((video.paused || video.ended) && video.readyState >= 2) {
     const playPromise = video.play();
     if (playPromise !== undefined) {
       playPromise.catch(() => {
@@ -154,6 +154,9 @@ export function initARAspectCorrection(sceneEl) {
     if (arContext && !arContext._rawGetProjectionMatrix) {
       arContext._rawGetProjectionMatrix = arContext.getProjectionMatrix;
       arContext.getProjectionMatrix = function () {
+        if (!arContext.arController) {
+          return null;
+        }
         try {
           const rawMat = arContext._rawGetProjectionMatrix.call(arContext);
           // Safety check: Don't scale if the matrix isn't valid yet
@@ -174,7 +177,7 @@ export function initARAspectCorrection(sceneEl) {
         const originalUpdate = sceneEl.camera.updateProjectionMatrix.bind(sceneEl.camera);
         sceneEl.camera.updateProjectionMatrix = function () {
           const { arContext: ctx } = getARObjects(sceneEl);
-          if (ctx && ctx._rawGetProjectionMatrix) {
+          if (ctx && ctx.arController && ctx._rawGetProjectionMatrix) {
             try {
               const rawMat = ctx._rawGetProjectionMatrix.call(ctx);
               if (rawMat && rawMat.elements && !isNaN(rawMat.elements[0])) {
@@ -190,7 +193,7 @@ export function initARAspectCorrection(sceneEl) {
       }
       
       // Force immediate re-evaluation if matrix is ready
-      if (arContext && arContext._rawGetProjectionMatrix) {
+      if (arContext && arContext.arController && arContext._rawGetProjectionMatrix) {
           try {
             const rawMat = arContext._rawGetProjectionMatrix.call(arContext);
             if (rawMat && rawMat.elements && !isNaN(rawMat.elements[0]) && rawMat.elements[0] !== 1) {

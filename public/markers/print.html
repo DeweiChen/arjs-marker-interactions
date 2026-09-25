@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR.js 8 Markers - A4 Print Layout</title>
+  <style>
+    /* Reset and box-sizing */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Standard A4 Page Definition */
+    @page {
+      size: A4 portrait;
+      margin: 0; /* Remove default A4 margin */
+    }
+
+    body {
+      background-color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Screen-only Controls */
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background-color: #2563eb;
+      color: #ffffff;
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+      background-color: #1d4ed8;
+    }
+
+    /* A4 Paper Container: 210mm x 297mm */
+    .page {
+      width: 210mm;
+      height: 297mm;
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      display: grid;
+      grid-template-columns: repeat(2, 105mm);
+      grid-template-rows: repeat(4, 74.25mm);
+      position: relative;
+    }
+
+    /* 1/8 Cell: 105mm x 74.25mm */
+    .cell {
+      width: 105mm;
+      height: 74.25mm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px dashed #e2e8f0;
+      border-bottom: 1px dashed #e2e8f0;
+      position: relative;
+    }
+
+    /* Remove outer borders on right column and bottom row */
+    .cell:nth-child(2n) {
+      border-right: none;
+    }
+    .cell:nth-child(n+7) {
+      border-bottom: none;
+    }
+
+    /* Marker: 62mm x 62mm square with ample AR.js quiet zone */
+    .marker-img {
+      width: 62mm;
+      height: 62mm;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    /* Print media styling */
+    @media print {
+      body {
+        background: transparent;
+        padding: 0;
+      }
+      .controls {
+        display: none !important;
+      }
+      .page {
+        box-shadow: none;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="controls">
+    <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+  <div class="page">
+    <div class="cell"><img class="marker-img" src="./images/barcode-0.png" alt="Marker 0"></div>
+    <div class="cell"><img class="marker-img" src="./images/barcode-1.png" alt="Marker 1"></div>
+    <div class="cell"><img class="marker-img" src="./images/barcode-2.png" alt="Marker 2"></div>
+    <div class="cell"><img class="marker-img" src="./images/barcode-3.png" alt="Marker 3"></div>
+    <div class="cell"><img class="marker-img" src="./images/barcode-4.png" alt="Marker 4"></div>
+    <div class="cell"><img class="marker-img" src="./images/barcode-5.png" alt="Marker 5"></div>
+    <div class="cell"><img class="marker-img" src="./images/barcode-6.png" alt="Marker 6"></div>
+    <div class="cell"><img class="marker-img" src="./images/barcode-7.png" alt="Marker 7"></div>
+  </div>
+
+</body>
+</html>

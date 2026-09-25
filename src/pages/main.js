@@ -14,7 +14,7 @@ import { initARAspectCorrection } from '../core/ar-aspect-corrector.js';
 import { HUDTelemetryController } from '../ui/hud-telemetry.js';
 import { BloomPanelController } from '../ui/bloom-panel.js';
 import { ModalController } from '../ui/modal-controller.js';
-import profilesData from '../../public/config/profiles.json';
+import profilesData from '../config/profiles.json';
 
 document.addEventListener('DOMContentLoaded', () => {
   const sceneEl = document.querySelector('a-scene');
@@ -25,6 +25,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize AR aspect ratio matrix corrector
   if (sceneEl) {
     initARAspectCorrection(sceneEl);
+
+    // Diagnostics for camera initialization and error handling
+    sceneEl.addEventListener('camera-init', (data) => {
+      console.log('[ARCamera] Camera stream successfully initialized.');
+    });
+
+    sceneEl.addEventListener('camera-error', (err) => {
+      console.error('[ARCamera] Camera initialization failed:', err);
+    });
+
+    window.addEventListener('arjs-video-loaded', () => {
+      console.log('[ARCamera] arjs-video-loaded event received.');
+    });
   }
 
   // Detect Debug mode request strictly from URL query or hash (?d=1, ?debug=1, ?d=true, ?debug=true, ?d, ?debug, #debug, #d)
