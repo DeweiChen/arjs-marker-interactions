@@ -15,6 +15,7 @@ import { HUDTelemetryController } from '../ui/hud-telemetry.js';
 import { BloomPanelController } from '../ui/bloom-panel.js';
 import { ModalController } from '../ui/modal-controller.js';
 import { ScanGuideController } from '../ui/scan-guide.js';
+import { PhotoModeController } from '../ui/photo-mode-controller.js';
 import profilesData from '../config/profiles.json';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -74,10 +75,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const bloomPanelController = new BloomPanelController(sceneEl, isDebugActive);
   const modalController = new ModalController(sceneEl);
   const scanGuideController = new ScanGuideController(sceneEl);
+  const photoModeController = new PhotoModeController(sceneEl);
 
   const applyDebugMode = (active) => {
     hudController.setDebugMode(active);
     bloomPanelController.setDebugMode(active);
+    if (active) {
+      photoModeController.setButtonVisible(true);
+    }
   };
 
   // Apply initial debug mode state
@@ -99,6 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Toggle Audio button visibility based on condition (celebration reached & audio configured)
       modalController.setAudioButtonVisible(hasAudioUrl && isCelebrationState);
+
+      // Toggle Photo Mode button visibility based on celebration state (or debug mode)
+      photoModeController.setButtonVisible(isCelebrationState || isDebugModeRequested());
 
       if (typeof e.detail.isAudioPlaying === 'boolean') {
         modalController.updateAudioState(e.detail.isAudioPlaying);

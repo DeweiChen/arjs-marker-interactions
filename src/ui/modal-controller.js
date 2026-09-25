@@ -44,11 +44,12 @@ export class ModalController {
       });
     }
 
-    if (this.btnResetBday) {
+      if (this.btnResetBday) {
       this.btnResetBday.addEventListener('click', () => {
         this.sceneEl.emit('reset-birthday');
         this.setAudioButtonVisible(false);
         this.updateAudioState(false);
+        this.setPhotoModeButtonVisible(false);
       });
     }
 
@@ -74,6 +75,13 @@ export class ModalController {
   setAudioButtonVisible(visible) {
     if (this.btnToggleAudio) {
       this.btnToggleAudio.classList.toggle('hidden', !visible);
+    }
+  }
+
+  setPhotoModeButtonVisible(visible) {
+    const btn = document.getElementById('btn-photo-mode');
+    if (btn) {
+      btn.classList.toggle('hidden', !visible);
     }
   }
 

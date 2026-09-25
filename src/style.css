@@ -2125,3 +2125,202 @@ div.a-orientation-modal {
   }
 }
 
+/* ==========================================================================
+   Photo Mode (拍照模式) Styling & Presentation Overlay
+   ========================================================================== */
+
+/* Photo Mode HUD Activation Button */
+.photo-btn {
+  animation: photoBtnPopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+}
+
+.photo-btn:hover {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: #fbbf24;
+  color: #fef3c7;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.4);
+}
+
+.photo-btn .hud-status-dot.active {
+  background: #fbbf24;
+  box-shadow: 0 0 8px #fbbf24;
+  animation: pulsePhotoDot 1.5s infinite ease-in-out;
+}
+
+@keyframes pulsePhotoDot {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes photoBtnPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Photo Mode Active State: Blackout camera view & suppress standard HUD */
+body.photo-mode-active {
+  background-color: #000000 !important;
+  touch-action: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+body.photo-mode-active #arjs-video,
+body.photo-mode-active video {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body.photo-mode-active .hud-header,
+body.photo-mode-active .hud-status-panel,
+body.photo-mode-active #scan-guide-overlay,
+body.photo-mode-active #bloom-control-panel,
+body.photo-mode-active #markers-modal,
+body.photo-mode-active #btn-restore-hud {
+  display: none !important;
+}
+
+body.photo-mode-active .a-canvas {
+  touch-action: none !important;
+  pointer-events: auto !important;
+}
+
+/* Photo Mode Overlay Container */
+.photo-mode-ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 16px);
+  transition: opacity 0.3s ease;
+}
+
+/* Floating Top Toolbar */
+.photo-mode-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: auto;
+  padding: 12px 14px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.photo-mode-toolbar.ui-hidden {
+  opacity: 0 !important;
+  transform: translateY(-16px);
+  pointer-events: none !important;
+}
+
+/* Frosted Glass Pill Buttons */
+.photo-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 9999px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.exit-pill-btn {
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.exit-pill-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+}
+
+.exit-pill-btn:active {
+  transform: translateY(0);
+}
+
+.reset-pill-btn {
+  background: rgba(15, 23, 42, 0.85);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.reset-pill-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #e0f2fe;
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+}
+
+.reset-pill-btn:active {
+  transform: translateY(0);
+}
+
+/* Subtle Floating Bottom Toast */
+.photo-mode-hint {
+  align-self: center;
+  margin-bottom: 24px;
+  padding: 8px 20px;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  color: #cbd5e1;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  pointer-events: none;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.photo-mode-hint.hint-fade {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.photo-mode-hint.ui-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+

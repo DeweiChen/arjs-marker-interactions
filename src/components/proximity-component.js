@@ -46,6 +46,13 @@ if (typeof AFRAME !== 'undefined') {
         });
       }
 
+      // Photo Mode state and snapshot caching
+      this.isPhotoMode = false;
+      this.frozenData = null;
+      this.lastActiveNodes = [];
+      this.lastChain = [];
+      this.lastIdle = [];
+
       // Initialize primary FX via FXFactory (defaults to ChainConductionFX)
       this.lightningFX = globalFXFactory.create(this.data.fxType, sceneEl.object3D, {
         maxDistance: this.data.maxDistance,
@@ -124,11 +131,13 @@ if (typeof AFRAME !== 'undefined') {
         if (!markerEl) return;
 
         markerEl.addEventListener('markerFound', () => {
+          if (this.isPhotoMode || document.body.classList.contains('photo-mode-active')) return;
           node.isVisible = true;
           this.el.emit('marker-status-change', { marker: node.name, id: node.id, visible: true });
         });
 
         markerEl.addEventListener('markerLost', () => {
+          if (this.isPhotoMode || document.body.classList.contains('photo-mode-active')) return;
           node.isVisible = false;
           node.hasInitPos = false;
           this.el.emit('marker-status-change', { marker: node.name, id: node.id, visible: false });
@@ -290,8 +299,122 @@ if (typeof AFRAME !== 'undefined') {
       return { chain, idle };
     },
 
+    /**
+     * Snapshot active markers, chain, and midpoint for freezing in Photo Mode
+     */
+    getFrozenSnapshot: function () {
+      const nodesClone = (this.lastActiveNodes || []).map((n) => ({
+        id: n.id,
+        name: n.name,
+        color: n.color,
+        position: n.position.clone(),
+        smoothedPos: n.smoothedPos.clone(),
+        el: document.getElementById(`marker-${n.id}`)
+      }));
+
+      const chainClone = (this.lastChain || []).map((n) => {
+        const found = nodesClone.find((nc) => nc.id === n.id);
+        return found || {
+          id: n.id,
+          name: n.name,
+          color: n.color,
+          position: n.position.clone(),
+          smoothedPos: n.smoothedPos.clone(),
+          el: document.getElementById(`marker-${n.id}`)
+        };
+      });
+
+      const idleClone = (this.lastIdle || []).map((n) => {
+        const found = nodesClone.find((nc) => nc.id === n.id);
+        return found || {
+          id: n.id,
+          name: n.name,
+          color: n.color,
+          position: n.position.clone(),
+          smoothedPos: n.smoothedPos.clone(),
+          el: document.getElementById(`marker-${n.id}`)
+        };
+      });
+
+      let midpoint = null;
+      if (this.birthdayFX && this.birthdayFX.lastMidpoint) {
+        midpoint = this.birthdayFX.lastMidpoint.clone();
+      }
+
+      return {
+        nodes: nodesClone,
+        chain: chainClone,
+        idle: idleClone,
+        midpoint
+      };
+    },
+
+    /**
+     * Switch Photo Mode on or off
+     * @param {boolean} enabled
+     * @param {Object|null} frozenData
+     */
+    setPhotoMode: function (enabled, frozenData) {
+      this.isPhotoMode = !!enabled;
+      this.frozenData = enabled ? frozenData : null;
+      console.log(`[Proximity] Photo Mode set to: ${this.isPhotoMode}`);
+    },
+
     tick: function (time, timeDelta) {
       if (!this.lightningFX) return;
+
+      // When in Photo Mode, bypass physical camera detection and execute loop using frozen snapshot
+      if (this.isPhotoMode && this.frozenData) {
+        const chain = this.frozenData.chain || [];
+        const idle = this.frozenData.idle || [];
+        const activeNodes = this.frozenData.nodes || [];
+
+        let totalDist = 0;
+        for (let i = 0; i < chain.length - 1; i++) {
+          totalDist += chain[i].position.distanceTo(chain[i + 1].position);
+        }
+
+        const prox = 1.0;
+        let bdayResult = { state: 'CELEBRATION', chargePercent: 100, chargeProgress: 1.0, lightningIntensity: 1.0 };
+
+        let tNodes = [0, 1];
+        try { tNodes = JSON.parse(this.data.targetNodes); } catch (e) {}
+
+        const nodeA = chain.find((n) => n.id === tNodes[0]) || (chain.length > 0 ? chain[0] : null);
+        const nodeB = chain.find((n) => n.id === tNodes[1]) || (chain.length > 1 ? chain[chain.length - 1] : null);
+
+        if (this.birthdayFX) {
+          bdayResult = this.birthdayFX.update(
+            nodeA ? nodeA.position : null,
+            nodeB ? nodeB.position : null,
+            totalDist || 1.0,
+            prox,
+            timeDelta
+          );
+        }
+
+        if (typeof this.lightningFX.updateChain === 'function') {
+          this.lightningFX.updateChain(chain, timeDelta, bdayResult.lightningIntensity, 0, idle);
+        } else if (chain.length >= 2) {
+          this.lightningFX.update(chain[0].position, chain[chain.length - 1].position, timeDelta, bdayResult.lightningIntensity, 0);
+        }
+
+        this.el.emit('proximity-update', {
+          distance: totalDist,
+          proximity: prox,
+          active: true,
+          chainPath: chain.map((n) => n.name),
+          chainPathStr: chain.map((n) => n.name).join(' ➔ '),
+          activeCount: activeNodes.length,
+          birthdayState: bdayResult.state,
+          chargePercent: 100,
+          celebrationText: this.data.celebrationText || '',
+          isAudioPlaying: this.birthdayFX ? this.birthdayFX.isAudioPlaying() : false,
+          hasAudio: this.birthdayFX ? this.birthdayFX.hasAudio() : false,
+          isPhotoMode: true
+        });
+        return;
+      }
 
       const alpha = this.data.smoothingFactor;
       const activeNodes = [];
@@ -336,6 +459,15 @@ if (typeof AFRAME !== 'undefined') {
 
       // Build physical nearest-neighbor chain path
       const { chain, idle } = this._buildNearestNeighborChain(activeNodes);
+
+      // Cache active nodes & chain for snapshotting
+      if (activeNodes.length > 0) {
+        this.lastActiveNodes = activeNodes;
+      }
+      if (chain.length > 0) {
+        this.lastChain = chain;
+      }
+      this.lastIdle = idle;
 
       if (chain.length >= 2) {
         // Calculate total chain distance

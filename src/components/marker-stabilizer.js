@@ -38,6 +38,10 @@ if (typeof AFRAME !== 'undefined') {
     },
 
     _onMarkerFound: function () {
+      if (document.body.classList.contains('photo-mode-active')) {
+        this._setChildrenVisibility(false);
+        return;
+      }
       this.isFound = true;
       this.stableFrameCount = 0;
       this.isStable = false;
@@ -46,6 +50,9 @@ if (typeof AFRAME !== 'undefined') {
     },
 
     _onMarkerLost: function () {
+      if (document.body.classList.contains('photo-mode-active')) {
+        return;
+      }
       this.isFound = false;
       this.stableFrameCount = 0;
       this.isStable = false;
@@ -56,6 +63,16 @@ if (typeof AFRAME !== 'undefined') {
     tick: function () {
       const obj3D = this.el.object3D;
       if (!obj3D) return;
+
+      // In Photo Mode, completely disable marker rendering and keep all children hidden
+      if (document.body.classList.contains('photo-mode-active')) {
+        this.stableFrameCount = 0;
+        this.isStable = false;
+        this.isFound = false;
+        this._setChildrenVisibility(false);
+        obj3D.visible = false;
+        return;
+      }
 
       const isDetected = obj3D.visible || this.isFound;
 
