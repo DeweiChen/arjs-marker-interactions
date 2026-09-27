@@ -143,6 +143,9 @@ export class ModalController {
 
       const markerItemEl = document.getElementById(`modal-marker-item-${markerId}`);
       if (markerItemEl) {
+        const isConfigured = Object.hasOwn(profile.markers || {}, markerId);
+        markerItemEl.classList.toggle('hidden', !isConfigured);
+
         const titleEl = markerItemEl.querySelector('.marker-title');
         const badgeEl = markerItemEl.querySelector('.marker-text-badge');
         const terminalBadge = markerItemEl.querySelector('.marker-terminal-badge');

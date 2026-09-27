@@ -210,5 +210,38 @@
       "celebrationText": "東京不甩尾",
       "audioUrl": ""
     }
+  },
+  "daisy": {
+    "name": "Daisy",
+    "markers": {
+      "0": {
+        "text": "0",
+        "color": "#1d4ed8",
+        "emissive": "#0077ff"
+      },
+      "1": {
+        "text": "1",
+        "color": "#00cba9",
+        "emissive": "#00cba9"
+      },
+      "2": {
+        "text": "2",
+        "color": "#dc2626",
+        "emissive": "#ff1a1a"
+      },
+      "7": {
+        "text": "7",
+        "color": "#e2e8f0",
+        "emissive": "#ffffff"
+      }
+    },
+    "interaction": {
+      "targetNodes": [
+        0,
+        7
+      ],
+      "celebrationText": "Happy Birthday",
+      "audioUrl": "./assets/HBD.mp3"
+    }
   }
 }
