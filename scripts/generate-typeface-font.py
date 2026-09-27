@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from fontTools.pens.recordingPen import RecordingPen
+from fontTools.pens.recordingPen import DecomposingRecordingPen
 from fontTools.ttLib import TTFont
 
 
@@ -16,6 +16,7 @@ CHARS = (
     "，。！？（）【】「」：；＋－／"
     " 生日快樂你好我你他吳蕭兒珈儀"
     "東京不甩尾"
+    "\u5c0f\u99a5\u8179\u694a\u6995"
 )
 RESOLUTION = 1000
 
@@ -36,7 +37,7 @@ def append_command(commands, command, *points):
 
 
 def outline_for_glyph(glyph_set, glyph_name, units_per_em):
-    pen = RecordingPen()
+    pen = DecomposingRecordingPen(glyph_set)
     glyph_set[glyph_name].draw(pen)
     commands = []
     start = None
@@ -86,6 +87,7 @@ def main():
         candidates = [
             Path("/tmp/NotoSansTC-Regular.ttf"),
             Path(__file__).resolve().parent.parent / "fonts" / "NotoSansTC-Regular.ttf",
+            Path("/System/Library/Fonts/STHeiti Medium.ttc"),
             Path("/System/Library/Fonts/Supplemental/Arial Unicode.ttf"),
             Path("/System/Library/Fonts/STHeiti Light.ttc"),
         ]

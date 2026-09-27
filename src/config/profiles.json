@@ -66,34 +66,34 @@
         "emissive": "#00cba9"
       },
       "2": {
-        "text": "=0=",
+        "text": "Rong",
         "color": "#dc2626",
-        "emissive": "#ff1a1a"
+        "emissive": "#ffffff"
       },
       "3": {
-        "text": "=3=",
+        "text": "Christine",
         "color": "#ea580c",
         "emissive": "#ff7a00"
       },
       "4": {
-        "text": "><",
+        "text": "楊馥榕",
         "color": "#ca8a04",
-        "emissive": "#ffe600"
-      },
-      "5": {
-        "text": "@@",
-        "color": "#16a34a",
         "emissive": "#22c55e"
       },
+      "5": {
+        "text": "Yang",
+        "color": "#16a34a",
+        "emissive": "#ffe600"
+      },
       "6": {
-        "text": ">/<",
+        "text": "小腹",
         "color": "#7c3aed",
         "emissive": "#a855f7"
       },
       "7": {
-        "text": "^^",
+        "text": "小馥",
         "color": "#e2e8f0",
-        "emissive": "#ffffff"
+        "emissive": "#ffe600"
       }
     },
     "interaction": {

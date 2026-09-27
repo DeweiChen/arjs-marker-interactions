@@ -89,18 +89,23 @@ export function createPaths(text, size, data, THREE, fallbackData = null) {
 
   let offsetX = 0;
   let offsetY = 0;
+  let previousWasFallback = false;
 
   for (let i = 0; i < chars.length; i++) {
     const char = chars[i];
     if (char === '\n') {
       offsetX = 0;
       offsetY -= line_height;
+      previousWasFallback = false;
     } else {
       const primaryGlyph = data.glyphs[char];
       const fallbackGlyph = fallbackData?.glyphs[char];
       const isFallback = !primaryGlyph && !!fallbackGlyph;
       const glyph = primaryGlyph || fallbackGlyph || data.glyphs['?'] || fallbackData?.glyphs['?'];
       if (glyph) {
+        if (isFallback && previousWasFallback) {
+          offsetX += size * 0.06;
+        }
         const path = new THREE.ShapePath();
         const glyphResolution = (isFallback && fallbackData?.resolution) ? fallbackData.resolution : data.resolution;
         const glyphScale = size / glyphResolution;
@@ -141,6 +146,7 @@ export function createPaths(text, size, data, THREE, fallbackData = null) {
           }
         }
         offsetX += glyph.ha * glyphScale;
+        previousWasFallback = isFallback;
         paths.push(path);
       }
     }
