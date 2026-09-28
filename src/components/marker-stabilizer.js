@@ -8,7 +8,8 @@ if (typeof AFRAME !== 'undefined') {
   AFRAME.registerComponent('marker-stabilizer', {
     schema: {
       warmupFrames: { type: 'int', default: 4 },
-      smoothUpdate: { type: 'boolean', default: true }
+      smoothUpdate: { type: 'boolean', default: true },
+      enabled: { type: 'boolean', default: true }
     },
 
     init: function () {
@@ -25,6 +26,15 @@ if (typeof AFRAME !== 'undefined') {
       this.el.addEventListener('markerLost', this._onMarkerLost);
     },
 
+    update: function (oldData) {
+      // Disabled markers (e.g. not listed in the active profile) never show their content
+      if (oldData && oldData.enabled !== undefined && !this.data.enabled) {
+        this.stableFrameCount = 0;
+        this.isStable = false;
+        this._setChildrenVisibility(false);
+      }
+    },
+
     _setChildrenVisibility: function (visible) {
       const el = this.el;
       if (!el || !el.children) return;
@@ -38,7 +48,7 @@ if (typeof AFRAME !== 'undefined') {
     },
 
     _onMarkerFound: function () {
-      if (document.body.classList.contains('photo-mode-active')) {
+      if (!this.data.enabled || document.body.classList.contains('photo-mode-active')) {
         this._setChildrenVisibility(false);
         return;
       }
@@ -71,6 +81,15 @@ if (typeof AFRAME !== 'undefined') {
         this.isFound = false;
         this._setChildrenVisibility(false);
         obj3D.visible = false;
+        return;
+      }
+
+      if (!this.data.enabled) {
+        if (this.isStable || this.stableFrameCount > 0) {
+          this.stableFrameCount = 0;
+          this.isStable = false;
+        }
+        this._setChildrenVisibility(false);
         return;
       }
 

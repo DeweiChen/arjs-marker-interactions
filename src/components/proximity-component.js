@@ -132,6 +132,8 @@ if (typeof AFRAME !== 'undefined') {
 
         markerEl.addEventListener('markerFound', () => {
           if (this.isPhotoMode || document.body.classList.contains('photo-mode-active')) return;
+          const stab = markerEl.components['marker-stabilizer'];
+          if (stab && !stab.data.enabled) return;
           node.isVisible = true;
           this.el.emit('marker-status-change', { marker: node.name, id: node.id, visible: true });
         });

@@ -163,7 +163,8 @@ Set `type` and `model` on any marker in a profile file (`src/config/profiles/<id
       "timeScale": 1
     },
     "glow": false,           // true = include the model in the selective bloom pass
-    "preload": false         // true = download when the profile is applied instead of on detection
+    "preload": false,        // true = download when the profile is applied instead of on detection
+    "smoothing": 0.8         // pose jitter smoothing 0–0.98 (0 = off; higher = steadier but laggier)
   }
 }
 ```
@@ -192,6 +193,17 @@ This project includes a pre-configured GitHub Actions workflow (`.github/workflo
    - Navigate to **Settings** -> **Pages**.
    - Set **Build and deployment > Source** to **GitHub Actions**.
 4. Once deployed, access the app at `https://<YOUR_GITHUB_USERNAME>.github.io/arjs-marker-interactions/` with automatic HTTPS.
+
+---
+
+## 🎨 Third-Party 3D Models
+
+| File | Model | Author | License |
+|---|---|---|---|
+| `public/models/daisy/purin.glb` | [Pompompurin](https://sketchfab.com/3d-models/pompompurin-ae512b681d404970ab540db295a8a6e0) | [fukkacumy](https://sketchfab.com/kraevaya201) | [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) |
+| `RobotExpressive.glb` (loaded from jsDelivr in `default` marker 1) | [RobotExpressive](https://github.com/mrdoob/three.js/tree/r164/examples/models/gltf/RobotExpressive) | Tomás Laulhé (modified by Don McCurdy) | CC0 1.0 |
+
+Pompompurin is a character © Sanrio; the fan-made model above is used for a personal, non-commercial project.
 
 ---
 

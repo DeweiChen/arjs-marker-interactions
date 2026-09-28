@@ -148,7 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
       loop: animation.loop || 'repeat',
       timeScale: animation.timeScale ?? 1,
       glow: !!model.glow,
-      preload: !!model.preload
+      preload: !!model.preload,
+      smoothing: model.smoothing ?? 0.8
     };
   };
 
@@ -194,6 +195,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const markerEl = document.getElementById(`marker-${markerId}`);
       if (markerEl) {
+        // `hideUnlistedMarkers` profiles only show the markers they list (no default.json fallback)
+        const isListed = Object.hasOwn(profile.markers || {}, markerId);
+        markerEl.setAttribute('marker-stabilizer', 'enabled', isListed || !profile.hideUnlistedMarkers);
+
         const isGlb = targetData.type === 'glb' && !!targetData.model?.url;
         const textEl = markerEl.querySelector('[three-text-3d]');
         if (textEl) {

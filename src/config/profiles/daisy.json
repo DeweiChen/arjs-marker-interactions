@@ -1,9 +1,10 @@
 {
   "name": "Daisy",
   "order": 40,
+  "hideUnlistedMarkers": true,
   "markers": {
     "0": {
-      "text": "0",
+      "text": "Daisy",
       "color": "#1d4ed8",
       "emissive": "#0077ff"
     },
@@ -15,12 +16,18 @@
     "2": {
       "text": "2",
       "color": "#dc2626",
-      "emissive": "#ff1a1a"
+      "emissive": "#22c55e"
     },
     "7": {
       "text": "7",
       "color": "#e2e8f0",
-      "emissive": "#ffffff"
+      "emissive": "#ffffff",
+      "type": "glb",
+      "model": {
+        "url": "./models/daisy/purin.glb",
+        "fitSize": 1.2,
+        "rotation": [0, -90, 0]
+      }
     }
   },
   "interaction": {
