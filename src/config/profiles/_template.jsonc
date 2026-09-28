@@ -1,0 +1,53 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Profile template — copy this file to `<id>.json` (e.g. `my-profile.json`) and
+// remove the comments. The file name becomes the profile id:
+//   https://.../?p=my-profile   (also ?profile=my-profile, ?mode=my-profile, #my-profile)
+//
+// Use a lowercase id: the `#<id>` hash form is matched in lowercase.
+// Files starting with `_` are ignored, so this template is never loaded.
+//
+// Fallback rules:
+//   - A marker (0–7) missing from `markers` uses the same marker from
+//     `default.json`, or plain `{ text: "<id>", color/emissive: "#ffffff" }`.
+//   - Only markers listed in `markers` are shown in the Markers info modal.
+// ─────────────────────────────────────────────────────────────────────────────
+{
+  "name": "My Profile",       // Display name in the Profile dropdown & modal (defaults to the id)
+  "order": 100,               // Optional dropdown sort order (ascending); `default` is always first
+
+  "markers": {                // Keys "0"–"7" = barcode marker ids; every key is optional
+    "0": {
+      "text": "Hello",        // 3D text shown on the marker; also the marker name in celebration FX
+      "color": "#1d4ed8",     // Text base color
+      "emissive": "#0077ff"   // Text glow / emissive color
+    },
+
+    // Optional: show a GLB model instead of the 3D text (text becomes the fallback on load error)
+    "1": {
+      "text": "Robot",
+      "color": "#00cba9",
+      "emissive": "#00cba9",
+      "type": "glb",
+      "model": {
+        "url": "./models/robot.glb", // Local file in public/models/, or a CORS-enabled remote URL (required)
+        "fitSize": 0.9,               // Longest side normalized to this size in marker units (default 0.9)
+        "scale": 1,                   // Extra multiplier after fitting (default 1)
+        "offset": [0, 0, 0],          // Position tweak [x, y, z] (default [0, 0, 0])
+        "rotation": [0, 0, 0],        // Rotation in degrees [x, y, z] (default [0, 0, 0])
+        "animation": {
+          "clip": "*",                // "*" = all clips (default), a clip name, or null = no animation
+          "loop": "repeat",           // "repeat" (default) | "once" | "pingpong"
+          "timeScale": 1              // Playback speed (default 1)
+        },
+        "glow": false,                // true = include the model in the bloom pass (default false)
+        "preload": false              // true = download on profile apply instead of on first detection (default false)
+      }
+    }
+  },
+
+  "interaction": {
+    "targetNodes": [0, 7],               // Two marker ids that trigger the celebration when brought together (default [0, 7])
+    "celebrationText": "Happy Birthday", // Celebration text; empty/omitted disables the celebration & reset button
+    "audioUrl": "./assets/HBD.mp3"       // Music during celebration; empty/omitted hides the audio button
+  }
+}

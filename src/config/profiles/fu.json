@@ -1,0 +1,54 @@
+{
+  "name": "Fu",
+  "order": 10,
+  "markers": {
+    "0": {
+      "text": "DW",
+      "color": "#1d4ed8",
+      "emissive": "#0077ff"
+    },
+    "1": {
+      "text": "Fu",
+      "color": "#00cba9",
+      "emissive": "#00cba9"
+    },
+    "2": {
+      "text": "Rong",
+      "color": "#dc2626",
+      "emissive": "#ffffff"
+    },
+    "3": {
+      "text": "Christine",
+      "color": "#ea580c",
+      "emissive": "#ff7a00"
+    },
+    "4": {
+      "text": "楊馥榕",
+      "color": "#ca8a04",
+      "emissive": "#22c55e"
+    },
+    "5": {
+      "text": "Yang",
+      "color": "#16a34a",
+      "emissive": "#ffe600"
+    },
+    "6": {
+      "text": "小腹",
+      "color": "#7c3aed",
+      "emissive": "#a855f7"
+    },
+    "7": {
+      "text": "小馥",
+      "color": "#e2e8f0",
+      "emissive": "#ffe600"
+    }
+  },
+  "interaction": {
+    "targetNodes": [
+      0,
+      1
+    ],
+    "celebrationText": "Happy Birthday 30",
+    "audioUrl": "./assets/HBD.mp3"
+  }
+}

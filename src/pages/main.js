@@ -17,7 +17,7 @@ import { BloomPanelController } from '../ui/bloom-panel.js';
 import { ModalController } from '../ui/modal-controller.js';
 import { ScanGuideController } from '../ui/scan-guide.js';
 import { PhotoModeController } from '../ui/photo-mode-controller.js';
-import profilesData from '../config/profiles.json';
+import profilesData from '../config/profile-loader.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const sceneEl = document.querySelector('a-scene');

@@ -18,7 +18,7 @@ A WebAR dual-marker proximity interaction system built on **AR.js**, **A-Frame (
   - **Direct Arcs**: When no intermediate numbers are present, maintains direct high-voltage electric arcs between the terminal markers.
   - **Half-Chain & Idle Nodes**: Single terminals form partial chains with nearby numbers, while unlinked markers exhibit soft breathing idle pulse auras.
 - 🔮 **Proximity-Scaled Plasma & Relay Cores**: Active relay energy crystals at each marker node and midpoint arcs that expand, rotate, and pulse with high-frequency jitter.
-- 🎛️ **Profile System (`profiles.json`)**: Configurable interaction profiles (`default` pure numbers version vs. `fu` celebration version) with custom target explosion nodes, celebration text, and audio.
+- 🎛️ **Profile System (`src/config/profiles/*.json`)**: One file per interaction profile (`default` pure numbers version plus any custom profiles) with custom marker text/colors/GLB models, target explosion nodes, celebration text, and audio.
 - 📱 **Mobile HTTPS Ready**: Includes `@vitejs/plugin-basic-ssl` for local development HTTPS certificates and automated GitHub Pages CI/CD deployment.
 
 ---
@@ -44,8 +44,6 @@ arjs-marker-interactions/
 │   └── workflows/
 │       └── deploy.yml          # GitHub Pages automated CI/CD deployment
 ├── public/
-│   ├── config/
-│   │   └── profiles.json       # Profile configuration (default, fu)
 │   ├── fonts/
 │   │   └── fredoka_light_regular.json  # 3D Typeface font
 │   └── markers/
@@ -57,6 +55,12 @@ arjs-marker-interactions/
 │   └── generate-barcode-markers.py # Barcode marker generator
 ├── src/
 │   ├── components/             # Custom A-Frame components (three-text-3d, proximity, bloom)
+│   ├── config/
+│   │   ├── profile-loader.js   # Auto-loads every profiles/*.json (file name = profile id)
+│   │   └── profiles/
+│   │       ├── _template.jsonc # Documented template of every setting (not loaded)
+│   │       ├── default.json    # Default profile & per-marker fallback
+│   │       └── <id>.json       # One file per custom profile
 │   ├── core/                   # Font loader, aspect ratio corrector
 │   ├── fx/                     # Lightning FX, Birthday FX strategies
 │   ├── pages/                  # Application bootstrap (main.js)
@@ -108,10 +112,15 @@ The application supports multiple URL parameters to toggle profiles and develope
 
 | Parameter | Example | Description |
 |---|---|---|
-| `p` / `profile` | `?p=default` or `?p=fu` | **Profile Selection**: Loads profile from `public/config/profiles.json`. `default` loads standard pure numbers (`0`–`7`), while `fu` loads the DW/Fu celebration profile. |
+| `p` / `profile` | `?p=default` or `?p=<id>` | **Profile Selection**: Loads `src/config/profiles/<id>.json` (file name = id). `default` loads standard pure numbers (`0`–`7`); unknown ids fall back to `default`. `mode` is also accepted. |
 | `d` / `debug` | `?d=1` or `?debug=1` | **Debug Diagnostics HUD**: Displays the top-left FPS/frametime telemetry badge, bottom proximity & energy status bar, top-right **Profile** switcher dropdown, and **FX / DPR** bloom & resolution setting panel. By default, debug elements remain hidden for a clean experience unless `?d=1` or `?debug=1` is provided. |
 
-> **Tip**: You can combine parameters (e.g. `?d=1&p=fu`) or use URL hash (e.g. `#debug`, `#fu`).
+> **Tip**: You can combine parameters (e.g. `?d=1&p=<id>`) or use URL hash (e.g. `#debug`, `#<id>`).
+
+### Adding a Profile
+1. Copy `src/config/profiles/_template.jsonc` to `src/config/profiles/<id>.json` (lowercase id) and strip the comments.
+2. Fill in only what you need — markers you omit fall back to the same marker in `default.json`, and only listed markers appear in the Markers modal.
+3. Open `?p=<id>`. The profile is picked up automatically (no code changes); optional `order` controls its position in the dropdown.
 
 ---
 
@@ -132,7 +141,7 @@ markerManager.setMarkerObject('hiro', photoMesh);
 ```
 
 ### 2. Showing GLB Models on a Marker (`type: "glb"`)
-Set `type` and `model` on any marker in `src/config/profiles.json`. The model is downloaded the first time that marker is detected, auto-fitted onto the marker, and its embedded animations are played. `text` is still used as the marker name and as a fallback if loading fails.
+Set `type` and `model` on any marker in a profile file (`src/config/profiles/<id>.json`). The model is downloaded the first time that marker is detected, auto-fitted onto the marker, and its embedded animations are played. `text` is still used as the marker name and as a fallback if loading fails.
 
 ```jsonc
 "1": {
