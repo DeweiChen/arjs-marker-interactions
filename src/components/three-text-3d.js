@@ -30,7 +30,8 @@ if (typeof AFRAME !== 'undefined') {
       smoothingFactor: { type: 'number', default: 0.25 },
       autoFit: { type: 'boolean', default: true },
       fitWidth: { type: 'number', default: 1.22 },
-      fitHeight: { type: 'number', default: 0.9 }
+      fitHeight: { type: 'number', default: 0.9 },
+      hidden: { type: 'boolean', default: false }
     },
 
     init: function () {
@@ -76,6 +77,7 @@ if (typeof AFRAME !== 'undefined') {
       if (oldData && (oldData.text !== this.data.text || oldData.fontUrl !== this.data.fontUrl || oldData.fallbackFontUrl !== this.data.fallbackFontUrl || oldData.size !== this.data.size || oldData.depth !== this.data.depth || oldData.autoFit !== this.data.autoFit || oldData.fitWidth !== this.data.fitWidth || oldData.fitHeight !== this.data.fitHeight)) {
         this._buildMesh();
       } else if (this.mesh && this.mesh.material) {
+        this.mesh.visible = !this.data.hidden;
         const THREE = window.THREE || AFRAME.THREE;
         if (this.mesh.material.isMeshBasicMaterial) {
           this.mesh.material.color.set(this.data.emissive || this.data.color);
@@ -90,7 +92,7 @@ if (typeof AFRAME !== 'undefined') {
     },
 
     tick: function () {
-      if (!this.mesh) return;
+      if (!this.mesh || this.data.hidden) return;
 
       const obj3D = this.el.object3D;
       if (!obj3D || !obj3D.parent) return;
@@ -202,6 +204,7 @@ if (typeof AFRAME !== 'undefined') {
           }
         }
         this.mesh.layers.enable(1);
+        this.mesh.visible = !this.data.hidden;
         this.el.setObject3D('mesh', this.mesh);
         this.el.emit('three-text-loaded', { mesh: this.mesh }, true);
       };

@@ -155,7 +155,8 @@ export class ModalController {
           titleEl.textContent = `Barcode ${i} (${colorName})`;
         }
         if (badgeEl) {
-          badgeEl.textContent = `"${markerData.text}"`;
+          const isGlb = markerData.type === 'glb' && !!markerData.model?.url;
+          badgeEl.textContent = isGlb ? `3D · "${markerData.text}"` : `"${markerData.text}"`;
           if (markerData.color) {
             badgeEl.style.borderColor = markerData.color;
             badgeEl.style.color = markerData.color;

@@ -131,17 +131,35 @@ photoMesh.rotation.x = -Math.PI / 2; // Lie flat on top of the marker
 markerManager.setMarkerObject('hiro', photoMesh);
 ```
 
-### 2. Loading External 3D Models (GLTF / GLB)
-```javascript
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+### 2. Showing GLB Models on a Marker (`type: "glb"`)
+Set `type` and `model` on any marker in `src/config/profiles.json`. The model is downloaded the first time that marker is detected, auto-fitted onto the marker, and its embedded animations are played. `text` is still used as the marker name and as a fallback if loading fails.
 
-const loader = new GLTFLoader();
-loader.load('./assets/models/my-model.glb', (gltf) => {
-  const model = gltf.scene;
-  model.scale.set(0.5, 0.5, 0.5);
-  markerManager.setMarkerObject('hiro', model);
-});
+```jsonc
+"1": {
+  "text": "1",
+  "color": "#00cba9",
+  "emissive": "#00cba9",
+  "type": "glb",
+  "model": {
+    "url": "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r164/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
+                             // or a local file: put it in public/models/ and use "./models/xxx.glb"
+                             // remote URLs must allow CORS
+    "fitSize": 0.9,          // longest side normalized to this size (marker units)
+    "scale": 1,              // extra multiplier after fitting
+    "offset": [0, 0, 0],     // position tweak; the model's bottom rests on the marker by default
+    "rotation": [0, 0, 0],   // degrees
+    "animation": {
+      "clip": "Dance",       // "*" = all clips (default), a clip name, or null = none
+      "loop": "repeat",      // "repeat" | "once" | "pingpong"
+      "timeScale": 1
+    },
+    "glow": false,           // true = include the model in the selective bloom pass
+    "preload": false         // true = download when the profile is applied instead of on detection
+  }
+}
 ```
+
+Scene lights (ambient + directional) are created only while at least one GLB model is loaded; text-only profiles render without lights. The `default` profile ships this example on marker 1.
 
 ### 3. Adding Custom Markers (.patt)
 Generate custom `.patt` files using the [AR.js Marker Training Generator](https://ar-js-org.github.io/AR.js/three.js/examples/marker-training/examples/generator.html):

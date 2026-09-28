@@ -10,7 +10,17 @@
       "1": {
         "text": "1",
         "color": "#00cba9",
-        "emissive": "#00cba9"
+        "emissive": "#00cba9",
+        "type": "glb",
+        "model": {
+          "url": "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r164/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
+          "fitSize": 0.9,
+          "animation": {
+            "clip": "Dance",
+            "loop": "repeat",
+            "timeScale": 1
+          }
+        }
       },
       "2": {
         "text": "2",

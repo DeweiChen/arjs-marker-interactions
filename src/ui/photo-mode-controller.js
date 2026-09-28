@@ -250,9 +250,11 @@ export class PhotoModeController {
         clone.matrixAutoUpdate = true;
 
         // Ensure Selective Bloom Layer 1 is preserved on all child meshes
+        // (GLB models keep their own layer setup so non-glowing models don't bloom)
+        const isModelSlot = childEl.classList.contains('marker-model-slot');
         clone.traverse((obj) => {
           if (obj.isMesh || obj.isPoints) {
-            obj.layers.enable(1);
+            if (!isModelSlot) obj.layers.enable(1);
             obj.frustumCulled = false;
             if (obj.material) {
               obj.material.depthWrite = true;

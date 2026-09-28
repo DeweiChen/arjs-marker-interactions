@@ -7,6 +7,7 @@ import '../style.css';
 import '../components/marker-stabilizer.js';
 import '../components/proximity-component.js';
 import '../components/three-text-3d.js';
+import '../components/marker-model.js';
 import '../components/bloom-effect.js';
 
 import { initAntiZoomProtection } from '../core/anti-zoom.js';
@@ -129,6 +130,36 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'default';
   };
 
+  const toVec3 = (arr) => {
+    const [x = 0, y = 0, z = 0] = Array.isArray(arr) ? arr : [];
+    return { x, y, z };
+  };
+
+  // Map a profile marker's `model` config onto the marker-model component schema
+  const toMarkerModelAttrs = (model) => {
+    const animation = model.animation || {};
+    return {
+      url: model.url,
+      fitSize: model.fitSize ?? 0.9,
+      scale: model.scale ?? 1,
+      offset: toVec3(model.offset),
+      rotation: toVec3(model.rotation),
+      clip: animation.clip === null ? '' : (animation.clip ?? '*'),
+      loop: animation.loop || 'repeat',
+      timeScale: animation.timeScale ?? 1,
+      glow: !!model.glow,
+      preload: !!model.preload
+    };
+  };
+
+  // Fall back to the marker's 3D text when its GLB model fails to load
+  document.querySelectorAll('.marker-model-slot').forEach((slotEl) => {
+    slotEl.addEventListener('marker-model-error', () => {
+      const textEl = slotEl.parentEl && slotEl.parentEl.querySelector('[three-text-3d]');
+      if (textEl) textEl.setAttribute('three-text-3d', 'hidden', false);
+    });
+  });
+
   const applyProfile = (profileId) => {
     if (!profiles[profileId]) return;
     currentProfileId = profileId;
@@ -163,13 +194,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const markerEl = document.getElementById(`marker-${markerId}`);
       if (markerEl) {
+        const isGlb = targetData.type === 'glb' && !!targetData.model?.url;
         const textEl = markerEl.querySelector('[three-text-3d]');
         if (textEl) {
           textEl.setAttribute('three-text-3d', {
             text: targetData.text,
             color: targetData.color,
-            emissive: targetData.emissive
+            emissive: targetData.emissive,
+            hidden: isGlb
           });
+        }
+
+        const modelSlotEl = markerEl.querySelector('.marker-model-slot');
+        if (modelSlotEl) {
+          if (isGlb) {
+            modelSlotEl.setAttribute('marker-model', toMarkerModelAttrs(targetData.model));
+          } else if (modelSlotEl.hasAttribute('marker-model')) {
+            modelSlotEl.removeAttribute('marker-model');
+          }
         }
       }
     }
