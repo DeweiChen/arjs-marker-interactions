@@ -3,6 +3,8 @@
  * Manages marker pattern dialogs, celebration reset, and audio toggle controls.
  */
 
+import { MARKER_IDS, resolveMarker } from '../config/profile-loader.js';
+
 export class ModalController {
   constructor(sceneEl) {
     this.sceneEl = sceneEl;
@@ -109,10 +111,9 @@ export class ModalController {
    * Dynamically update markers modal content and badges to reflect current active profile
    *
    * @param {string} profileId - Current active profile identifier
-   * @param {Object} profile - Current active profile configuration object
-   * @param {Object} defaultProfile - Default profile configuration object
+   * @param {Object} profile - Current active (normalized) profile configuration object
    */
-  updateProfileInfo(profileId, profile = {}, defaultProfile = {}) {
+  updateProfileInfo(profileId, profile = {}) {
     if (!profile) return;
 
     // Update Profile Name badge in modal header
@@ -121,7 +122,6 @@ export class ModalController {
       profileNameEl.textContent = profile.name || profileId;
     }
 
-    const defaultMarkers = defaultProfile.markers || {};
     const targetNodes = profile.interaction?.targetNodes || [];
 
     const COLOR_NAMES = {
@@ -135,16 +135,13 @@ export class ModalController {
       7: 'Pure White'
     };
 
-    for (let i = 0; i <= 7; i++) {
-      const markerId = String(i);
-      const markerData = (profile.markers && profile.markers[markerId]) ||
-                         (defaultMarkers && defaultMarkers[markerId]) ||
-                         { text: markerId, color: '#ffffff', emissive: '#ffffff' };
+    for (const markerId of MARKER_IDS) {
+      const i = Number(markerId);
+      const { marker, listed } = resolveMarker(profile, markerId);
 
       const markerItemEl = document.getElementById(`modal-marker-item-${markerId}`);
       if (markerItemEl) {
-        const isConfigured = Object.hasOwn(profile.markers || {}, markerId);
-        markerItemEl.classList.toggle('hidden', !isConfigured);
+        markerItemEl.classList.toggle('hidden', !listed);
 
         const titleEl = markerItemEl.querySelector('.marker-title');
         const badgeEl = markerItemEl.querySelector('.marker-text-badge');
@@ -155,12 +152,9 @@ export class ModalController {
           titleEl.textContent = `Barcode ${i} (${colorName})`;
         }
         if (badgeEl) {
-          const isGlb = markerData.type === 'glb' && !!markerData.model?.url;
-          badgeEl.textContent = isGlb ? `3D · "${markerData.text}"` : `"${markerData.text}"`;
-          if (markerData.color) {
-            badgeEl.style.borderColor = markerData.color;
-            badgeEl.style.color = markerData.color;
-          }
+          badgeEl.textContent = marker.type === 'glb' ? `3D · "${marker.name}"` : `"${marker.text.text}"`;
+          badgeEl.style.borderColor = marker.text.color;
+          badgeEl.style.color = marker.text.color;
         }
 
         const isTarget = targetNodes.includes(i);

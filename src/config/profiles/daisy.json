@@ -4,37 +4,39 @@
   "hideUnlistedMarkers": true,
   "markers": {
     "0": {
+      "type": "text",
       "text": "Daisy",
       "color": "#1d4ed8",
       "emissive": "#0077ff"
     },
     "1": {
-      "text": "1",
+      "type": "text",
+      "text": "2/5",
       "color": "#00cba9",
       "emissive": "#00cba9"
     },
     "2": {
-      "text": "2",
+      "type": "text",
+      "text": "2027",
       "color": "#dc2626",
       "emissive": "#22c55e"
     },
     "7": {
-      "text": "7",
-      "color": "#e2e8f0",
-      "emissive": "#ffffff",
       "type": "glb",
+      "name": "7",
       "model": {
         "url": "./models/daisy/purin.glb",
         "fitSize": 1.2,
         "rotation": [0, -90, 0]
+      },
+      "fallback": {
+        "color": "#e2e8f0",
+        "emissive": "#ffffff"
       }
     }
   },
   "interaction": {
-    "targetNodes": [
-      0,
-      7
-    ],
+    "targetNodes": [0, 7],
     "celebrationText": "Happy Birthday",
     "audioUrl": "./assets/HBD.mp3"
   }

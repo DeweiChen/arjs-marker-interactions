@@ -140,15 +140,19 @@ photoMesh.rotation.x = -Math.PI / 2; // Lie flat on top of the marker
 markerManager.setMarkerObject('hiro', photoMesh);
 ```
 
-### 2. Showing GLB Models on a Marker (`type: "glb"`)
-Set `type` and `model` on any marker in a profile file (`src/config/profiles/<id>.json`). The model is downloaded the first time that marker is detected, auto-fitted onto the marker, and its embedded animations are played. `text` is still used as the marker name and as a fallback if loading fails.
+### 2. Marker Types (`type: "text"` / `type: "glb"`)
+Every marker in a profile file (`src/config/profiles/<id>.json`) declares one of two types. See `_template.jsonc` for every field and its default.
+
+```jsonc
+"0": { "type": "text", "text": "Hello", "color": "#1d4ed8", "emissive": "#0077ff" }
+```
+
+A `glb` marker shows a 3D model instead. The model is downloaded the first time that marker is detected, auto-fitted onto the marker, and its embedded animations are played. `name` is the marker name used by the celebration FX and Markers modal; `fallback` is the 3D text shown if loading fails.
 
 ```jsonc
 "1": {
-  "text": "1",
-  "color": "#00cba9",
-  "emissive": "#00cba9",
   "type": "glb",
+  "name": "1",
   "model": {
     "url": "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r164/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
                              // or a local file: put it in public/models/ and use "./models/xxx.glb"
@@ -165,8 +169,17 @@ Set `type` and `model` on any marker in a profile file (`src/config/profiles/<id
     "glow": false,           // true = include the model in the selective bloom pass
     "preload": false,        // true = download when the profile is applied instead of on detection
     "smoothing": 0.8         // pose jitter smoothing 0–0.98 (0 = off; higher = steadier but laggier)
-  }
+  },
+  "fallback": { "text": "1", "color": "#00cba9", "emissive": "#00cba9" } // optional; text defaults to name
 }
+```
+
+**Compress local GLB files before committing.** GitHub Pages has a soft 100 GB/month bandwidth limit, and Draco compression usually shrinks mesh-heavy models 5–10× (`purin.glb`: 1.27 MB → 98 KB). The loader already supports Draco; the decoder (~300 KB, cached) is only fetched when a Draco model is loaded.
+
+```bash
+npx @gltf-transform/cli dedup in.glb tmp1.glb
+npx @gltf-transform/cli prune tmp1.glb tmp2.glb
+npx @gltf-transform/cli draco tmp2.glb public/models/<profile>/model.glb
 ```
 
 Scene lights (ambient + directional) are created only while at least one GLB model is loaded; text-only profiles render without lights. The `default` profile ships this example on marker 1.

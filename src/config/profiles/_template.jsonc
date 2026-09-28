@@ -18,20 +18,25 @@
   "order": 100,               // Optional dropdown sort order (ascending); `default` is always first
   "hideUnlistedMarkers": false, // true = markers missing from `markers` show nothing (default false = use default.json)
 
-  "markers": {                // Keys "0"–"7" = barcode marker ids; every key is optional
+  // Keys "0"–"7" = barcode marker ids; every key is optional.
+  // Each marker is exactly one of two types, chosen by `type`:
+  //   "text" — 3D extruded text
+  //   "glb"  — a GLB/GLTF 3D model
+  "markers": {
+    // ── type "text" ──────────────────────────────────────────────────────────
     "0": {
-      "text": "Hello",        // 3D text shown on the marker; also the marker name in celebration FX
-      "color": "#1d4ed8",     // Text base color
-      "emissive": "#0077ff"   // Text glow / emissive color
+      "type": "text",         // Required: "text" | "glb"
+      "text": "Hello",        // Required: 3D text shown on the marker; also the marker name in celebration FX & modal
+      "color": "#1d4ed8",     // Text base color (default "#ffffff")
+      "emissive": "#0077ff",  // Text glow / emissive color (default = color)
+      "name": "Hello"         // Optional: override the marker name (default = text)
     },
 
-    // Optional: show a GLB model instead of the 3D text (text becomes the fallback on load error)
+    // ── type "glb" ───────────────────────────────────────────────────────────
     "1": {
-      "text": "Robot",
-      "color": "#00cba9",
-      "emissive": "#00cba9",
       "type": "glb",
-      "model": {
+      "name": "Robot",        // Marker name in celebration FX & modal (default = marker id)
+      "model": {              // Required
         "url": "./models/robot.glb", // Local file in public/models/, or a CORS-enabled remote URL (required)
         "fitSize": 0.9,               // Longest side normalized to this size in marker units (default 0.9)
         "scale": 1,                   // Extra multiplier after fitting (default 1)
@@ -45,6 +50,11 @@
         "glow": false,                // true = include the model in the bloom pass (default false)
         "preload": false,             // true = download on profile apply instead of on first detection (default false)
         "smoothing": 0.8              // Pose jitter smoothing 0–0.98 (0 = off, higher = steadier but laggier; default 0.8)
+      },
+      "fallback": {           // Optional: 3D text shown if the model fails to load
+        "text": "Robot",      // default = name
+        "color": "#00cba9",   // also tints the badge in the Markers modal (default "#ffffff")
+        "emissive": "#00cba9" // default = color
       }
     }
   },

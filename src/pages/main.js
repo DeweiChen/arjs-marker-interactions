@@ -17,7 +17,7 @@ import { BloomPanelController } from '../ui/bloom-panel.js';
 import { ModalController } from '../ui/modal-controller.js';
 import { ScanGuideController } from '../ui/scan-guide.js';
 import { PhotoModeController } from '../ui/photo-mode-controller.js';
-import profilesData from '../config/profile-loader.js';
+import profilesData, { MARKER_IDS, resolveMarker } from '../config/profile-loader.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const sceneEl = document.querySelector('a-scene');
@@ -182,30 +182,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // HUD button text remains 'Profile' as intended
 
     // 1. Compute and apply final marker configurations in a single pass
-    const defaultMarkers = profiles['default']?.markers || {};
     const markerNamesMap = {};
 
-    for (let i = 0; i <= 7; i++) {
-      const markerId = String(i);
-      const targetData = (profile.markers && profile.markers[markerId]) ||
-                         (defaultMarkers && defaultMarkers[markerId]) ||
-                         { text: markerId, color: '#ffffff', emissive: '#ffffff' };
-
-      markerNamesMap[markerId] = targetData.text;
+    for (const markerId of MARKER_IDS) {
+      const { marker, listed } = resolveMarker(profile, markerId);
+      markerNamesMap[markerId] = marker.name;
 
       const markerEl = document.getElementById(`marker-${markerId}`);
       if (markerEl) {
         // `hideUnlistedMarkers` profiles only show the markers they list (no default.json fallback)
-        const isListed = Object.hasOwn(profile.markers || {}, markerId);
-        markerEl.setAttribute('marker-stabilizer', 'enabled', isListed || !profile.hideUnlistedMarkers);
+        markerEl.setAttribute('marker-stabilizer', 'enabled', listed || !profile.hideUnlistedMarkers);
 
-        const isGlb = targetData.type === 'glb' && !!targetData.model?.url;
+        const isGlb = marker.type === 'glb';
         const textEl = markerEl.querySelector('[three-text-3d]');
         if (textEl) {
           textEl.setAttribute('three-text-3d', {
-            text: targetData.text,
-            color: targetData.color,
-            emissive: targetData.emissive,
+            text: marker.text.text,
+            color: marker.text.color,
+            emissive: marker.text.emissive,
             hidden: isGlb
           });
         }
@@ -213,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const modelSlotEl = markerEl.querySelector('.marker-model-slot');
         if (modelSlotEl) {
           if (isGlb) {
-            modelSlotEl.setAttribute('marker-model', toMarkerModelAttrs(targetData.model));
+            modelSlotEl.setAttribute('marker-model', toMarkerModelAttrs(marker.model));
           } else if (modelSlotEl.hasAttribute('marker-model')) {
             modelSlotEl.removeAttribute('marker-model');
           }
@@ -243,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hudController.setCelebrationText(profile.interaction?.celebrationText || 'Happy Birthday');
 
     // Synchronize markers modal information with current active profile
-    modalController.updateProfileInfo(profileId, profile, profiles['default'] || {});
+    modalController.updateProfileInfo(profileId, profile);
 
     // Update Dropdown Active State
     document.querySelectorAll('.profile-option').forEach(btn => {
